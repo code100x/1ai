@@ -111,7 +111,7 @@ export async function generateTitleFromUserMessage({
   });
 
   if (!response.ok) {
-    throw new Error('Failed to generate title');
+    return message.slice(0, 20) + "...";
   }
 
   const data = await response.json();
