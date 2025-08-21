@@ -28,7 +28,7 @@ export default function Home() {
       try {
         while (true) {
           const { done, value } = await reader.read();
-          
+
           if (done) {
             console.log('Stream finished');
             break;
@@ -48,7 +48,7 @@ export default function Home() {
   }, []);
   return (
     <div className="">
-      hi 
+      hi
     </div>
   );
 }
