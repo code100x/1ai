@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-dark text-white font-mono;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-black/20 backdrop-blur-sm border border-white/10;
+  }
+  
+  .glow-border {
+    @apply border border-accent/30 shadow-lg shadow-accent/20;
+  }
+}
