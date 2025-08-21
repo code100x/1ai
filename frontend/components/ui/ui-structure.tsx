@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 import {
   Sidebar,
@@ -12,7 +13,6 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
-import { Geist } from "next/font/google";
 import { Button } from "./button";
 import { api } from "@/trpc/react";
 import { useState } from "react";
@@ -20,30 +20,16 @@ import { useEffect } from "react";
 import { Input } from "./input";
 import {
   BookmarkIcon,
-  DotsThreeVertical,
   MagnifyingGlassIcon,
   ShareFatIcon,
   TrashIcon,
 } from "@phosphor-icons/react";
 import { Separator } from "./separator";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { T3Chat } from "../svgs/t3chat";
-import type { User } from "@prisma/client";
+import { Logo } from "../svgs/logo";
 import { useSession } from "next-auth/react";
-import { Share, ShareIcon } from "lucide-react";
-
-const giest = Geist({
-  display: "swap",
-  subsets: ["latin"],
-});
 
 interface Chat {
   id: string;
@@ -76,8 +62,8 @@ export function UIStructure() {
       toast.success("Chat saved successfully");
       setChats(
         chats.map((chat) =>
-          chat.id === chatId ? { ...chat, isSaved: true } : chat,
-        ),
+          chat.id === chatId ? { ...chat, isSaved: true } : chat
+        )
       );
     } catch (error) {
       console.error("Error saving chat:", error);
@@ -90,8 +76,8 @@ export function UIStructure() {
       toast.success("Chat removed from saved successfully");
       setChats(
         chats.map((chat) =>
-          chat.id === chatId ? { ...chat, isSaved: false } : chat,
-        ),
+          chat.id === chatId ? { ...chat, isSaved: false } : chat
+        )
       );
     } catch (error) {
       console.error("Error removing chat from saved:", error);
@@ -120,7 +106,7 @@ export function UIStructure() {
               <div className="flex w-full items-center gap-2 rounded-lg p-1 text-lg">
                 <SidebarTrigger className="shrink-0" />
                 <div className="dark:text-primary-foreground flex size-4 w-full flex-1 items-center justify-center rounded-lg">
-                  <T3Chat />
+                  <Logo />
                 </div>
                 <span className="size-6"></span>
               </div>
@@ -129,7 +115,7 @@ export function UIStructure() {
                   e.preventDefault();
                   router.push("/ask");
                 }}
-                variant="t3"
+                variant="accent"
                 className="w-full"
               >
                 New Chat
@@ -145,14 +131,17 @@ export function UIStructure() {
                 className="rounded-none border-none bg-transparent px-0 py-1 shadow-none ring-0 focus-visible:ring-0 dark:bg-transparent"
               />
             </div>
-            <SidebarGroupLabel className="p-0">
-              <Badge
-                variant="secondary"
-                className="text-foreground flex items-center gap-2 rounded-lg"
-              >
-                <span className="font-semibold">Saved Chats</span>
-              </Badge>
-            </SidebarGroupLabel>
+            {chatsData !== undefined &&
+              chats?.filter((chat: Chat) => chat.isSaved).length > 0 && (
+                <SidebarGroupLabel className="p-0">
+                  <Badge
+                    variant="secondary"
+                    className="text-foreground flex items-center gap-2 rounded-lg"
+                  >
+                    <span className="font-semibold">Saved Chats</span>
+                  </Badge>
+                </SidebarGroupLabel>
+              )}
             <SidebarMenu className="mt-2 p-0">
               {chatsData === undefined
                 ? // Skeleton loader while loading saved chats
@@ -199,9 +188,13 @@ export function UIStructure() {
                                   className="flex items-center justify-center rounded-md"
                                   onClick={(e) => {
                                     e.preventDefault();
-                                    const shareLink = process.env.NEXT_PUBLIC_APP_URL + `/chat/share/${chat.id}`
-                                    navigator.clipboard.writeText(shareLink)
-                                    toast.success("Share link copied to clipboard")
+                                    const shareLink =
+                                      process.env.NEXT_PUBLIC_APP_URL +
+                                      `/chat/share/${chat.id}`;
+                                    navigator.clipboard.writeText(shareLink);
+                                    toast.success(
+                                      "Share link copied to clipboard"
+                                    );
                                   }}
                                 >
                                   <ShareFatIcon
@@ -230,14 +223,6 @@ export function UIStructure() {
             </SidebarMenu>
 
             <Separator className="my-2" />
-            <SidebarGroupLabel className="p-0">
-              <Badge
-                variant="secondary"
-                className="text-foreground flex items-center gap-2 rounded-lg"
-              >
-                <span className="font-semibold">Recent Chats</span>
-              </Badge>
-            </SidebarGroupLabel>
 
             <SidebarMenu className="mt-2 w-full p-0">
               {chatsData === undefined
@@ -283,9 +268,13 @@ export function UIStructure() {
                                   className="flex items-center justify-center rounded-md"
                                   onClick={(e) => {
                                     e.preventDefault();
-                                    const shareLink = process.env.NEXT_PUBLIC_APP_URL + `/chat/share/${chat.id}`
-                                    navigator.clipboard.writeText(shareLink)
-                                    toast.success("Share link copied to clipboard")
+                                    const shareLink =
+                                      process.env.NEXT_PUBLIC_APP_URL +
+                                      `/chat/share/${chat.id}`;
+                                    navigator.clipboard.writeText(shareLink);
+                                    toast.success(
+                                      "Share link copied to clipboard"
+                                    );
                                   }}
                                 >
                                   <ShareFatIcon
@@ -343,11 +332,13 @@ export function UIStructure() {
                 alt={user.name ?? "User"}
                 className="h-10 w-10 rounded-full object-cover"
               />
-              <div className="flex flex-col text-sm text-white">
+              <div className="flex flex-col text-sm">
                 <span className="font-medium">{user.name ?? "Anonymous"}</span>
-                <span className="w-36 truncate text-xs text-gray-300">
-                  {user.email ?? ""}
-                </span>
+                {user.email && (
+                  <span className="w-36 truncate text-xs text-muted-foreground">
+                    {user.email}
+                  </span>
+                )}
               </div>
             </div>
           )}

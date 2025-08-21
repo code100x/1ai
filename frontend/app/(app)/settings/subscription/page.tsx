@@ -38,7 +38,7 @@ export default async function SubscriptionPage() {
             </div>
           </div>
         </div>
-        <div className="grid grid-cols-1 gap-14 lg:grid-cols-3">
+        <div className="flex flex-col gap-14">
           {/* Left Column - Profile and Shortcuts */}
           <div className="hidden space-y-8 lg:col-span-1 lg:block">
             {/* Profile Section */}
@@ -52,92 +52,6 @@ export default async function SubscriptionPage() {
               about={user?.about as string}
               plan={user?.subscription?.plan as string}
             />
-
-            {/* Message Usage */}
-            <div className="bg-accent space-y-4 rounded-xl p-4 dark:bg-black">
-              <div className="flex items-center justify-between">
-                <span className="text-foreground font-medium">
-                  Message Usage
-                </span>
-                <span className="text-muted-foreground text-sm">
-                  Resets today at 5:30 AM
-                </span>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-foreground">Standard</span>
-                  <span className="text-foreground font-mono">0/20</span>
-                </div>
-                <div className="bg-muted h-2 w-full rounded-full">
-                  <div
-                    className="bg-primary h-2 rounded-full"
-                    style={{ width: "0%" }}
-                  ></div>
-                </div>
-                <p className="text-muted-foreground text-sm">
-                  20 messages remaining
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column - Tabs Section */}
-          <div className="lg:col-span-2">
-            <Tabs defaultValue="account" className="max-w-full overflow-x-auto">
-              <div className="no-scrollbar overflow-x-auto">
-                <TabsList className="h-[34px] rounded-lg">
-                  <TabsTrigger className="rounded-md text-xs" value="account">
-                    Account
-                  </TabsTrigger>
-                  <TabsTrigger
-                    className="rounded-lg text-xs"
-                    value="customisation"
-                  >
-                    Customisation
-                  </TabsTrigger>
-                  <TabsTrigger className="rounded-lg text-xs" value="history">
-                    History & Sync
-                  </TabsTrigger>
-                  <TabsTrigger className="rounded-lg text-xs" value="models">
-                    Models
-                  </TabsTrigger>
-                  <TabsTrigger className="rounded-lg text-xs" value="api-keys">
-                    API Keys
-                  </TabsTrigger>
-                  <TabsTrigger
-                    className="rounded-lg text-xs"
-                    value="attachments"
-                  >
-                    Attachments
-                  </TabsTrigger>
-                  <TabsTrigger className="rounded-lg text-xs" value="contact">
-                    Contact
-                  </TabsTrigger>
-                </TabsList>
-              </div>
-              <TabsContent value="account" className="mt-6">
-                <Account />
-              </TabsContent>
-              <TabsContent value="customisation">
-                <Customisation />
-              </TabsContent>
-              <TabsContent value="history">
-                <History />
-              </TabsContent>
-              <TabsContent value="models">
-                <Models />
-              </TabsContent>
-              <TabsContent value="api-keys">
-                <APIKeysPage />
-              </TabsContent>
-              <TabsContent value="attachments">
-                <AttachmentsPage />
-              </TabsContent>
-              <TabsContent value="contact">
-                <ContactUsPage />
-              </TabsContent>
-            </Tabs>
           </div>
         </div>
       </div>

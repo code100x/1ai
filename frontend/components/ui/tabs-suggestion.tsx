@@ -5,8 +5,8 @@ const TabsSuggestion = ({
   suggestedInput,
   setSuggestedInput,
 }: {
-  suggestedInput: any;
-  setSuggestedInput: any;
+  suggestedInput: string;
+  setSuggestedInput: (input: string) => void;
 }) => {
   const [activeTab, setActiveTab] = useState("create");
 
@@ -61,16 +61,16 @@ const TabsSuggestion = ({
 
   return (
     <div className="text-foreground mt-7 h-fit min-w-lg">
-      <div className="mx-auto max-w-4xl">
+      <div className="flex flex-col gap-4">
         {/* Tab Navigation */}
-        <div className="mb-4 flex items-center justify-center gap-4">
+        <div className="mb-4 flex gap-2">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ${
+              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all duration-200 cursor-pointer justify-center border  ${
                 activeTab === tab.id
-                  ? "bg-primary text-primary-foreground shadow-lg"
+                  ? "bg-primary text-primary-foreground"
                   : "bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:text-foreground"
               } `}
             >
@@ -81,7 +81,7 @@ const TabsSuggestion = ({
         </div>
 
         {/* Tab Content */}
-        <div className="mx-auto flex max-w-md flex-col items-center space-y-2">
+        <div className="flex flex-col items-center gap-6">
           {activeTabData?.content.map((item, index) => (
             <div
               key={index}
@@ -90,11 +90,9 @@ const TabsSuggestion = ({
                   setSuggestedInput(item);
                 }
               }}
-              className="bg-muted/80 hover:bg-accent/80 group w-full cursor-pointer rounded-xl border py-2 text-center transition-all duration-200"
+              className="group w-full cursor-pointer transition-all duration-200 hover:text-secondary-foreground"
             >
-              <p className="text-card-foreground text-sm leading-relaxed">
-                {item}
-              </p>
+              <p className="text-card-foreground text-sm">{item}</p>
             </div>
           ))}
         </div>

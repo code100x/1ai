@@ -31,8 +31,17 @@ import SpeechRecognition, {
 import { useSpeechSynthesis } from "react-speech-kit";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
-import { Earth, EarthIcon, Globe, Paperclip, WrapText } from "lucide-react";
+import {
+  ArrowUpIcon,
+  Earth,
+  EarthIcon,
+  Globe,
+  Paperclip,
+  WrapText,
+} from "lucide-react";
 import { atomOneDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
+import { Logo } from "../svgs/logo";
+import { Skeleton } from "./skeleton";
 
 const geistMono = Geist_Mono({
   subsets: ["latin"],
@@ -48,10 +57,9 @@ interface Message {
 }
 
 const UIInput = () => {
-  const session = useSession();
   const [model, setModel] = useState<string>(DEFAULT_MODEL_ID);
   const [modeOfChatting, setModeOfChatting] = useState<"text" | "voice">(
-    "text",
+    "text"
   );
   const [query, setQuery] = useState<string>("");
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -185,8 +193,8 @@ const UIInput = () => {
         updateTimeout = setTimeout(() => {
           setMessages((prev) =>
             prev.map((msg) =>
-              msg.id === tempMessageId ? { ...msg, content } : msg,
-            ),
+              msg.id === tempMessageId ? { ...msg, content } : msg
+            )
           );
         }, 50);
       };
@@ -199,8 +207,8 @@ const UIInput = () => {
             prev.map((msg) =>
               msg.id === tempMessageId
                 ? { ...msg, content: accumulatedContent }
-                : msg,
-            ),
+                : msg
+            )
           );
 
           if (updateTimeout) {
@@ -252,8 +260,8 @@ const UIInput = () => {
                   prev.map((msg) =>
                     msg.id === tempMessageId
                       ? { ...msg, content: `Error: ${parsedData.error}` }
-                      : msg,
-                  ),
+                      : msg
+                  )
                 );
                 break;
               }
@@ -279,8 +287,8 @@ const UIInput = () => {
         prev.map((msg) =>
           msg.id === tempMessageId
             ? { ...msg, content: "Error: Failed to process response" }
-            : msg,
-        ),
+            : msg
+        )
       );
     } finally {
       setIsLoading(false);
@@ -397,18 +405,6 @@ const UIInput = () => {
         {!query && showWelcome && messages.length === 0 ? (
           <div className="flex h-full w-full flex-col">
             <div className="flex h-full w-full flex-col items-center justify-center">
-              <div className="drop-shadow-primary/60 bg-primary relative mb-6 size-[4.5rem] overflow-hidden rounded-xl drop-shadow-2xl">
-                <div className="bg-foreground absolute top-1/2 left-1/2 flex size-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full">
-                  <ChatCircleDotsIcon className="text-background text-2xl" />
-                </div>
-              </div>
-              <h1 className="text-2xl">
-                Hello{" "}
-                <span className="font-semibold">
-                  {session.data?.user.name?.split(" ")[0]},
-                </span>
-              </h1>
-              <p className="text-3xl">How may I help you today?</p>
               <TabsSuggestion
                 suggestedInput={query}
                 setSuggestedInput={setQuery}
@@ -425,10 +421,10 @@ const UIInput = () => {
                 >
                   <div
                     className={cn(
-                      "prose dark:prose-invert max-w-none rounded-lg px-4 py-2",
+                      "prose cursor-pointer dark:prose-invert max-w-none rounded-lg px-4 py-2",
                       message.role === "user"
                         ? "bg-accent/40 w-fit max-w-full font-medium"
-                        : "w-full p-0",
+                        : "w-full p-0"
                     )}
                   >
                     <ReactMarkdown
@@ -448,7 +444,7 @@ const UIInput = () => {
                             <code
                               className={cn(
                                 "bg-accent rounded-sm px-1 py-0.5 text-sm",
-                                geistMono.className,
+                                geistMono.className
                               )}
                               {...rest}
                             >
@@ -640,7 +636,7 @@ const UIInput = () => {
           </div>
         )}
 
-        <div className="bg-muted border-border/20 w-full rounded-2xl border-t p-2">
+        <div className="bg-muted border-border/20 mb-4 w-full rounded-2xl border-t p-2">
           <div className="mx-auto w-full max-w-4xl">
             <form
               onSubmit={handleCreateChat}
@@ -652,7 +648,7 @@ const UIInput = () => {
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
-                    void handleCreateChat(e as any);
+                    void handleCreateChat(e);
                   }
                 }}
                 placeholder={
@@ -665,58 +661,21 @@ const UIInput = () => {
               />
               <div className="mt-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={toggleMode}
-                    className="text-xs"
-                  >
-                    {modeOfChatting === "text"
-                      ? "Switch to Voice"
-                      : "Switch to Text"}
-                  </Button>
-                  {modeOfChatting === "voice" && (
-                    <div className="bg-accent flex size-8 items-center justify-center rounded-lg border">
-                      <button
-                        onClick={
-                          listening ? handleStopListening : handleStartListening
-                        }
-                        disabled={!browserSupportsSpeechRecognition}
-                      >
-                        <MicrophoneIcon
-                          weight="bold"
-                          className={`text-foreground hover:text-primary size-4 cursor-pointer ${
-                            listening ? "animate-pulse text-red-500" : ""
-                          }`}
-                        />
-                      </button>
-                    </div>
-                  )}
                   <ModelSelector
                     value={model}
                     onValueChange={setModel}
                     disabled={isLoading}
                   />
-                  {/* Search */}
-                  <Button variant="ghost" size="sm" className={`text-xs ${search ? "bg-primary/60 hover:bg-primary/70" : ""}`} onClick={() => setSearch(!search)}>
-                    <Globe className="size-4" />
-                    Search
-                  </Button>
-
-                  {/* Attachments */}
-                  <Button variant="ghost" size="sm" className="text-xs" onClick={handleFileInput}>
-                    <Paperclip className="size-4" />
-                  </Button>
                 </div>
                 <Button
                   type="submit"
-                  className="w-fit"
+                  size="icon"
                   disabled={isLoading || !query.trim()}
                 >
                   {isLoading ? (
                     <SpinnerGapIcon className="animate-spin" />
                   ) : (
-                    "Send"
+                    <ArrowUpIcon className="size-4" />
                   )}
                 </Button>
               </div>

@@ -20,16 +20,6 @@ export default async function Home() {
         <Feedback />
         <Footer />
       </main>
-
-      {/* <div className="absolute top-[30rem] left-[-2%] z-[-1] w-[110vw] -rotate-[10deg] items-center gap-4 md:top-[18rem] md:flex xl:top-28">
-        <Image
-          src="/strip.png"
-          alt="Hero"
-          width={5500}
-          height={5500}
-          className="h-full w-full object-cover"
-        />
-      </div> */}
     </HydrateClient>
   );
 }

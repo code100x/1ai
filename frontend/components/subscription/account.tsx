@@ -1,5 +1,4 @@
 import {
-  ArrowLeftIcon,
   GiftIcon,
   LifebuoyIcon,
   RocketIcon,
@@ -15,7 +14,7 @@ interface FeatureCardProps {
 function FeatureCard({ icon, title, description }: FeatureCardProps) {
   return (
     <div className="border-border bg-muted/50 flex flex-col items-start justify-center gap-1 rounded-lg border px-4 py-3">
-      <div className="text-xl text-pink-500">{icon}</div>
+      <div className="text-xl text-primary">{icon}</div>
       <div className="text-foreground font-semibold">{title}</div>
       <div className="text-muted-foreground text-sm leading-relaxed">
         {description}
@@ -57,12 +56,6 @@ const features = [
   },
 ];
 
-const keyboardShortcuts = [
-  { label: "Search", keys: ["Ctrl", "K"] },
-  { label: "New Chat", keys: ["Ctrl", "Shift", "O"] },
-  { label: "Toggle Sidebar", keys: ["Ctrl", "B"] },
-];
-
 export const Account = () => {
   return (
     <div className="space-y-8 lg:col-span-2">
@@ -81,9 +74,7 @@ export const Account = () => {
           {features.map((feature) => (
             <FeatureCard key={feature.title} {...feature} />
           ))}
-          <Button className="w-full max-w-sm rounded-lg bg-pink-600 py-3 font-medium text-white hover:bg-pink-700">
-            Upgrade Now
-          </Button>
+          <Button>Upgrade Now</Button>
         </div>
 
         {/* Upgrade Button */}
@@ -101,12 +92,7 @@ export const Account = () => {
         <p className="text-muted-foreground text-sm">
           Permanently delete your account and all associated data.
         </p>
-        <Button
-          variant="destructive"
-          className="mt-4 rounded-lg bg-red-600 px-6 py-2 font-medium text-white hover:bg-red-700"
-        >
-          Delete Account
-        </Button>
+        <Button variant="destructive">Delete Account</Button>
       </div>
     </div>
   );

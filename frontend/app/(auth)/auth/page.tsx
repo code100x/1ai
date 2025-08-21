@@ -23,15 +23,15 @@ function LoginPage() {
           <div className="flex items-center gap-2">
             <span className="text-xl font-bold text-white">Welcome to</span>
             <span className="text-primary-foreground text-2xl font-bold">
-              T3.chat
+              1ai
             </span>
           </div>
           <p className="text-foreground text-center">
-            Sign in below (we'll increase your message limits if you do 😉)
+            Sign in below (we&apos;ll increase your message limits if you do 😉)
           </p>
         </div>
         <Button
-          variant="t3"
+          variant="accent"
           onClick={() => signIn("google", { callbackUrl: "/" })}
           className="h-14 w-[25rem] text-lg font-semibold text-white"
         >

@@ -20,7 +20,7 @@ const APIKeysPage = () => {
           <p className="text-muted-foreground text-sm">
             Upgrade to Pro to access this feature.
           </p>
-          <Button variant={"t3"}>Upgrade to Pro - $8/month</Button>
+          <Button variant="accent">Upgrade to Pro - $8/month</Button>
         </CardContent>
       </Card>
     </div>

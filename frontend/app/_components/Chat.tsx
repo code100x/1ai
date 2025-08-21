@@ -54,7 +54,6 @@ interface Message {
 const Chat = ({ chatId: initialChatId }: { chatId: string }) => {
   const [model, setModel] = useState<string>(DEFAULT_MODEL_ID);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [search, setSearch] = useState<boolean>(false);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [modeOfChatting, setModeOfChatting] = useState<"text" | "voice">(
@@ -64,7 +63,6 @@ const Chat = ({ chatId: initialChatId }: { chatId: string }) => {
   const [copied, setCopied] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
-  const welcomeSpokenRef = useRef(false);
   const [isWrapped, setIsWrapped] = useState(false);
   const { resolvedTheme } = useTheme();
   const [query, setQuery] = useState<string>("");
@@ -82,11 +80,13 @@ const Chat = ({ chatId: initialChatId }: { chatId: string }) => {
   useEffect(() => {
     if (chatMessages) {
       setMessages(
-        chatMessages.messages.map((message) => ({
-          id: message.id,
-          role: message.role === "USER" ? "user" : "assistant",
-          content: message.content,
-        }))
+        chatMessages.messages.map(
+          (message: { id: string; role: string; content: string }) => ({
+            id: message.id,
+            role: message.role === "USER" ? "user" : "assistant",
+            content: message.content,
+          })
+        )
       );
     }
   }, [chatMessages]);
@@ -95,12 +95,8 @@ const Chat = ({ chatId: initialChatId }: { chatId: string }) => {
     setIsWrapped((prev) => !prev);
   }, []);
 
-  const {
-    transcript,
-    listening,
-    resetTranscript,
-    browserSupportsSpeechRecognition,
-  } = useSpeechRecognition();
+  const { transcript, listening, browserSupportsSpeechRecognition } =
+    useSpeechRecognition();
 
   const {
     speak,
@@ -293,30 +289,6 @@ const Chat = ({ chatId: initialChatId }: { chatId: string }) => {
     }
   };
 
-  useEffect(() => {
-    if (
-      showWelcome &&
-      messages.length === 0 &&
-      modeOfChatting === "voice" &&
-      ttsSupported &&
-      selectedVoice &&
-      !welcomeSpokenRef.current
-    ) {
-      welcomeSpokenRef.current = true;
-      speak({
-        text: `Hello mate, how may I help you today?`,
-        voice: selectedVoice,
-      });
-    }
-  }, [
-    showWelcome,
-    messages.length,
-    modeOfChatting,
-    ttsSupported,
-    selectedVoice,
-    speak,
-  ]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -373,29 +345,6 @@ const Chat = ({ chatId: initialChatId }: { chatId: string }) => {
     }
   }, []);
 
-  const handleStartListening = () => {
-    resetTranscript();
-    SpeechRecognition.startListening({ continuous: true });
-    toast.success("Listening...", {
-      description: "Speak now...",
-      duration: 5000,
-    });
-  };
-
-  const handleStopListening = () => {
-    SpeechRecognition.stopListening();
-    toast.success("Stopped listening", {
-      description: "Processing your voice input...",
-    });
-  };
-
-  const toggleMode = () => {
-    if (modeOfChatting === "voice" && speaking) {
-      cancel();
-    }
-    setModeOfChatting(modeOfChatting === "text" ? "voice" : "text");
-  };
-
   const handleCopy = async (content: string) => {
     try {
       await navigator.clipboard.writeText(content);
@@ -404,19 +353,6 @@ const Chat = ({ chatId: initialChatId }: { chatId: string }) => {
     } catch (err) {
       console.error("Failed to copy: ", err);
     }
-  };
-
-  const handleFileInput = () => {
-    const fileInput = document.createElement("input");
-    fileInput.type = "file";
-    fileInput.accept = "image/*";
-    fileInput.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        setAttachments((prev) => [...prev, file]);
-      }
-    };
-    fileInput.click();
   };
 
   return (
@@ -663,11 +599,11 @@ const Chat = ({ chatId: initialChatId }: { chatId: string }) => {
         </div>
 
         {/* Input Form */}
-        <div className="bg-muted border-border/20 absolute bottom-0 w-full rounded-xl border-t p-2">
+        <div className="bg-muted border-border/20 absolute bottom-4 w-full rounded-3xl border-t">
           <div className="mx-auto w-full max-w-4xl">
             <form
               onSubmit={handleSubmit}
-              className="bg-accent/30 flex w-full flex-col rounded-xl p-3 pb-3"
+              className="bg-accent/30 flex w-full flex-col rounded-3xl p-3 pb-3"
             >
               <Textarea
                 value={input}
@@ -675,72 +611,24 @@ const Chat = ({ chatId: initialChatId }: { chatId: string }) => {
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
-                    void handleCreateChat(e as any);
+                    void handleCreateChat(e);
                   }
                 }}
                 placeholder="Ask whatever you want to be"
-                className="h-[2rem] resize-none rounded-none border-none bg-transparent px-0 py-1 shadow-none ring-0 focus-visible:ring-0 dark:bg-transparent"
+                className="h-[2rem] resize-none rounded-none border-none bg-transparent px-3 py-1 shadow-none ring-0 focus-visible:ring-0 dark:bg-transparent"
                 disabled={isLoading}
               />
               <div className="mt-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={toggleMode}
-                    className="text-xs"
-                  >
-                    {modeOfChatting === "text"
-                      ? "Switch to Voice"
-                      : "Switch to Text"}
-                  </Button>
-                  {modeOfChatting === "voice" && (
-                    <div className="bg-accent flex size-8 items-center justify-center rounded-lg border">
-                      <button
-                        onClick={
-                          listening ? handleStopListening : handleStartListening
-                        }
-                        disabled={!browserSupportsSpeechRecognition}
-                      >
-                        <MicrophoneIcon
-                          weight="bold"
-                          className={`text-foreground hover:text-primary size-4 cursor-pointer ${
-                            listening ? "animate-pulse text-red-500" : ""
-                          }`}
-                        />
-                      </button>
-                    </div>
-                  )}
                   <ModelSelector
                     value={model}
                     onValueChange={setModel}
                     disabled={isLoading}
                   />
-
-                  {/* Search */}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={`text-xs ${search ? "bg-primary/60 hover:bg-primary/70" : ""}`}
-                    onClick={() => setSearch(!search)}
-                  >
-                    <Globe className="size-4" />
-                    Search
-                  </Button>
-
-                  {/* Attachments */}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-xs"
-                    onClick={handleFileInput}
-                  >
-                    <Paperclip className="size-4" />
-                  </Button>
                 </div>
                 <Button
                   type="submit"
-                  className="w-fit"
+                  size="icon"
                   disabled={isLoading || !input.trim()}
                 >
                   {isLoading ? (
