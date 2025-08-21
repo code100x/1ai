@@ -1,38 +1,66 @@
+import "@/styles/globals.css";
 import type { Metadata } from "next";
-import "./globals.css";
-import { Plus_Jakarta_Sans } from "next/font/google";
-import { ThemeProvider } from "@/components/theme-provider";
-import LayoutWrapper from "@/components/layout-wrapper";
+import { Geist, Inter, Playfair_Display, Roboto } from "next/font/google";
+import { TRPCReactProvider } from "@/trpc/react";
+import localFont from "next/font/local";
+import { FontProvider } from "@/contexts/font-context";
+import { BlurProvider } from "@/contexts/blur-context";
+import { Toaster } from "sonner";
+import { siteConfig } from "@/config/site";
+export const metadata: Metadata = siteConfig;
 
-const plusJakartaSans = Plus_Jakarta_Sans({
-  variable: "--font-plus-jakarta-sans",
-  subsets: ["latin"],
+const proxima = localFont({
+  src: "../app/proxima_vara.woff2",
+  variable: "--font-proxima",
+  display: "swap",
 });
 
-export const metadata: Metadata = {
-  icons: {
-    icon: "/logo.svg",
-  },
-  title: "1AI",
-  description: "1AI",
-};
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const geist = Geist({
+  subsets: ["latin"],
+  variable: "--font-geist",
+  display: "swap",
+});
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair",
+  style: ["italic", "normal"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+});
+
+const roboto = Roboto({
+  subsets: ["latin"],
+  variable: "--font-roboto",
+  weight: ["400", "500", "700"],
+  display: "swap",
+});
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
-      <body className={`${plusJakartaSans.className} antialiased min-h-screen`}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <LayoutWrapper>{children}</LayoutWrapper>
-        </ThemeProvider>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${proxima.variable} ${inter.variable} ${geist.variable} ${playfair.variable} ${roboto.variable}`}
+    >
+      <body
+        className={`${proxima.className} ${inter.className} ${geist.className} ${playfair.className} ${roboto.className}`}
+      >
+        <TRPCReactProvider>
+          <FontProvider>
+            <BlurProvider>
+              {children}
+              <Toaster />
+            </BlurProvider>
+          </FontProvider>
+        </TRPCReactProvider>
       </body>
     </html>
   );
