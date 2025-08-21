@@ -5,7 +5,7 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
     const authToken = req.headers.authorization?.split(" ")[1];
 
     if(!authToken) {
-        res.send({
+        res.status(403).send({
             message: "Auth token invalid",
             success: false,
         })
@@ -17,7 +17,7 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
         req.userId = (data as unknown as JwtPayload).userId as unknown as string;
         next();
     } catch (e) {
-        res.send({
+        res.status(403).send({
             message: "Auth token invalid",
             success: false,
         });
