@@ -1,4 +1,6 @@
 "use client";
+import AnimatedHeader from "@/components/AnimatedHeader";
+import HeroSection from "@/components/HeroSection";
 import { useEffect } from "react";
 
 const BACKEND_URL = "http://localhost:3000";
@@ -47,8 +49,10 @@ export default function Home() {
     makeRequest();
   }, []);
   return (
-    <div className="">
-      hi
+    <div className="relative ">
+      <AnimatedHeader></AnimatedHeader>
+      <HeroSection></HeroSection>
+
     </div>
   );
 }
