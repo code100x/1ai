@@ -21,24 +21,40 @@ model User {
   updatedAt DateTime @updatedAt
 
   conversations Conversation[]
+  payments      Payment[]
 }
 
 model Conversation {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   userId    String
-  title     String   @default("Untitled")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id])
+  title     String    @default("Untitled")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  user      User      @relation(fields: [userId], references: [id])
   messages  Message[]
 }
 
 model Message {
-  id        String   @id @default(uuid())
+  id             String       @id @default(uuid())
   conversationId String
-  content String
-  role String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  conversation Conversation @relation(fields: [conversationId], references: [id])
+  content        String
+  role           String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+}
+
+model Payment {
+  id          String   @id @default(cuid())
+  userId      String
+  amount      Int
+  status      String
+  orderId     String
+  description String? // Optional description of what the payment is for
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("payments")
 }
