@@ -8,7 +8,7 @@ export const Logo = ({ className }: { className?: string }) => {
       xmlns="http://www.w3.org/2000/svg"
       className={cn("size-6", className)}
     >
-      <g clip-path="url(#clip0_23_49)">
+      <g clipPath="url(#clip0_23_49)">
         <g filter="url(#filter0_iii_23_49)">
           <path
             d="M1.08594 49.944C1.08594 23.4342 22.5763 1.94391 49.0859 1.94391H112.086C138.596 1.94391 160.086 23.4342 160.086 49.944V97.944H49.0859C22.5763 97.944 1.08594 76.4537 1.08594 49.944Z"
@@ -44,9 +44,9 @@ export const Logo = ({ className }: { className?: string }) => {
           width="163.8"
           height="100.8"
           filterUnits="userSpaceOnUse"
-          color-interpolation-filters="sRGB"
+          colorInterpolationFilters="sRGB"
         >
-          <feFlood flood-opacity="0" result="BackgroundImageFix" />
+          <feFlood floodOpacity="0" result="BackgroundImageFix" />
           <feBlend
             mode="normal"
             in="SourceGraphic"
