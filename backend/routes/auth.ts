@@ -62,11 +62,44 @@ router.post("/signin", async (req, res) => {
         return;
     }
 
-
-    // Verify with some totp lib
-    const { otp } = TOTP.generate(base32.encode(data.email + process.env.JWT_SECRET!));
+    // Verify TOTP by checking 3 iterations (current, previous, and next)
+    const secret = base32.encode(data.email + process.env.JWT_SECRET!);
     
-    if(otp !== data.otp) {
+    // Standard TOTP verification with tolerance
+    // Check current time window and adjacent windows (±1 window)
+    const timeStep = 30; // 30 seconds per TOTP window
+    const currentTime = Math.floor(Date.now() / 1000);
+    const currentWindow = Math.floor(currentTime / timeStep);
+    
+    let otpValid = false;
+    
+    // Check current window
+    const currentOtp = TOTP.generate(secret);
+    if (currentOtp.otp === data.otp) {
+        otpValid = true;
+    }
+    
+    // Check previous window (30 seconds ago)
+    if (!otpValid) {
+        const previousWindow = currentWindow - 1;
+        const previousTime = previousWindow * timeStep;
+        const previousOtp = TOTP.generate(secret, { time: previousTime * 1000 });
+        if (previousOtp.otp === data.otp) {
+            otpValid = true;
+        }
+    }
+    
+    // Check next window (30 seconds ahead)
+    if (!otpValid) {
+        const nextWindow = currentWindow + 1;
+        const nextTime = nextWindow * timeStep;
+        const nextOtp = TOTP.generate(secret, { time: nextTime * 1000 });
+        if (nextOtp.otp === data.otp) {
+            otpValid = true;
+        }
+    }
+    
+    if (!otpValid) {
         res.json({
             message: "Invalid otp",
             success: false,
