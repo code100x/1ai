@@ -62,7 +62,9 @@ export default function RootLayout({
             <FontProvider>
               <BlurProvider>
                 {children}
-                <Toaster />
+                <Toaster 
+                toastOptions={{className: 'sonner-toast'}} 
+                />
               </BlurProvider>
             </FontProvider>
         </ThemeProvider>

@@ -24,6 +24,12 @@ body {
   font-weight: 300;
 }
 
+.sonner-toast {
+  background: #f0b100 !important;
+  color: #fff !important;
+  border: #f0b100 !important;
+}
+
 .glass-card {
   @apply rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md;
 }
