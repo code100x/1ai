@@ -93,40 +93,60 @@ const UIInput = () => {
         { id: tempMessageId, role: "assistant", content: "" },
       ]);
 
-      let accumulatedContent = "";
+      let fullContent = "";
+      let displayedContent = "";
       let buffer = "";
-      let updateTimeout: NodeJS.Timeout | null = null;
+      let typingIntervalId: NodeJS.Timeout | null = null;
+      let isTyping = false;
 
-      const updateMessage = (content: string) => {
-        if (updateTimeout) {
-          clearTimeout(updateTimeout);
-        }
+      const startTyping = () => {
+        if (isTyping) return;
+        isTyping = true;
 
-        updateTimeout = setTimeout(() => {
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === tempMessageId ? { ...msg, content } : msg
-            )
-          );
-        }, 50);
+        typingIntervalId = setInterval(() => {
+          if (displayedContent.length < fullContent.length) {
+            const charsToAdd = Math.min(
+              Math.floor(Math.random() * 3) + 1,
+              fullContent.length - displayedContent.length
+            );
+
+            displayedContent = fullContent.slice(
+              0,
+              displayedContent.length + charsToAdd
+            );
+
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === tempMessageId
+                  ? { ...msg, content: displayedContent }
+                  : msg
+              )
+            );
+          } else {
+            if (typingIntervalId) {
+              clearInterval(typingIntervalId);
+              typingIntervalId = null;
+              isTyping = false;
+            }
+          }
+        }, 16);
       };
 
       while (true) {
         const { done, value } = await reader.read();
 
         if (done) {
+          if (typingIntervalId) {
+            clearInterval(typingIntervalId);
+          }
+          displayedContent = fullContent;
           setMessages((prev) =>
             prev.map((msg) =>
               msg.id === tempMessageId
-                ? { ...msg, content: accumulatedContent }
+                ? { ...msg, content: displayedContent }
                 : msg
             )
           );
-
-          if (updateTimeout) {
-            clearTimeout(updateTimeout);
-          }
-
           break;
         }
 
@@ -137,8 +157,6 @@ const UIInput = () => {
 
         const lines = buffer.split("\n");
         buffer = lines.pop() ?? "";
-
-        let hasNewContent = false;
 
         for (const line of lines) {
           if (line.trim() === "") continue;
@@ -152,22 +170,25 @@ const UIInput = () => {
 
             try {
               const parsedData = JSON.parse(data) as {
-                content?: string
+                content?: string;
               };
               const content = parsedData.content;
               if (content) {
-                accumulatedContent += content;
-                hasNewContent = true;
+                fullContent += content;
+
+                if (!isTyping) {
+                  startTyping();
+                }
               }
             } catch (e) {
               console.error("Error parsing JSON:", e);
             }
           }
         }
+      }
 
-        if (hasNewContent) {
-          updateMessage(accumulatedContent);
-        }
+      if (typingIntervalId) {
+        clearInterval(typingIntervalId);
       }
     } catch (error) {
       console.error("Error processing stream:", error);
