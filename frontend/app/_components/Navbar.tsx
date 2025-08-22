@@ -47,7 +47,7 @@ export default function Navbar() {
           <Link href="/">Testimonials</Link>
           <Button className="rounded-xl" asChild>
             <Link href="/ask">
-              Chat with T3 <ArrowUpRightIcon weight="bold" />
+              Chat with 1ai.co <ArrowUpRightIcon weight="bold" />
             </Link>
           </Button>
         </div>

@@ -21,13 +21,13 @@ export const GetStarted = () => {
         <div className="relative z-10 flex h-full flex-col items-center justify-center gap-8">
           {/* Content */}
           <h1 className="max-w-md text-center text-4xl font-bold text-balance">
-            Just Signup and write your first question to T3 :)
+            Just Signup and write your first question to 1ai.co :)
           </h1>
           <span className="text-muted-foreground">
             We promise , we dont spam with useless mails
           </span>
           <Button className="h-12 w-40 rounded-xl">
-            <Link href="/ask">Chat with T3</Link>
+            <Link href="/ask">Chat with 1ai.co</Link>
           </Button>
         </div>
       </div>

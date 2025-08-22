@@ -52,7 +52,7 @@ const features = [
     ),
     title: "Priority Support",
     description:
-      "Get faster responses and dedicated assistance from the T3 team whenever you need help!",
+      "Get faster responses and dedicated assistance from the 1ai.co team whenever you need help!",
   },
 ];
 
