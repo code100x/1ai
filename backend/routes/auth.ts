@@ -7,6 +7,7 @@ import base32 from "hi-base32";
 import { PrismaClient } from "../generated/prisma";
 import { authMiddleware } from "../auth-middleware";
 import { perMinuteLimiter, perMinuteLimiterRelaxed } from "../ratelimitter";
+import { AuthTokenManager } from "../auth-refresh";
 
 const prismaClient = new PrismaClient();
 
@@ -32,8 +33,6 @@ router.post("/initiate_signin", perMinuteLimiter, async (req, res) => {
         console.log("otp is", otp);
         if (process.env.NODE_ENV !== "development") {
             await sendEmail(data.email, "Login to 1ai", `Log into 1ai your otp is ${otp}`);
-        } else {
-            console.log(`Log into your 1ai `, otp);
         }
 
         otpCache.set(data.email, otp);
@@ -44,7 +43,7 @@ router.post("/initiate_signin", perMinuteLimiter, async (req, res) => {
                 }
             });
         } catch (e) {
-            console.log("User already exists");
+            // User already exists; proceed to send OTP
         }
 
         res.json({
@@ -52,8 +51,8 @@ router.post("/initiate_signin", perMinuteLimiter, async (req, res) => {
             success: true,
         });
     } catch (e) {
-        console.log(e);
-        res.json({
+        console.error("initiate_signin error:", e);
+        res.status(500).json({
             message: "Internal server error",
             success: false,
         });
@@ -97,12 +96,18 @@ router.post("/signin", perMinuteLimiterRelaxed, async (req, res) => {
         return
     }
 
-    const token = jwt.sign({
-        userId: user.id
-    }, process.env.JWT_SECRET!);
+    const tokenManager = AuthTokenManager.getInstance();
+    const { accessToken, refreshToken } = await tokenManager.generateTokenPair(user.id);
 
     res.json({
-        token
+        accessToken,
+        refreshToken,
+        user: {
+            id: user.id,
+            email: user.email,
+            credits: user.credits,
+            isPremium: user.isPremium
+        }
     })
 })
 
@@ -126,5 +131,36 @@ router.get("/me", authMiddleware, async (req, res) => {
         }
     })
 })
+
+router.post("/refresh", async (req, res) => {
+    const { refreshToken } = req.body;
+    
+    if (!refreshToken) {
+        return res.status(401).json({ message: "Refresh token required" });
+    }
+
+    const tokenManager = AuthTokenManager.getInstance();
+    const tokens = await tokenManager.refreshAccessToken(refreshToken);
+
+    if (!tokens) {
+        return res.status(401).json({ message: "Invalid refresh token" });
+    }
+
+    res.json(tokens);
+});
+
+router.post("/logout", authMiddleware, async (req, res) => {
+    const { refreshToken } = req.body;
+    
+    if (refreshToken) {
+        const tokenManager = AuthTokenManager.getInstance();
+        try {
+            const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET!) as any;
+            await tokenManager.revokeRefreshToken(decoded.tokenId);
+        } catch {}
+    }
+
+    res.json({ message: "Logged out successfully" });
+});
 
 export default router;

@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
 import { PrismaClient } from "../generated/prisma";
 import { authMiddleware } from "../auth-middleware";
@@ -72,7 +71,7 @@ const plans = [{
 }]
 
 
-billingRouter.post("/init-subscribe", async (req, res) => {
+billingRouter.post("/init-subscribe", authMiddleware, async (req, res) => {
   const userId = req.userId;
 
   const authHeader = 'Basic ' + Buffer.from(razorPayCredentials.key + ':' + razorPayCredentials.secret).toString('base64');
@@ -126,7 +125,7 @@ billingRouter.post("/init-subscribe", async (req, res) => {
   }
 });
 
-billingRouter.post("/subscribe", async (req, res) => {
+billingRouter.post("/subscribe", authMiddleware, async (req, res) => {
   const userId = req.userId;
   const { orderId, paymentId, signature } = req.body;
 
@@ -278,7 +277,6 @@ billingRouter.get("/credits/:userId", authMiddleware, async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
-``
     return res.json({ 
       credits: user.credits, 
       isPremium: user.isPremium 
