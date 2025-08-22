@@ -44,7 +44,7 @@ interface Chat {
 export function UIStructure() {
   const [chats, setChats] = useState<Chat[]>([]);
   const [hoverChatId, setHoverChatId] = useState<string>("");
-  const { data: chatsData } = api.chat.getAllChats.useQuery();
+  const chatsData = api.chat.getAllChats.useSuspenseQuery();
   const saveChat = api.chat.saveChat.useMutation();
   const removeFromSaved = api.chat.removeFromSaved.useMutation();
   const deleteChat = api.chat.deleteChat.useMutation();
