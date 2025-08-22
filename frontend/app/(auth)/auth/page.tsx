@@ -49,7 +49,8 @@ function LoginPage() {
         otp: otp
       });
       if (response.data.success === true) {
-        toast.success(response.data.message);
+        toast.success(response.data.message || "Sign in successful");
+        localStorage.setItem("token", response.data.token);
         router.push("/ask");
         setactiveState(1);
       } else {
