@@ -63,15 +63,15 @@ export const createCompletion = async (messages: Message[],
           
                   try {
                     const parsed = JSON.parse(data);
-                    const content = parsed.choices[0].delta.content;
+                    const content = parsed.choices?.[0]?.delta?.content;
                     if (content) {
                       console.log("content");
                       console.log(content);
                       cb(content);
                     }
                   } catch (e) {
-                    // Ignore invalid JSON
-                    reject()
+                    // Ignore invalid JSON - this is common in SSE streams
+                    console.warn("Failed to parse SSE data:", data, e);
                   }
                 }
               }

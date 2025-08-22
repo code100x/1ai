@@ -5,6 +5,10 @@
   "devDependencies": {
     "@types/bun": "latest"
   },
+  "scripts": {
+    "dev": "bun index.ts",
+    "start": "bun index.ts"
+  },
   "peerDependencies": {
     "typescript": "^5.0.0"
   },

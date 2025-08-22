@@ -13,6 +13,9 @@ const router = Router();
 // TODO: Rate limit this
 router.post("/initiate_signin", async (req, res) => {
     try {
+        return res.status(403).json({
+            message: "Not implemented",
+        })
         const { success, data } = CreateUser.safeParse(req.body);
 
         if (!success) {
