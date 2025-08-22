@@ -376,3 +376,32 @@ html.boring-theme.dark {
 .dark::selection {
   background-color: var(--accent);
 }
+
+
+/* In your global CSS file */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Class for the newly added character */
+.new-char {
+  display: inline-block; /* Ensures animation works correctly */
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Class for the blinking cursor */
+.blinking-cursor {
+  animation: blink 1s step-end infinite;
+}
