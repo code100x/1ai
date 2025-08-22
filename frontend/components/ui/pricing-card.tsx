@@ -130,9 +130,9 @@ export function PricingCards({
                         )}
                         onClick={() => {
                           if (tier.name === "Free") {
-                            redirect("https://x.com/10Xpraash");
+                            redirect("https://x.com/kirat_tw");
                           } else if (tier.name === "Enterprise") {
-                            redirect("https://x.com/10Xpraash");
+                            redirect("https://x.com/kirat_tw");
                           }
                         }}
                       >

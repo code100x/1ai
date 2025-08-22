@@ -13,6 +13,7 @@ export enum ModelProvider {
   OPENAI = "openai",
   GOOGLE = "google",
   ANTHROPIC = "anthropic",
+  OPENROUTER = "openrouter",
 }
 
 export enum ModelCapability {

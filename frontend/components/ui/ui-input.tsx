@@ -1,4 +1,5 @@
 "use client";
+import { v4 } from "uuid";
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -18,7 +19,6 @@ import SyntaxHighlighter from "react-syntax-highlighter";
 import remarkGfm from "remark-gfm";
 import { Geist_Mono } from "next/font/google";
 import { cn } from "@/lib/utils";
-import { api } from "@/trpc/react";
 import TabsSuggestion from "./tabs-suggestion";
 import { ModelSelector } from "@/components/ui/model-selector";
 import { DEFAULT_MODEL_ID } from "@/models/constants";
@@ -30,6 +30,8 @@ import {
 import { atomOneDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import { Logo } from "../svgs/logo";
 import { Skeleton } from "./skeleton";
+import { useUser } from "@/hooks/useUser";
+import { useRouter } from "next/navigation";
 
 const geistMono = Geist_Mono({
   subsets: ["latin"],
@@ -57,6 +59,9 @@ const UIInput = () => {
   const abortControllerRef = useRef<AbortController | null>(null);
   const [isWrapped, setIsWrapped] = useState(false);
   const { resolvedTheme } = useTheme();
+  const { user, isLoading: isUserLoading } = useUser();
+  const router = useRouter();
+  const [conversationId, setConversationId] = useState<string | null>(v4());
 
   const toggleWrap = useCallback(() => {
     setIsWrapped((prev) => !prev);
@@ -186,6 +191,11 @@ const UIInput = () => {
 
   const handleCreateChat = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!user) {
+      router.push("/auth");
+      return;
+    };
     if (!query.trim() || isLoading) return;
 
     setShowWelcome(false);
@@ -221,11 +231,13 @@ const UIInput = () => {
               body: JSON.stringify({
                 message: currentQuery,
                 model: model,
+                conversationId: conversationId,
               }),
               signal: abortControllerRef.current?.signal,
             });
 
             await processStream(response, currentQuery);
+
           } catch (error) {
             if ((error as Error).name !== "AbortError") {
               console.error("Error sending message:", error);

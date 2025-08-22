@@ -1,8 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import UIInput from "@/components/ui/ui-input";
-import Turnstile from "react-turnstile";
-import { toast } from "sonner";
 
 const AskPage = () => {
   const [token, setToken] = useState<string | null>(null);

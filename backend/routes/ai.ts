@@ -14,6 +14,9 @@ router.get("/conversations", authMiddleware, async (req, res) => {
     const conversations = await prismaClient.conversation.findMany({
         where: {
             userId
+        },
+        orderBy: {
+            updatedAt: "desc"
         }
     })
 
@@ -69,6 +72,28 @@ router.post("/chat", authMiddleware, async (req, res) => {
         return;
     }
 
+    const conversation = await prismaClient.conversation.findUnique({
+        where: {
+            id: conversationId
+        }
+    })
+    
+    if (conversation && conversation.userId !== userId) {
+        res.status(400).json({
+            message: "Conversation already exists and you are not the owner"
+        });
+        return;
+    }
+
+    if (!conversation) {
+        await prismaClient.conversation.create({
+            data: {
+                id: conversationId,
+                userId,
+                title: data.message.slice(0, 20) + "..."
+            }
+        })
+    }
     if (false) {
     // if (user.credits <= 0) {
         res.status(403).json({
@@ -134,17 +159,6 @@ router.post("/chat", authMiddleware, async (req, res) => {
         role: Role.Agent,
         content: message
     })
-
-    if (!data.conversationId) {
-        await prismaClient.conversation.create({
-            data: {
-                title: data.message.slice(0, 20) + "...",
-                id: conversationId,
-                userId,
-            }
-        })
-    }
-    
     // Save messages and deduct credits in a transaction
     await prismaClient.$transaction([
         prismaClient.message.createMany({
