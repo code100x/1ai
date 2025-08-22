@@ -1,26 +1,20 @@
-import type { ReactNode } from "react";
-import Image from "next/image";
-import { Badge } from "@/components/ui/badge";
+"use client"
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
 import { FetchUser } from "@/actions/fetchUser";
 import Link from "next/link";
 import { ArrowLeftIcon } from "@phosphor-icons/react/dist/ssr";
 import SignOut from "@/components/ui/signout";
 import { SelectTheme } from "@/components/ui/theme-toggler";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Account } from "@/components/subscription/account";
-import { Customisation } from "@/components/subscription/customisation";
+
 import { Profile } from "@/components/subscription/profile/profile";
-import Models from "@/components/subscription/model";
-import APIKeysPage from "@/components/subscription/api-key";
-import { AttachmentsPage } from "@/components/subscription/attachments";
-import { ContactUsPage } from "@/components/subscription/contact-us";
-import { History } from "@/components/subscription/history";
+import { redirect } from "next/navigation";
 
 export default async function SubscriptionPage() {
   const user = await FetchUser();
-  console.log(user);
+  if(!user){
+    console.log("no user find");
+  }
   return (
     <div className="bg-background text-foreground min-h-screen w-full border">
       <div className="mx-auto w-full max-w-6xl p-8">

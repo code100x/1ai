@@ -35,7 +35,7 @@ interface Chat {
 export const SidebarToggle = () => {
   const { open } = useSidebar();
   const [chats, setChats] = useState<Chat[]>([]);
-  const { data: chatsData } = api.chat.getAllChats.useQuery();
+  const  chatsData = api.chat.getAllChats.useSuspenseQuery();
 
   useEffect(() => {
     if (chatsData) {
