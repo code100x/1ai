@@ -1,12 +1,12 @@
 import "@/styles/globals.css";
 import type { Metadata } from "next";
 import { Geist, Inter, Playfair_Display, Roboto } from "next/font/google";
-import { TRPCReactProvider } from "@/trpc/react";
 import localFont from "next/font/local";
 import { FontProvider } from "@/contexts/font-context";
 import { BlurProvider } from "@/contexts/blur-context";
 import { Toaster } from "sonner";
 import { siteConfig } from "@/config/site";
+import { ThemeProvider } from "@/components/theme-provider";
 export const metadata: Metadata = siteConfig;
 
 const proxima = localFont({
@@ -53,14 +53,19 @@ export default function RootLayout({
       <body
         className={`${proxima.className} ${inter.className} ${geist.className} ${playfair.className} ${roboto.className}`}
       >
-        <TRPCReactProvider>
-          <FontProvider>
-            <BlurProvider>
-              {children}
-              <Toaster />
-            </BlurProvider>
-          </FontProvider>
-        </TRPCReactProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+            <FontProvider>
+              <BlurProvider>
+                {children}
+                <Toaster />
+              </BlurProvider>
+            </FontProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -12,9 +12,7 @@ import {
   SidebarMenuItem,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "./button";
-import { api } from "@/trpc/react";
 import { useState } from "react";
 import { useEffect } from "react";
 import { Input } from "./input";
@@ -30,6 +28,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Logo } from "../svgs/logo";
 import { useSession } from "next-auth/react";
+import { Conversation, useConversation } from "@/hooks/useConversation";
+import { useUser } from "@/hooks/useUser";
 
 interface Chat {
   id: string;
@@ -42,51 +42,20 @@ interface Chat {
 }
 
 export function UIStructure() {
-  const [chats, setChats] = useState<Chat[]>([]);
+  const [chats, setChats] = useState<Conversation[]>([]);
   const [hoverChatId, setHoverChatId] = useState<string>("");
-  const { data: chatsData } = api.chat.getAllChats.useQuery();
-  const saveChat = api.chat.saveChat.useMutation();
-  const removeFromSaved = api.chat.removeFromSaved.useMutation();
-  const deleteChat = api.chat.deleteChat.useMutation();
+  const { conversations, loading, error } = useConversation();
   const router = useRouter();
 
   useEffect(() => {
-    if (chatsData) {
-      setChats(chatsData as unknown as Chat[]);
+    if (conversations) {
+      setChats(conversations);
     }
-  }, [chatsData]);
+  }, [conversations]);
 
-  const handleSaveChat = (chatId: string) => {
-    try {
-      saveChat.mutate({ chatId: chatId });
-      toast.success("Chat saved successfully");
-      setChats(
-        chats.map((chat) =>
-          chat.id === chatId ? { ...chat, isSaved: true } : chat
-        )
-      );
-    } catch (error) {
-      console.error("Error saving chat:", error);
-    }
-  };
-
-  const handleRemoveFromSaved = (chatId: string) => {
-    try {
-      removeFromSaved.mutate({ chatId: chatId });
-      toast.success("Chat removed from saved successfully");
-      setChats(
-        chats.map((chat) =>
-          chat.id === chatId ? { ...chat, isSaved: false } : chat
-        )
-      );
-    } catch (error) {
-      console.error("Error removing chat from saved:", error);
-    }
-  };
 
   const handleDeleteChat = (chatId: string) => {
     try {
-      deleteChat.mutate({ chatId: chatId });
       toast.success("Chat deleted successfully");
       setChats(chats.filter((chat) => chat.id !== chatId));
     } catch (error) {
@@ -94,8 +63,7 @@ export function UIStructure() {
     }
   };
 
-  const session = useSession();
-  const user = session.data?.user;
+  const { user, isLoading: isUserLoading } = useUser();
 
   return (
     <Sidebar className={`border py-2 pl-2`}>
@@ -120,7 +88,6 @@ export function UIStructure() {
               >
                 New Chat
               </Button>
-              {/* <SidebarTrigger /> */}
             </div>
           </SidebarGroupLabel>
           <SidebarGroupContent className="mt-4">
@@ -131,101 +98,9 @@ export function UIStructure() {
                 className="rounded-none border-none bg-transparent px-0 py-1 shadow-none ring-0 focus-visible:ring-0 dark:bg-transparent"
               />
             </div>
-            {chatsData !== undefined &&
-              chats?.filter((chat: Chat) => chat.isSaved).length > 0 && (
-                <SidebarGroupLabel className="p-0">
-                  <Badge
-                    variant="secondary"
-                    className="text-foreground flex items-center gap-2 rounded-lg"
-                  >
-                    <span className="font-semibold">Saved Chats</span>
-                  </Badge>
-                </SidebarGroupLabel>
-              )}
-            <SidebarMenu className="mt-2 p-0">
-              {chatsData === undefined
-                ? // Skeleton loader while loading saved chats
-                  Array.from({ length: 4 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="bg-primary/15 mb-2 h-7 w-full animate-pulse rounded-md"
-                    />
-                  ))
-                : chats
-                    ?.filter((chat: Chat) => chat.isSaved)
-                    .map((chat: Chat) => (
-                      <SidebarMenuItem key={chat.id}>
-                        <SidebarMenuButton
-                          className="group hover:bg-primary/20 relative"
-                          onMouseEnter={() => setHoverChatId(chat.id)}
-                          onMouseLeave={() => setHoverChatId("")}
-                          asChild
-                        >
-                          <div className="flex w-full items-center justify-between">
-                            <Link href={`/ask/${chat.id}`}>
-                              <span className="z-[-1]">
-                                {chat.messages[0]?.content.slice(0, 30)}...
-                              </span>
-                              <div
-                                className={`absolute top-0 right-0 z-[5] h-full w-12 rounded-r-md blur-[2em] ${chat.id === hoverChatId ? "bg-primary" : ""}`}
-                              />
-                              <div
-                                className={`absolute top-1/2 -right-16 z-[10] flex h-full -translate-y-1/2 items-center justify-center gap-1.5 rounded-r-md bg-transparent px-1 backdrop-blur-xl transition-all duration-200 ease-in-out ${chat.id === hoverChatId ? "group-hover:right-0" : ""}`}
-                              >
-                                <div
-                                  className="flex items-center justify-center rounded-md"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    handleRemoveFromSaved(chat.id);
-                                  }}
-                                >
-                                  <BookmarkIcon
-                                    weight="fill"
-                                    className="hover:text-foreground size-4"
-                                  />
-                                </div>
-                                <div
-                                  className="flex items-center justify-center rounded-md"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    const shareLink =
-                                      process.env.NEXT_PUBLIC_APP_URL +
-                                      `/chat/share/${chat.id}`;
-                                    navigator.clipboard.writeText(shareLink);
-                                    toast.success(
-                                      "Share link copied to clipboard"
-                                    );
-                                  }}
-                                >
-                                  <ShareFatIcon
-                                    weight="fill"
-                                    className="hover:text-foreground size-4"
-                                  />
-                                </div>
-                                <div
-                                  className="flex items-center justify-center rounded-md"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    handleDeleteChat(chat.id);
-                                  }}
-                                >
-                                  <TrashIcon
-                                    weight="bold"
-                                    className="hover:text-foreground size-4"
-                                  />
-                                </div>
-                              </div>
-                            </Link>
-                          </div>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))}
-            </SidebarMenu>
-
-            <Separator className="my-2" />
 
             <SidebarMenu className="mt-2 w-full p-0">
-              {chatsData === undefined
+              {loading
                 ? // Skeleton loader while loading saved chats
                   Array.from({ length: 4 }).map((_, i) => (
                     <div
@@ -234,8 +109,7 @@ export function UIStructure() {
                     />
                   ))
                 : chats
-                    ?.filter((chat: Chat) => !chat.isSaved)
-                    .map((chat: Chat) => (
+                    .map((chat: Conversation) => (
                       <SidebarMenuItem key={chat.id}>
                         <SidebarMenuButton
                           className="group hover:bg-primary/20 relative"
@@ -244,9 +118,8 @@ export function UIStructure() {
                           asChild
                         >
                           <div className="flex w-full items-center justify-between">
-                            <Link href={`/ask/${chat.id}`}>
                               <span className="z-[-1]">
-                                {chat.messages[0]?.content.slice(0, 30)}
+                                {chat.title}
                               </span>
                               <div
                                 className={`absolute top-0 right-0 z-[5] h-full w-12 rounded-r-md blur-[2em] ${chat.id === hoverChatId ? "bg-primary" : ""}`}
@@ -254,16 +127,6 @@ export function UIStructure() {
                               <div
                                 className={`absolute top-1/2 -right-16 z-[10] flex h-full -translate-y-1/2 items-center justify-center gap-1.5 rounded-r-md bg-transparent px-1 backdrop-blur-xl transition-all duration-200 ease-in-out ${chat.id === hoverChatId ? "group-hover:right-0" : ""}`}
                               >
-                                <div
-                                  className="flex items-center justify-center rounded-md"
-                                  onClick={() => handleSaveChat(chat.id)}
-                                >
-                                  <BookmarkIcon
-                                    weight={"bold"}
-                                    className="hover:text-foreground size-4"
-                                  />
-                                </div>
-
                                 <div
                                   className="flex items-center justify-center rounded-md"
                                   onClick={(e) => {
@@ -293,30 +156,6 @@ export function UIStructure() {
                                   />
                                 </div>
                               </div>
-                              {/* <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                              >
-                                <DotsThreeVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onClick={() => handleSaveChat(chat.id)}
-                              >
-                                Add to Saved
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleDeleteChat(chat.id)}
-                              >
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu> */}
-                            </Link>
                           </div>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
@@ -325,10 +164,10 @@ export function UIStructure() {
           </SidebarGroupContent>
         </SidebarGroup>
         <SidebarFooter className="bg-background absolute bottom-0 z-[70] h-20 w-full px-4 py-3">
-          {user && (
+          {/* {user && (
             <div className="flex items-center space-x-3">
               <img
-                src={user.image ?? "/default-avatar.png"}
+                src={"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQXXckRlC33zt7zHBLpEEEeqY_MGIn89LOdGw&s"}
                 alt={user.name ?? "User"}
                 className="h-10 w-10 rounded-full object-cover"
               />
@@ -341,6 +180,27 @@ export function UIStructure() {
                 )}
               </div>
             </div>
+          )} */}
+          {user && (
+            <Button
+              onClick={(e) => {
+                e.preventDefault();
+                localStorage.removeItem("token");
+                window.location.reload();
+              }}
+            >
+              Logout
+            </Button>
+          )}
+          {!isUserLoading && !user && (
+            <Button
+              onClick={(e) => {
+                e.preventDefault();
+                router.push("/auth");
+              }}
+            >
+            Login
+          </Button>
           )}
         </SidebarFooter>
       </SidebarContent>

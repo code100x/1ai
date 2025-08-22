@@ -1,5 +1,6 @@
 "use client";
-import React, { useState, useRef, useEffect, useCallback, ReactNode } from "react";
+import { v4 } from "uuid";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +27,10 @@ import {
 } from "lucide-react";
 import { atomOneDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import { TypeWriter } from "./typewritter";
+import { Logo } from "../svgs/logo";
+import { Skeleton } from "./skeleton";
+import { useUser } from "@/hooks/useUser";
+import { useRouter } from "next/navigation";
 
 const geistMono = Geist_Mono({
   subsets: ["latin"],
@@ -55,6 +60,9 @@ const UIInput = () => {
   const abortControllerRef = useRef<AbortController | null>(null);
   const [isWrapped, setIsWrapped] = useState(false);
   const { resolvedTheme } = useTheme();
+  const { user, isLoading: isUserLoading } = useUser();
+  const router = useRouter();
+  const [conversationId, setConversationId] = useState<string | null>(v4());
 
 
 
@@ -273,6 +281,11 @@ const UIInput = () => {
 
   const handleCreateChat = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!user) {
+      router.push("/auth");
+      return;
+    };
     if (!query.trim() || isLoading) return;
 
     setShowWelcome(false);
@@ -308,6 +321,7 @@ const UIInput = () => {
               body: JSON.stringify({
                 message: currentQuery,
                 model: model,
+                conversationId: conversationId,
               }),
               signal: abortControllerRef.current?.signal,
             });
