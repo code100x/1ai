@@ -7,7 +7,7 @@ import base32 from "hi-base32";
 import { PrismaClient } from "../generated/prisma";
 import { authMiddleware } from "../auth-middleware";
 import { perMinuteLimiter, perMinuteLimiterRelaxed, apiLimiter } from "../ratelimitter";
-import { OTPStore } from "../OTPStore";
+import { otpEmailHTML } from "../email/templates/otpEmail";
 
 const prismaClient = new PrismaClient();
 const otpStore = OTPStore.getInstance();
@@ -25,18 +25,19 @@ router.post("/initiate_signin", perMinuteLimiter, async (req, res) => {
         }
 
         // Generate TOTP using email and secret
-        console.log("Generating OTP for email:", data.email);
-        const { otp } = TOTP.generate(base32.encode(data.email + process.env.JWT_SECRET!));
-        
-        // Store OTP with automatic expiration
-        otpStore.setOTP(data.email, otp);
-        
-        // Send email (or log in development)
+        console.log("before send email")
+        const { otp, expires } = TOTP.generate(base32.encode(data.email + process.env.JWT_SECRET!));
+        console.log("email is", data.email);
+        console.log("otp is", otp);
+
         if (process.env.NODE_ENV !== "development") {
-            await sendEmail(data.email, "Login to 1ai", `Your login OTP for 1ai is: ${otp}\n\nThis OTP will expire in 5 minutes.`);
-            console.log(`OTP email sent to ${data.email}`);
+            const subject = "Your 1ai sign-in code";
+            const text = `Your OTP is ${otp}. Valid for ~30 seconds.`;
+            const html = otpEmailHTML(otp, data.email, 30);
+
+            await sendEmail({ to: data.email, subject, text, html });
         } else {
-            console.log(`🔐 Development OTP for ${data.email}: ${otp}`);
+            console.log(`1ai OTP for ${data.email}: ${otp}`);
         }
         try {
             await prismaClient.user.create({

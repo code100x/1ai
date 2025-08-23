@@ -4,8 +4,11 @@ import rateLimit from "express-rate-limit";
 // Strict limiter for sensitive operations (2 requests per minute)
 export const perMinuteLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 2,
+  max: 30,
   message: "Too many requests. Try again in a minute.",
+  keyGenerator: (req) => {
+    return req.body.email;
+  },
 });
 
 // Relaxed limiter for auth operations (5 requests per minute) 
