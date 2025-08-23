@@ -19,7 +19,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { AlertCircleIcon, CheckCircleIcon, InfoIcon, Crown } from "lucide-react";
+import {
+  AlertCircleIcon,
+  CheckCircleIcon,
+  InfoIcon,
+  Crown,
+} from "lucide-react";
 import { useCredits } from "@/hooks/useCredits";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -38,7 +43,7 @@ export function ModelSelector({
   showIcons = true,
 }: ModelSelectorProps) {
   const [selectedModel, setSelectedModel] = useState<string>(
-    value ?? DEFAULT_MODEL_ID,
+    value ?? DEFAULT_MODEL_ID
   );
   const { userCredits } = useCredits();
 
@@ -57,7 +62,6 @@ export function ModelSelector({
 
   const selectedModelObj = getModelById(selectedModel);
 
-
   const getModelStatusIcon = (model: Model) => {
     if (model.isAvailable === false) {
       return (
@@ -68,7 +72,7 @@ export function ModelSelector({
             </TooltipTrigger>
             <TooltipContent>
               <p>
-                This model is not available in TypeGPT API and will fall back to
+                This model is not available in 1ai API and will fall back to
                 GPT-3.5
               </p>
             </TooltipContent>
@@ -83,9 +87,7 @@ export function ModelSelector({
               <InfoIcon className="h-4 w-4 text-yellow-500" />
             </TooltipTrigger>
             <TooltipContent>
-              <p>
-                This model is experimental and may not be reliable on TypeGPT
-              </p>
+              <p>This model is experimental and may not be reliable on 1ai</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -112,7 +114,7 @@ export function ModelSelector({
             <CheckCircleIcon className="h-4 w-4 text-green-500" />
           </TooltipTrigger>
           <TooltipContent>
-            <p>This model is fully supported by TypeGPT API</p>
+            <p>This model is fully supported by 1ai API</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -141,7 +143,7 @@ export function ModelSelector({
           <SelectLabel className="flex items-center gap-2">
             <span>Free Models</span>
           </SelectLabel>
-          {MODELS.filter(model => !model.isPremium).map((model) => (
+          {MODELS.filter((model) => !model.isPremium).map((model) => (
             <SelectItem
               key={model.id}
               value={model.id}
@@ -166,9 +168,9 @@ export function ModelSelector({
             </div>
             {!userCredits?.isPremium && (
               <Link href="/pricing">
-                <Button 
-                  size="sm" 
-                  variant="default" 
+                <Button
+                  size="sm"
+                  variant="default"
                   className="h-6 px-2 text-xs bg-primary hover:bg-primary/90 text-primary-foreground"
                   onClick={(e) => e.stopPropagation()}
                 >
@@ -177,10 +179,10 @@ export function ModelSelector({
               </Link>
             )}
           </SelectLabel>
-          {MODELS.filter(model => model.isPremium).map((model) => {
+          {MODELS.filter((model) => model.isPremium).map((model) => {
             const isPremiumLocked = !userCredits?.isPremium;
             const isDisabled = model.isAvailable === false || isPremiumLocked;
-            
+
             return (
               <SelectItem
                 key={model.id}

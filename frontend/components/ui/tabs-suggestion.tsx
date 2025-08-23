@@ -69,10 +69,10 @@ const TabsSuggestion = ({
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all duration-300 cursor-pointer justify-center border ${
+              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm transition-all duration-300 cursor-pointer justify-center border ${
                 activeTab === tab.id
                   ? "bg-primary text-primary-foreground"
-                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:text-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/60 hover:text-foreground"
               } `}
             >
               {tab.icon}
@@ -99,16 +99,14 @@ const TabsSuggestion = ({
                   setSuggestedInput(item);
                 }
               }}
-              className="flex items-start gap-2 border-t border-secondary/40 py-1 first:border-none cursor-pointer"
+              className="flex items-start gap-2 border-t border-secondary/40 py-1 first:border-none cursor-pointer font-medium"
             >
-              <button className="w-full rounded-md py-2 text-left text-secondary-foreground hover:bg-secondary/50 sm:px-3">
+              <button className="w-full rounded-md py-2 text-left hover:bg-secondary sm:px-3">
                 {item}
               </button>
             </div>
           ))}
         </div>
-
-        {/* Optional: Add some visual feedback for the active tab */}
       </div>
     </div>
   );

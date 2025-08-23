@@ -47,7 +47,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${proxima.className} ${inter.className} ${geist.className} ${playfair.className} ${roboto.className} antialiased`}
+        className={`${proxima.className} ${inter.className} ${geist.className} ${playfair.className} ${roboto.className}`}
       >
         <ThemeProvider
           attribute="class"
