@@ -28,6 +28,7 @@ import { Conversation, useConversation } from "@/hooks/useConversation";
 import { useUser } from "@/hooks/useUser";
 import { useCredits } from "@/hooks/useCredits";
 import { useThrottle } from "@/hooks/useThrottle";
+import Link from "next/link";
 
 interface Chat {
   id: string;
@@ -95,14 +96,12 @@ export function UIStructure() {
   return (
     <Sidebar className={`border py-2 pl-2`}>
       <SidebarContent className="rounded-2xl">
-        <SidebarGroup className="flex flex-col gap-8 pt-3">
+        <SidebarGroup className="flex flex-col gap-8">
           <SidebarGroupLabel className="h-fit p-0">
             <div className="flex h-12 w-full flex-col items-center gap-2 rounded-lg">
-              <div className="flex w-full items-center gap-2 rounded-lg p-1 text-lg">
+              <div className="flex w-full items-center gap-2 rounded-lg p-1 text-lg justify-between">
                 <SidebarTrigger className="shrink-0" />
-                <div className="dark:text-primary-foreground flex size-4 w-full flex-1 items-center justify-center rounded-lg">
-                  <Logo />
-                </div>
+                <Logo />
                 <span className="size-6"></span>
               </div>
               <Button
@@ -199,9 +198,22 @@ export function UIStructure() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        <SidebarFooter className="bg-background absolute bottom-0 z-[70] h-20 w-full px-4 py-3">
-          {user && (
+        <SidebarFooter className="absolute bottom-0 z-[70] flex flex-col gap-2 w-full px-4 py-3">
+          {!isUserLoading && !user ? (
             <Button
+              variant="secondary"
+              size="lg"
+              onClick={(e) => {
+                e.preventDefault();
+                router.push("/auth");
+              }}
+            >
+              Login
+            </Button>
+          ) : (
+            <Button
+              variant="secondary"
+              size="lg"
               onClick={(e) => {
                 e.preventDefault();
                 localStorage.removeItem("token");
@@ -211,16 +223,18 @@ export function UIStructure() {
               Logout
             </Button>
           )}
-          {!isUserLoading && !user && (
-            <Button
-              onClick={(e) => {
-                e.preventDefault();
-                router.push("/auth");
-              }}
-            >
-              Login
-            </Button>
-          )}
+
+          <div className="flex items-center gap-2 justify-center">
+            <Link href="/terms" target="_target" className="text-xs">
+              Terms
+            </Link>
+            <Link href="/privacy" target="_target" className="text-xs">
+              Privacy
+            </Link>
+            <Link href="/refund" target="_target" className="text-xs">
+              Refund
+            </Link>
+          </div>
         </SidebarFooter>
       </SidebarContent>
     </Sidebar>

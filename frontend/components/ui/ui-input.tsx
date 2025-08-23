@@ -21,10 +21,7 @@ import TabsSuggestion from "./tabs-suggestion";
 import { ModelSelector } from "@/components/ui/model-selector";
 import { DEFAULT_MODEL_ID } from "@/models/constants";
 import { useTheme } from "next-themes";
-import {
-  ArrowUpIcon,
-  WrapText,
-} from "lucide-react";
+import { ArrowUpIcon, WrapText } from "lucide-react";
 import { atomOneDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import { useUser } from "@/hooks/useUser";
 import { useRouter } from "next/navigation";
@@ -45,13 +42,16 @@ interface Message {
   content: string;
 }
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3000";
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3000";
 
 interface UIInputProps {
   conversationId?: string;
 }
 
-const UIInput = ({ conversationId: initialConversationId  }: UIInputProps = {}) => {
+const UIInput = ({
+  conversationId: initialConversationId,
+}: UIInputProps = {}) => {
   const [model, setModel] = useState<string>(DEFAULT_MODEL_ID);
   const [query, setQuery] = useState<string>("");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -61,11 +61,19 @@ const UIInput = ({ conversationId: initialConversationId  }: UIInputProps = {}) 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const [isWrapped, setIsWrapped] = useState(false);
-  const [conversationId, setConversationId] = useState<string | null>(initialConversationId || v4());
+  const [conversationId, setConversationId] = useState<string | null>(
+    initialConversationId || v4()
+  );
   const { resolvedTheme } = useTheme();
   const { user, isLoading: isUserLoading } = useUser();
-  const {conversation, loading : converstionLoading} = useConversationById(initialConversationId)
-  const { userCredits, isLoading: isCreditsLoading, refetchCredits } = useCredits();
+  const { conversation, loading: converstionLoading } = useConversationById(
+    initialConversationId
+  );
+  const {
+    userCredits,
+    isLoading: isCreditsLoading,
+    refetchCredits,
+  } = useCredits();
   const router = useRouter();
 
   const toggleWrap = useCallback(() => {
@@ -86,7 +94,6 @@ const UIInput = ({ conversationId: initialConversationId  }: UIInputProps = {}) 
       setShowWelcome(false);
     }
   }, [conversation, initialConversationId]);
-
 
   const processStream = async (response: Response, userMessage: string) => {
     if (!response.ok) {
@@ -181,7 +188,7 @@ const UIInput = ({ conversationId: initialConversationId  }: UIInputProps = {}) 
 
             try {
               const parsedData = JSON.parse(data) as {
-                content?: string
+                content?: string;
               };
               const content = parsedData.content;
               if (content) {
@@ -257,7 +264,7 @@ const UIInput = ({ conversationId: initialConversationId  }: UIInputProps = {}) 
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${localStorage.getItem("token")}`
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
               },
               body: JSON.stringify({
                 message: currentQuery,
@@ -268,7 +275,6 @@ const UIInput = ({ conversationId: initialConversationId  }: UIInputProps = {}) 
             });
 
             await processStream(response, currentQuery);
-
           } catch (error) {
             if ((error as Error).name !== "AbortError") {
               console.error("Error sending message:", error);
@@ -287,7 +293,7 @@ const UIInput = ({ conversationId: initialConversationId  }: UIInputProps = {}) 
     try {
       await navigator.clipboard.writeText(content);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000); 
+      setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error("Failed to copy: ", err);
     }
@@ -295,7 +301,7 @@ const UIInput = ({ conversationId: initialConversationId  }: UIInputProps = {}) 
 
   if (initialConversationId && converstionLoading) {
     return (
-      <div className="flex h-[96vh] w-full overflow-hidden">
+      <div className="flex w-full overflow-hidden">
         <div className="relative flex h-full w-full flex-col">
           <div className="flex h-full w-full flex-col items-center justify-center">
             <div className="flex flex-col items-center gap-4">
@@ -304,7 +310,9 @@ const UIInput = ({ conversationId: initialConversationId  }: UIInputProps = {}) 
                 <div className="bg-accent h-2.5 w-2.5 animate-bounce rounded-full [animation-delay:0.2s] [animation-direction:reverse]"></div>
                 <div className="bg-accent h-2.5 w-2.5 animate-bounce rounded-full [animation-delay:0.4s]"></div>
               </div>
-              <p className="text-muted-foreground text-sm">Loading conversation...</p>
+              <p className="text-muted-foreground text-sm">
+                Loading conversation...
+              </p>
             </div>
           </div>
         </div>
@@ -313,7 +321,7 @@ const UIInput = ({ conversationId: initialConversationId  }: UIInputProps = {}) 
   }
 
   return (
-    <div className="flex h-[96vh] w-full overflow-hidden">
+    <div className="flex h-[96dvh] w-full overflow-hidden">
       <div className="relative flex h-full w-full flex-col">
         {!query && showWelcome && messages.length === 0 ? (
           <div className="flex h-full w-full flex-col">
@@ -336,7 +344,7 @@ const UIInput = ({ conversationId: initialConversationId  }: UIInputProps = {}) 
                     className={cn(
                       "prose cursor-pointer dark:prose-invert max-w-none rounded-lg px-4 py-2",
                       message.role === "user"
-                        ? "bg-accent/40 w-fit max-w-full font-medium"
+                        ? "bg-accent/10 w-fit max-w-full font-medium"
                         : "w-full p-0"
                     )}
                   >
@@ -537,11 +545,11 @@ const UIInput = ({ conversationId: initialConversationId  }: UIInputProps = {}) 
           </div>
         )}
 
-        <div className="bg-muted border-border/20 mb-4 w-full rounded-2xl border-t p-2">
+        <div className="bg-muted/20 backdrop-blur-3xl border border-border/50 mb-4 w-full rounded-2xl p-1">
           <div className="mx-auto w-full max-w-4xl">
             <form
               onSubmit={handleCreateChat}
-              className="bg-accent/30 flex w-full flex-col rounded-xl p-3 pb-3"
+              className="bg-accent/30 dark:bg-accent/10 flex w-full flex-col rounded-xl p-3"
             >
               <Textarea
                 value={query}
@@ -553,25 +561,49 @@ const UIInput = ({ conversationId: initialConversationId  }: UIInputProps = {}) 
                   }
                 }}
                 placeholder={
-                  userCredits && userCredits.credits <= 0 && !userCredits.isPremium
+                  userCredits &&
+                  userCredits.credits <= 0 &&
+                  !userCredits.isPremium
                     ? "You need credits to start a chat. Please upgrade to continue."
-                    : "Ask whatever you want to be"
+                    : "Ask anything"
                 }
                 className="h-[2rem] resize-none rounded-none border-none bg-transparent px-0 py-1 shadow-none ring-0 focus-visible:ring-0 dark:bg-transparent"
-                disabled={isLoading || !!(userCredits && userCredits.credits <= 0 && !userCredits.isPremium)}
+                disabled={
+                  isLoading ||
+                  !!(
+                    userCredits &&
+                    userCredits.credits <= 0 &&
+                    !userCredits.isPremium
+                  )
+                }
               />
               <div className="mt-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <ModelSelector
                     value={model}
                     onValueChange={setModel}
-                    disabled={isLoading || !!(userCredits && userCredits.credits <= 0 && !userCredits.isPremium)}
+                    disabled={
+                      isLoading ||
+                      !!(
+                        userCredits &&
+                        userCredits.credits <= 0 &&
+                        !userCredits.isPremium
+                      )
+                    }
                   />
                 </div>
                 <Button
                   type="submit"
                   size="icon"
-                  disabled={isLoading || !query.trim() || !!(userCredits && userCredits.credits <= 0 && !userCredits.isPremium)}
+                  disabled={
+                    isLoading ||
+                    !query.trim() ||
+                    !!(
+                      userCredits &&
+                      userCredits.credits <= 0 &&
+                      !userCredits.isPremium
+                    )
+                  }
                 >
                   {isLoading ? (
                     <SpinnerGapIcon className="animate-spin" />

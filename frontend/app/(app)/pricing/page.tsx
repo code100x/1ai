@@ -3,11 +3,11 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  CurrencyCircleDollarIcon, 
+import {
+  CurrencyCircleDollarIcon,
   CheckIcon,
   StarIcon,
-  LightningIcon 
+  LightningIcon,
 } from "@phosphor-icons/react/dist/ssr";
 import RazorpayPayment from "@/components/RazorpayPayment";
 
@@ -27,12 +27,12 @@ const pricingPlans = [
       "Web-based platform",
       "24/7 customer support",
       "Regular model updates",
-      "Mobile responsive design"
+      "Mobile responsive design",
     ],
     cta: {
       text: "Start Monthly Plan",
-      href: "/auth"
-    }
+      href: "/auth",
+    },
   },
   {
     name: "Yearly",
@@ -51,46 +51,37 @@ const pricingPlans = [
       "Custom AI model preferences",
       "Export conversation history",
       "API access (coming soon)",
-      "2 months free (₹198 value)"
+      "2 months free (₹198 value)",
     ],
     cta: {
       text: "Choose Yearly Plan",
-      href: "/auth"
-    }
-  }
+      href: "/auth",
+    },
+  },
 ];
 
 export default function PricingPage() {
   return (
     <div className="h-full overflow-y-auto pt-8 pb-4">
       <div className="container mx-auto px-4 py-8 max-w-5xl">
-        <div className="text-center mb-12">
-          <div className="flex justify-center mb-4">
-            <div className="bg-primary drop-shadow-primary flex size-12 items-center justify-center rounded-2xl drop-shadow-lg">
-              <CurrencyCircleDollarIcon
-                className="size-6"
-                weight="duotone"
-                fill="var(--foreground)"
-              />
-            </div>
-          </div>
-          <Badge className="mb-3">Pricing</Badge>
-          <h1 className="text-3xl font-bold text-primary mb-3 lg:text-4xl">
+        <div className="text-center flex flex-col gap-2">
+          <h1 className="text-3xl font-bold text-primary lg:text-4xl tracking-tight">
             Simple, Transparent Pricing
           </h1>
           <p className="text-muted-foreground text-base max-w-2xl mx-auto">
-            Choose the plan that works best for you. All plans include access to our complete AI platform.
+            Choose the plan that works best for you. All plans include access to
+            our complete AI platform.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-12">
           {pricingPlans.map((plan) => (
-            <Card 
-              key={plan.name} 
+            <Card
+              key={plan.name}
               className={`relative border-muted/40 bg-muted/10 transition-all duration-300 hover:shadow-lg ${
-                plan.highlight 
-                  ? 'border-primary/50 bg-primary/5 scale-[1.02]' 
-                  : 'hover:border-muted/60'
+                plan.highlight
+                  ? "border-primary/50 bg-primary/5 scale-[1.02]"
+                  : "hover:border-muted/60"
               }`}
             >
               {plan.popular && (
@@ -101,13 +92,14 @@ export default function PricingPage() {
                   </Badge>
                 </div>
               )}
-              
+
               <CardHeader className="text-center pb-4">
                 <CardTitle className="text-xl font-bold">{plan.name}</CardTitle>
                 <div className="mt-3">
                   <div className="flex items-center justify-center gap-2">
                     <span className="text-3xl font-bold text-primary">
-                      {plan.currency}{plan.price}
+                      {plan.currency}
+                      {plan.price}
                     </span>
                     <span className="text-muted-foreground text-sm">
                       {plan.interval}
@@ -115,7 +107,10 @@ export default function PricingPage() {
                   </div>
                   {plan.savings && (
                     <div className="mt-2">
-                      <Badge variant="secondary" className="bg-green-500/10 text-green-600 dark:text-green-400">
+                      <Badge
+                        variant="secondary"
+                        className="bg-green-500/10 text-green-600 dark:text-green-400"
+                      >
                         {plan.savings}
                       </Badge>
                     </div>
@@ -131,9 +126,14 @@ export default function PricingPage() {
                   {plan.features.map((feature, index) => (
                     <div key={index} className="flex items-center gap-3">
                       <div className="flex size-4 items-center justify-center rounded-full bg-primary/10">
-                        <CheckIcon className="size-2.5 text-primary" weight="bold" />
+                        <CheckIcon
+                          className="size-2.5 text-primary"
+                          weight="bold"
+                        />
                       </div>
-                      <span className="text-foreground/90 text-sm">{feature}</span>
+                      <span className="text-foreground/90 text-sm">
+                        {feature}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -143,12 +143,12 @@ export default function PricingPage() {
                     name: plan.name,
                     price: plan.price,
                     currency: plan.currency,
-                    interval: plan.interval.replace('per ', '')
+                    interval: plan.interval.replace("per ", ""),
                   }}
                   className={`w-full h-10 font-semibold text-sm ${
-                    plan.highlight 
-                      ? 'bg-primary hover:bg-primary/90 text-primary-foreground' 
-                      : 'bg-muted hover:bg-muted/80 text-foreground'
+                    plan.highlight
+                      ? "bg-primary hover:bg-primary/90 text-primary-foreground"
+                      : "bg-muted hover:bg-muted/80 text-foreground"
                   }`}
                 >
                   {plan.cta.text}
