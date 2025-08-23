@@ -27,6 +27,35 @@ export function useConversation() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const createNewConversation = () => {
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
+    const optimistic: Conversation = {
+      id,
+      title: "New Chat",
+      createdAt: now,
+      updatedAt: now,
+      messages: []
+    };
+    setConversations((prev) => [optimistic, ...(Array.isArray(prev) ? prev : [])]);
+    return id;
+  }
+
+  const refreshConversations = async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/ai/conversations`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      const data = await response.json();
+      setConversations(Array.isArray(data.conversations) ? data.conversations : []);
+    } catch (error) {
+      setError("Failed to fetch conversations");
+    }
+  };
+
   useEffect(() => {
     const fetchMessages = async () => {
       const response = await fetch(`${BACKEND_URL}/ai/conversations`, {
@@ -37,7 +66,7 @@ export function useConversation() {
       });
       try {
         const data = await response.json();
-        setConversations(data.conversations);
+        setConversations(Array.isArray(data.conversations) ? data.conversations : []);
         setLoading(false);
       } catch (error) {
         setError("Failed to fetch conversations");
@@ -47,7 +76,7 @@ export function useConversation() {
     fetchMessages();
   }, []);
 
-  return { conversations, loading, error };
+  return { conversations, loading, error, createNewConversation, refreshConversations };
 }
 
 
