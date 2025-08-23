@@ -16,7 +16,7 @@ export const CreateUser = z.object({
 
 export const SignIn = z.object({
     email: z.email(),
-    otp: z.string(),
+    otp: z.string().or(z.number().int()),
 })
 
 export type Message = {

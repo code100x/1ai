@@ -17,17 +17,13 @@ import { useState } from "react";
 import { useEffect } from "react";
 import { Input } from "./input";
 import {
-  BookmarkIcon,
   MagnifyingGlassIcon,
   ShareFatIcon,
   TrashIcon,
 } from "@phosphor-icons/react";
-import { Separator } from "./separator";
 import { toast } from "sonner";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Logo } from "../svgs/logo";
-import { useSession } from "next-auth/react";
 import { Conversation, useConversation } from "@/hooks/useConversation";
 import { useUser } from "@/hooks/useUser";
 
@@ -115,10 +111,10 @@ export function UIStructure() {
                           className="group hover:bg-primary/20 relative"
                           onMouseEnter={() => setHoverChatId(chat.id)}
                           onMouseLeave={() => setHoverChatId("")}
-                          asChild
+                          onClick={() => router.push(`/ask/${chat.id}`)}
                         >
                           <div className="flex w-full items-center justify-between">
-                              <span className="z-[-1]">
+                              <span className="z-[-1] cursor-pointer truncate">
                                 {chat.title}
                               </span>
                               <div
@@ -164,23 +160,6 @@ export function UIStructure() {
           </SidebarGroupContent>
         </SidebarGroup>
         <SidebarFooter className="bg-background absolute bottom-0 z-[70] h-20 w-full px-4 py-3">
-          {/* {user && (
-            <div className="flex items-center space-x-3">
-              <img
-                src={"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQXXckRlC33zt7zHBLpEEEeqY_MGIn89LOdGw&s"}
-                alt={user.name ?? "User"}
-                className="h-10 w-10 rounded-full object-cover"
-              />
-              <div className="flex flex-col text-sm">
-                <span className="font-medium">{user.name ?? "Anonymous"}</span>
-                {user.email && (
-                  <span className="w-36 truncate text-xs text-muted-foreground">
-                    {user.email}
-                  </span>
-                )}
-              </div>
-            </div>
-          )} */}
           {user && (
             <Button
               onClick={(e) => {

@@ -70,12 +70,9 @@ router.post("/signin", perMinuteLimiterRelaxed, async (req, res) => {
 
     console.log("data is");
     console.log(data);
-    // Verify with some totp lib
-    const { otp } = TOTP.generate(base32.encode(data.email + process.env.JWT_SECRET!));
-    console.log("expected otp is", otp);
     console.log("otpCache is", otpCache.get(data.email));
 
-    if(otp != data.otp && otp != otpCache.get(data.email)) {
+    if (otpCache.get(data.email) != data.otp) {
         console.log("invalid otp");
         res.status(401).json({
             message: "Invalid otp"

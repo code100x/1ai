@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { BACKEND_URL } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 const isEmailValid = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -13,15 +14,16 @@ const isEmailValid = (email: string) => {
 
 export function Email({setEmail, setStep, email}: {setEmail: (email: string) => void, setStep: (step: string) => void, email: string}) {   
     const router = useRouter();
+    const [sendingRequest, setSendingRequest] = useState(false);
     return (
         <div className="mx-auto max-h-screen max-w-6xl">
         <div className="absolute top-4 left-4">
-          <Button asChild variant="ghost" className="font-semibold" onClick={() => router.push("/")}>
+          {/* <Button asChild variant="ghost" className="font-semibold" onClick={() => router.push("/")}>
             <Link className="flex items-center gap-2" href="/">
               <ArrowLeft className="size-4" />
               Back to chat
             </Link>
-          </Button>
+          </Button> */}
         </div>
         <div className="flex h-full flex-col items-center justify-center gap-8">
           <div className="flex flex-col items-center gap-2">
@@ -41,9 +43,10 @@ export function Email({setEmail, setStep, email}: {setEmail: (email: string) => 
             className="h-14 w-[25rem] text-lg font-semibold text-white"
           />
           <Button
-            disabled={!isEmailValid(email)}
+            disabled={!isEmailValid(email) || sendingRequest}
             variant="accent"
             onClick={() => {
+                setSendingRequest(true);
                 fetch(`${BACKEND_URL}/auth/initiate_signin`, {
                     method: "POST",
                     body: JSON.stringify({ email }),
@@ -60,6 +63,8 @@ export function Email({setEmail, setStep, email}: {setEmail: (email: string) => 
                 }).catch((err) => {
                     console.error(err);
                     toast.error("Failed to send OTP, please retry after a few minutes");
+                }).finally(() => {
+                    setSendingRequest(false);
                 });
             }}
             className="h-14 w-[25rem] text-lg font-semibold text-white hover:bg-primary/90"
@@ -68,13 +73,17 @@ export function Email({setEmail, setStep, email}: {setEmail: (email: string) => 
           </Button>
           <div className="text-muted-foreground/80 text-sm">
             By continuing, you agree to our{" "}
+            <Link href="/terms" className="text-muted-foreground font-medium">
             <span className="text-muted-foreground font-medium">
               Terms of Service
             </span>{" "}
+            </Link>
             and{" "}
-            <span className="text-muted-foreground font-medium">
-              Privacy Policy
-            </span>
+            <Link href="/privacy" className="text-muted-foreground font-medium">
+              <span className="text-muted-foreground font-medium">
+                Privacy Policy
+              </span>
+            </Link>
           </div>
         </div>
       </div>

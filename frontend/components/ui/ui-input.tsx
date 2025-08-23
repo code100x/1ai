@@ -8,8 +8,6 @@ import {
   CopyIcon,
   ThumbsDownIcon,
   ThumbsUpIcon,
-  SpeakerHighIcon,
-  SpeakerXIcon,
   CheckIcon,
   CheckCircleIcon,
   ArrowsLeftRightIcon,
@@ -28,10 +26,9 @@ import {
   WrapText,
 } from "lucide-react";
 import { atomOneDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
-import { Logo } from "../svgs/logo";
-import { Skeleton } from "./skeleton";
 import { useUser } from "@/hooks/useUser";
 import { useRouter } from "next/navigation";
+import { useConversationById } from "@/hooks/useConversation";
 
 const geistMono = Geist_Mono({
   subsets: ["latin"],
@@ -48,7 +45,11 @@ interface Message {
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3000";
 
-const UIInput = () => {
+interface UIInputProps {
+  conversationId?: string;
+}
+
+const UIInput = ({ conversationId: initialConversationId  }: UIInputProps = {}) => {
   const [model, setModel] = useState<string>(DEFAULT_MODEL_ID);
   const [query, setQuery] = useState<string>("");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -58,10 +59,11 @@ const UIInput = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const [isWrapped, setIsWrapped] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(initialConversationId || v4());
   const { resolvedTheme } = useTheme();
   const { user, isLoading: isUserLoading } = useUser();
+  const {conversation, loading : converstionLoading} = useConversationById(initialConversationId)
   const router = useRouter();
-  const [conversationId, setConversationId] = useState<string | null>(v4());
 
   const toggleWrap = useCallback(() => {
     setIsWrapped((prev) => !prev);
@@ -74,6 +76,13 @@ const UIInput = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    if (conversation?.messages && initialConversationId) {
+      setMessages(conversation.messages);
+      setShowWelcome(false);
+    }
+  }, [conversation, initialConversationId]);
 
 
   const processStream = async (response: Response, userMessage: string) => {
@@ -256,11 +265,30 @@ const UIInput = () => {
     try {
       await navigator.clipboard.writeText(content);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000); // Reset after 2s
+      setTimeout(() => setCopied(false), 2000); 
     } catch (err) {
       console.error("Failed to copy: ", err);
     }
   };
+
+  if (initialConversationId && converstionLoading) {
+    return (
+      <div className="flex h-[96vh] w-full overflow-hidden">
+        <div className="relative flex h-full w-full flex-col">
+          <div className="flex h-full w-full flex-col items-center justify-center">
+            <div className="flex flex-col items-center gap-4">
+              <div className="flex items-center space-x-2">
+                <div className="bg-accent h-2.5 w-2.5 animate-bounce rounded-full [animation-delay:0s]"></div>
+                <div className="bg-accent h-2.5 w-2.5 animate-bounce rounded-full [animation-delay:0.2s] [animation-direction:reverse]"></div>
+                <div className="bg-accent h-2.5 w-2.5 animate-bounce rounded-full [animation-delay:0.4s]"></div>
+              </div>
+              <p className="text-muted-foreground text-sm">Loading conversation...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-[96vh] w-full overflow-hidden">
