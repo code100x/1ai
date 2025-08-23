@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { PrismaClient } from "../generated/prisma";
+import { webhookLimiter } from "../ratelimitter";
 import crypto from "crypto";
 
 const prisma = new PrismaClient();
@@ -21,7 +22,7 @@ function verifyWebhookSignature(payload: string, signature: string): boolean {
   }
 }
 
-rzpWebhookRouter.post("/", async (req, res) => {
+rzpWebhookRouter.post("/", webhookLimiter, async (req, res) => {
   try {
     console.log("Webhook received:", req.body);
     console.log(req.body);
