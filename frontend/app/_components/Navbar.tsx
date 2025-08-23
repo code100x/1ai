@@ -43,7 +43,7 @@ export default function Navbar() {
           <h1 className="font-semibold">1AI</h1>
         </div>
         <div className="flex items-center gap-5 font-semibold">
-          <Link href="/">Pricing</Link>
+          <Link href="/ask">Chat</Link>
           <Link href="/">Testimonials</Link>
           <Button className="rounded-xl" asChild>
             <Link href="/ask">

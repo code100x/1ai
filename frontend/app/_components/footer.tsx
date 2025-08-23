@@ -30,10 +30,10 @@ export const Footer = () => {
           </a>
           <span className="text-muted-foreground/50">•</span>
           <a 
-            href="/pricing" 
+            href="/ask" 
             className="text-muted-foreground hover:text-primary transition-colors duration-200"
           >
-            Pricing
+            Chat
           </a>
           <span className="text-muted-foreground/50">•</span>
           <a 
