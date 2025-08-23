@@ -29,7 +29,11 @@ import { useConversationById } from "@/hooks/useConversation";
 import { useCredits } from "@/hooks/useCredits";
 import { UpgradeCTA } from "@/components/ui/upgrade-cta";
 import { useConversationContext } from "@/contexts/conversation-context";
-import { TypingIndicator, EnhancedSpinner, EnhancedLoading } from "@/components/ui/enhanced-loading";
+import {
+  TypingIndicator,
+  EnhancedSpinner,
+  EnhancedLoading,
+} from "@/components/ui/enhanced-loading";
 import { MessageBubble } from "@/components/ui/message-bubble";
 
 const geistMono = Geist_Mono({
@@ -310,7 +314,7 @@ const UIInput = ({
         <div className="relative flex h-full w-full flex-col">
           <div className="flex h-full w-full flex-col items-center justify-center">
             <div className="flex flex-col items-center gap-4">
-                          <EnhancedLoading variant="wave" size="md" />
+              <EnhancedLoading variant="wave" size="md" />
               <p className="text-muted-foreground text-sm">
                 Loading conversation...
               </p>
@@ -457,10 +461,7 @@ const UIInput = ({
                         <span className="font-bold">{props.children}</span>
                       ),
                       a: (props) => (
-                        <a
-                          className="text-primary underline"
-                          href={props.href}
-                        >
+                        <a className="text-primary underline" href={props.href}>
                           {props.children}
                         </a>
                       ),
