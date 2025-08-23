@@ -22,10 +22,11 @@ import {
   TrashIcon,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Logo } from "../svgs/logo";
 import { Conversation, useConversation } from "@/hooks/useConversation";
 import { useUser } from "@/hooks/useUser";
+import { cn } from "@/lib/utils";
 
 interface Chat {
   id: string;
@@ -42,6 +43,10 @@ export function UIStructure() {
   const [hoverChatId, setHoverChatId] = useState<string>("");
   const { conversations, loading, error } = useConversation();
   const router = useRouter();
+  const pathname = usePathname();
+  
+  // Simple way to get current conversation ID from URL
+  const currentChatId = pathname.startsWith('/ask/') ? pathname.split('/')[2] : null;
 
   useEffect(() => {
     if (conversations) {
@@ -108,7 +113,10 @@ export function UIStructure() {
                     .map((chat: Conversation) => (
                       <SidebarMenuItem key={chat.id}>
                         <SidebarMenuButton
-                          className="group hover:bg-primary/20 relative"
+                          className={cn(
+                            "group hover:bg-primary/20 relative cursor-pointer",
+                            chat.id === currentChatId && "bg-primary/20 border-l-2 border-primary font-medium"
+                          )}
                           onMouseEnter={() => setHoverChatId(chat.id)}
                           onMouseLeave={() => setHoverChatId("")}
                           onClick={() => router.push(`/ask/${chat.id}`)}

@@ -94,8 +94,8 @@ router.post("/chat", authMiddleware, async (req, res) => {
             }
         })
     }
-    if (false) {
-    // if (user.credits <= 0) {
+    // if (false) {
+    if (user.credits <= 0) {
         res.status(403).json({
             message: "Insufficient credits. Please subscribe to continue.",
             credits: user.credits
