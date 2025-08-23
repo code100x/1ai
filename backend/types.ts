@@ -129,7 +129,8 @@ export type ModelFull = {
 export const CreateChatSchema = z.object({
     conversationId: z.uuid().optional(),
     message: z.string().max(MAX_INPUT_TOKENS),
-    model: z.enum(SUPPORTER_MODELS)
+    model: z.enum(SUPPORTER_MODELS),
+    images: z.array(z.string()).optional()
 })
 
 export const CreateUser = z.object({
@@ -144,6 +145,7 @@ export const SignIn = z.object({
 export type Message = {
     content: string;
     role: Role;
+    images?: string[]; // Store base64 images for persistence
 }
 
 export type Messages = Message[];

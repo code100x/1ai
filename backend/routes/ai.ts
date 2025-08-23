@@ -80,6 +80,14 @@ router.post("/chat", authMiddleware, async (req, res) => {
         return;
     }
 
+    // Check if images are provided and user is premium
+    if (data.images && data.images.length > 0 && !user.isPremium) {
+        res.status(403).json({
+            message: "Image uploads are only available for premium users. Please upgrade to continue."
+        });
+        return;
+    }
+
     if (model.isPremium && !user?.isPremium) {
         res.status(403).json({
             message: "Insufficient credits. Please subscribe to continue.",
@@ -148,12 +156,13 @@ router.post("/chat", authMiddleware, async (req, res) => {
     try {
         await createCompletion([...existingMessages, {
             role: Role.User,
-            content: data.message
+            content: data.message,
+            images: data.images
         }], data.model, (chunk: string) => {
             message += chunk;
             // Format as proper SSE data
             res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
-        });
+        }, data.images);
         
         // Send completion signal
         res.write(`data: ${JSON.stringify({ done: true })}\n\n`);

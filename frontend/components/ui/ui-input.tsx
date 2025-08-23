@@ -28,6 +28,7 @@ import { useRouter } from "next/navigation";
 import { useConversationById } from "@/hooks/useConversation";
 import { useCredits } from "@/hooks/useCredits";
 import { UpgradeCTA } from "@/components/ui/upgrade-cta";
+import { ImageUpload } from "./image-upload";
 
 const geistMono = Geist_Mono({
   subsets: ["latin"],
@@ -40,6 +41,7 @@ interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
+  images?: string[];
 }
 
 const BACKEND_URL =
@@ -58,6 +60,8 @@ const UIInput = ({
   const [showWelcome, setShowWelcome] = useState(true);
   const [copied, setCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [images, setImages] = useState<string[]>([]);
+  const [imageResetTrigger, setImageResetTrigger] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const [isWrapped, setIsWrapped] = useState(false);
@@ -244,9 +248,12 @@ const UIInput = ({
       id: `user-${Date.now()}`,
       role: "user",
       content: currentQuery,
+      images: images.length > 0 ? [...images] : undefined, // Include images in the message
     };
 
     setQuery("");
+    setImages([]); // Clear images after sending
+    setImageResetTrigger(prev => prev + 1); // Trigger image upload reset
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
 
@@ -270,6 +277,7 @@ const UIInput = ({
                 message: currentQuery,
                 model: model,
                 conversationId: conversationId,
+                images: images, // Send images with the request
               }),
               signal: abortControllerRef.current?.signal,
             });
@@ -348,6 +356,20 @@ const UIInput = ({
                         : "w-full p-0"
                     )}
                   >
+                    {/* Show images if they exist */}
+                    {message.images && message.images.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {message.images.map((image, index) => (
+                          <img
+                            key={index}
+                            src={image}
+                            alt={`Image ${index + 1}`}
+                            className="w-32 h-32 object-cover rounded-lg border border-border"
+                          />
+                        ))}
+                      </div>
+                    )}
+                    
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm]}
                       components={{
@@ -545,8 +567,32 @@ const UIInput = ({
           </div>
         )}
 
+        {/* Show image upload info for non-premium users */}
+        {userCredits && !userCredits.isPremium && (
+          <div className="mb-4 w-full px-4 md:px-8">
+            <div className="mx-auto w-full max-w-4xl">
+              <div className="bg-accent/20 border border-border rounded-lg p-4 text-center">
+                <p className="text-sm text-muted-foreground">
+                  🖼️ <strong>Image Analysis Available!</strong> Upgrade to Premium to analyze images with AI models.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="bg-muted/20 backdrop-blur-3xl border border-border/50 mb-4 w-full rounded-2xl p-1">
           <div className="mx-auto w-full max-w-4xl">
+            {/* Image Upload Section */}
+            {userCredits?.isPremium && (
+              <div className="p-3 border-b border-border/50">
+                <ImageUpload
+                  onImagesChange={setImages}
+                  disabled={isLoading}
+                  resetTrigger={imageResetTrigger}
+                />
+              </div>
+            )}
+            
             <form
               onSubmit={handleCreateChat}
               className="bg-accent/30 dark:bg-accent/10 flex w-full flex-col rounded-xl p-3"
