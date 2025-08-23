@@ -6,15 +6,13 @@ import { TOTP } from "totp-generator"
 import base32 from "hi-base32";
 import { PrismaClient } from "../generated/prisma";
 import { authMiddleware } from "../auth-middleware";
-import { perMinuteLimiter, perMinuteLimiterRelaxed } from "../ratelimitter";
+import { perMinuteLimiter, perMinuteLimiterRelaxed, apiLimiter } from "../ratelimitter";
 import { otpEmailHTML } from "../email/templates/otpEmail";
 
 const prismaClient = new PrismaClient();
+const otpStore = OTPStore.getInstance();
 
 const router = Router();
-
-// Temporarily adding local user otp cache
-const otpCache = new Map<string, string>();
 
 // TODO: Rate limit this
 router.post("/initiate_signin", perMinuteLimiter, async (req, res) => {
@@ -41,8 +39,6 @@ router.post("/initiate_signin", perMinuteLimiter, async (req, res) => {
         } else {
             console.log(`1ai OTP for ${data.email}: ${otp}`);
         }
-
-        otpCache.set(data.email, otp);
         try {
             await prismaClient.user.create({
                 data: {
@@ -70,21 +66,36 @@ router.post("/signin", perMinuteLimiterRelaxed, async (req, res) => {
     const { success, data } = SignIn.safeParse(req.body);
 
     if (!success) {
-        res.status(411).send("Invalid input");
+        res.status(411).json({
+            message: "Invalid input data",
+            success: false
+        });
         return;
     }
 
-    console.log("data is");
-    console.log(data);
-    console.log("otpCache is", otpCache.get(data.email));
+    console.log(`🔍 Sign-in attempt for: ${data.email} with OTP: '${data.otp}'`);
 
-    if (otpCache.get(data.email) != data.otp) {
-        console.log("invalid otp");
-        res.status(401).json({
-            message: "Invalid otp"
-        })
-        return
+    // Verify OTP using the new OTP store
+    const verification = otpStore.verifyOTP(data.email, data.otp);
+
+    if (!verification.isValid) {
+        console.log(`❌ OTP verification failed: ${verification.message}`);
+        
+        // Apply additional rate limiting if too many attempts
+        if (verification.shouldRateLimit) {
+            return res.status(429).json({
+                message: verification.message,
+                success: false
+            });
+        }
+
+        return res.status(401).json({
+            message: verification.message,
+            success: false
+        });
     }
+
+    console.log(`✅ OTP verified successfully for ${data.email}`);
 
     const user = await prismaClient.user.findUnique({
         where: {
@@ -109,7 +120,7 @@ router.post("/signin", perMinuteLimiterRelaxed, async (req, res) => {
     })
 })
 
-router.get("/me", authMiddleware, async (req, res) => {
+router.get("/me", apiLimiter, authMiddleware, async (req, res) => {
     const user = await prismaClient.user.findUnique({
         where: { id: req.userId }
     })
@@ -129,5 +140,17 @@ router.get("/me", authMiddleware, async (req, res) => {
         }
     })
 })
+
+// Debug endpoint to check OTP store status (only in development)
+if (process.env.NODE_ENV === "development") {
+    router.get("/debug/otp-stats", apiLimiter, (req, res) => {
+        const stats = otpStore.getStats();
+        res.json({
+            message: "OTP Store Statistics",
+            ...stats,
+            timestamp: new Date().toISOString()
+        });
+    });
+}
 
 export default router;
