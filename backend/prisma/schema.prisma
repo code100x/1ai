@@ -45,6 +45,23 @@ model Message {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   conversation Conversation @relation(fields: [conversationId], references: [id])
+  
+  attachments MessageAttachment[]
+}
+
+model MessageAttachment {
+  id        String   @id @default(uuid())
+  messageId String
+  fileName  String
+  fileUrl   String
+  fileType  String
+  fileSize  Int
+  extractedContent String?
+  createdAt DateTime @default(now())
+  
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  
+  @@index([messageId])
 }
 
 model PaymentHistory {

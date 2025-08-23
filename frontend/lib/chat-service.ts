@@ -1,14 +1,24 @@
 import { BACKEND_URL } from "./utils";
 
+export interface MessageAttachment {
+  fileName: string;
+  fileUrl: string;
+  fileType: string;
+  fileSize: number;
+  extractedContent?: string;
+}
+
 export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
+  attachments?: MessageAttachment[];
 }
 
 export interface ChatRequest {
   message: string;
   model: string;
   conversationId?: string;
+  attachments?: MessageAttachment[];
 }
 
 export interface ChatStreamResponse {
@@ -152,7 +162,7 @@ export class ChatService {
     }
 
     try {
-      const response = await fetch(`${BACKEND_URL}/credits`, {
+      const response = await fetch(`${BACKEND_URL}/ai/credits`, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`
@@ -173,6 +183,7 @@ export class ChatService {
   /**
    * Fetch conversations list
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static async getConversations(): Promise<any[] | null> {
     const token = this.getAuthToken();
     
@@ -181,7 +192,7 @@ export class ChatService {
     }
 
     try {
-      const response = await fetch(`${BACKEND_URL}/conversations`, {
+      const response = await fetch(`${BACKEND_URL}/ai/conversations`, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`
@@ -211,7 +222,7 @@ export class ChatService {
     }
 
     try {
-      const response = await fetch(`${BACKEND_URL}/conversations/${conversationId}`, {
+      const response = await fetch(`${BACKEND_URL}/ai/conversations/${conversationId}`, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`

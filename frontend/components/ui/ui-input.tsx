@@ -29,6 +29,7 @@ import { useConversationById } from "@/hooks/useConversation";
 import { useCredits } from "@/hooks/useCredits";
 import { UpgradeCTA } from "@/components/ui/upgrade-cta";
 import { useConversationContext } from "@/contexts/conversation-context";
+import { FileUpload, type UploadedFile } from "@/components/ui/file-upload";
 
 const geistMono = Geist_Mono({
   subsets: ["latin"],
@@ -37,10 +38,19 @@ const geistMono = Geist_Mono({
   display: "swap",
 });
 
+interface MessageAttachment {
+  fileName: string;
+  fileUrl: string;
+  fileType: string;
+  fileSize: number;
+  extractedContent?: string;
+}
+
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
+  attachments?: MessageAttachment[];
 }
 
 const BACKEND_URL =
@@ -65,6 +75,7 @@ const UIInput = ({
   const [conversationId, setConversationId] = useState<string | null>(
     initialConversationId || v4()
   );
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const { resolvedTheme } = useTheme();
   const { user, isLoading: isUserLoading } = useUser();
   const { conversation, loading: converstionLoading } = useConversationById(
@@ -80,6 +91,14 @@ const UIInput = ({
 
   const toggleWrap = useCallback(() => {
     setIsWrapped((prev) => !prev);
+  }, []);
+
+  const handleFileUpload = useCallback((file: UploadedFile) => {
+    setUploadedFiles((prev) => [...prev, file]);
+  }, []);
+
+  const handleFileRemove = useCallback((fileUrl: string) => {
+    setUploadedFiles((prev) => prev.filter((file) => file.url !== fileUrl));
   }, []);
 
   const scrollToBottom = () => {
@@ -237,19 +256,28 @@ const UIInput = ({
       return;
     }
 
-    if (!query.trim() || isLoading) return;
+    if ((!query.trim() && uploadedFiles.length === 0) || isLoading) return;
 
     setShowWelcome(false);
 
     const currentQuery = query.trim();
+    const currentAttachments = uploadedFiles;
 
     const userMessage: Message = {
       id: `user-${Date.now()}`,
       role: "user",
-      content: currentQuery,
+      content: currentQuery || (currentAttachments.length > 0 ? "Attached files" : ""),
+      attachments: currentAttachments.length > 0 ? currentAttachments.map(file => ({
+        fileName: file.fileName,
+        fileUrl: file.url,
+        fileType: file.fileType,
+        fileSize: file.fileSize,
+        extractedContent: file.extractedContent
+      })) : undefined,
     };
 
     setQuery("");
+    setUploadedFiles([]);
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
 
@@ -270,9 +298,16 @@ const UIInput = ({
                 Authorization: `Bearer ${localStorage.getItem("token")}`,
               },
               body: JSON.stringify({
-                message: currentQuery,
+                message: currentQuery || (currentAttachments.length > 0 ? "Please analyze the attached files" : ""),
                 model: model,
                 conversationId: conversationId,
+                attachments: currentAttachments.length > 0 ? currentAttachments.map(file => ({
+                  fileName: file.fileName,
+                  fileUrl: file.url,
+                  fileType: file.fileType,
+                  fileSize: file.fileSize,
+                  extractedContent: file.extractedContent
+                })) : undefined,
               }),
               signal: abortControllerRef.current?.signal,
             });
@@ -490,6 +525,25 @@ const UIInput = ({
                     >
                       {message.content}
                     </ReactMarkdown>
+                    
+                    {/* Display attachments for user messages */}
+                    {message.role === "user" && message.attachments && message.attachments.length > 0 && (
+                      <div className="mt-3 mb-2">
+                        <FileUpload
+                          onFileUpload={() => {}}
+                          onFileRemove={() => {}}
+                          uploadedFiles={message.attachments.map(att => ({
+                            url: att.fileUrl,
+                            fileName: att.fileName,
+                            fileType: att.fileType,
+                            fileSize: att.fileSize,
+                            extractedContent: att.extractedContent
+                          }))}
+                          disabled={true}
+                          hideButton={true}
+                        />
+                      </div>
+                    )}
                   </div>
                   <div className="font-medium">
                     {message.role === "assistant" && (
@@ -554,6 +608,17 @@ const UIInput = ({
               onSubmit={handleCreateChat}
               className="bg-accent/30 dark:bg-accent/10 flex w-full flex-col rounded-xl p-3"
             >
+              {uploadedFiles.length > 0 && (
+                <div className="mb-3">
+                  <FileUpload
+                    onFileUpload={handleFileUpload}
+                    onFileRemove={handleFileRemove}
+                    uploadedFiles={uploadedFiles}
+                    disabled={isLoading}
+                    hideButton={true}
+                  />
+                </div>
+              )}
               <Textarea
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -594,13 +659,25 @@ const UIInput = ({
                       )
                     }
                   />
+                  <FileUpload
+                    onFileUpload={handleFileUpload}
+                    onFileRemove={handleFileRemove}
+                    uploadedFiles={[]}
+                    disabled={isLoading ||
+                      !!(
+                        userCredits &&
+                        userCredits.credits <= 0 &&
+                        !userCredits.isPremium
+                      )}
+                    hideButton={false}
+                  />
                 </div>
                 <Button
                   type="submit"
                   size="icon"
                   disabled={
                     isLoading ||
-                    !query.trim() ||
+                    (!query.trim() && uploadedFiles.length === 0) ||
                     !!(
                       userCredits &&
                       userCredits.credits <= 0 &&

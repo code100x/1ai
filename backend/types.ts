@@ -126,10 +126,19 @@ export type ModelFull = {
     isPremium: boolean;
 }
 
+export const MessageAttachmentSchema = z.object({
+    fileName: z.string(),
+    fileUrl: z.string().url(),
+    fileType: z.string(),
+    fileSize: z.number(),
+    extractedContent: z.string().optional()
+})
+
 export const CreateChatSchema = z.object({
     conversationId: z.uuid().optional(),
     message: z.string().max(MAX_INPUT_TOKENS),
-    model: z.enum(SUPPORTER_MODELS)
+    model: z.enum(SUPPORTER_MODELS),
+    attachments: z.array(MessageAttachmentSchema).optional()
 })
 
 export const CreateUser = z.object({
@@ -141,9 +150,18 @@ export const SignIn = z.object({
     otp: z.string().or(z.number().int()),
 })
 
+export type MessageAttachment = {
+    fileName: string;
+    fileUrl: string;
+    fileType: string;
+    fileSize: number;
+    extractedContent?: string;
+}
+
 export type Message = {
     content: string;
     role: Role;
+    attachments?: MessageAttachment[];
 }
 
 export type Messages = Message[];
