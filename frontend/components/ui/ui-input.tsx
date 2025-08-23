@@ -43,8 +43,12 @@ interface Message {
   content: string;
 }
 
+<<<<<<< HEAD
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
+=======
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3000";
+>>>>>>> origin/main
 
 interface UIInputProps {
   conversationId?: string;
@@ -77,7 +81,11 @@ const UIInput = ({
   } = useCredits();
   const { refreshConversations } = useConversationContext();
   const router = useRouter();
+<<<<<<< HEAD
   const searchParams = useSearchParams();
+  const [conversationId, setConversationId] = useState<string | null>(null);
+=======
+>>>>>>> origin/main
 
   const toggleWrap = useCallback(() => {
     setIsWrapped((prev: boolean) => !prev);
@@ -91,20 +99,51 @@ const UIInput = ({
     scrollToBottom();
   }, [messages]);
 
+<<<<<<< HEAD
   // Initialize conversation from URL parameters
   useEffect(() => {
     const conversationParam = searchParams.get('c');
     if (conversationParam && conversationParam !== conversationId) {
       setConversationId(conversationParam);
+      loadConversationMessages(conversationParam);
     }
   }, [searchParams, conversationId]);
 
+  const loadConversationMessages = async (convId: string) => {
+    if (!user) return;
+    
+    try {
+      const response = await fetch(`${BACKEND_URL}/ai/conversations/${convId}`, {
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.conversation && data.conversation.messages && Array.isArray(data.conversation.messages)) {
+          const formattedMessages: Message[] = data.conversation.messages.map((msg: any) => ({
+            id: msg.id,
+            role: msg.role === 'Agent' ? 'assistant' : 'user',
+            content: msg.content
+          }));
+          setMessages(formattedMessages);
+          setShowWelcome(false);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading conversation:", error);
+    }
+  };
+
+=======
   useEffect(() => {
     if (conversation?.messages && initialConversationId) {
       setMessages(conversation.messages);
       setShowWelcome(false);
     }
   }, [conversation, initialConversationId]);
+>>>>>>> origin/main
 
   const processStream = async (response: Response, userMessage: string) => {
     if (!response.ok) {
