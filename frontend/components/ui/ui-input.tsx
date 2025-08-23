@@ -64,7 +64,7 @@ const UIInput = ({ conversationId: initialConversationId  }: UIInputProps = {}) 
   const [conversationId, setConversationId] = useState<string | null>(initialConversationId || v4());
   const { resolvedTheme } = useTheme();
   const { user, isLoading: isUserLoading } = useUser();
-  const {conversation, loading : converstionLoading} = useConversationById(initialConversationId)
+  const {conversation, loading: conversationLoading} = useConversationById(initialConversationId)
   const { userCredits, isLoading: isCreditsLoading, refetchCredits } = useCredits();
   const router = useRouter();
 
@@ -85,7 +85,7 @@ const UIInput = ({ conversationId: initialConversationId  }: UIInputProps = {}) 
       setMessages(conversation.messages);
       setShowWelcome(false);
     }
-  }, [conversation, initialConversationId]);
+  }, [conversation?.messages, initialConversationId]);
 
 
   const processStream = async (response: Response, userMessage: string) => {
@@ -293,7 +293,7 @@ const UIInput = ({ conversationId: initialConversationId  }: UIInputProps = {}) 
     }
   };
 
-  if (initialConversationId && converstionLoading) {
+  if (initialConversationId && conversationLoading) {
     return (
       <div className="flex h-[96vh] w-full overflow-hidden">
         <div className="relative flex h-full w-full flex-col">
