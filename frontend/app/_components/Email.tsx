@@ -41,6 +41,7 @@ export function Email({setEmail, setStep, email}: {setEmail: (email: string) => 
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
             className="h-14 w-[25rem] text-lg font-semibold text-white"
+            disabled={isSendingEmail}
           />
           <Button
             disabled={!isEmailValid(email)}
