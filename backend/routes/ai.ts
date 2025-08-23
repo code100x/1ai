@@ -9,29 +9,34 @@ const prismaClient = new PrismaClient();
 
 const router = Router();
 
-router.get("/conversations", authMiddleware, async (req, res) => {
-    const userId = req.userId;
-    const conversations = await prismaClient.conversation.findMany({
-        where: {
-            userId
-        },
-        orderBy: {
-            updatedAt: "desc"
-        }
-    })
-
-    res.json({
-        conversations
-    });
-});
-
 router.get("/conversations/:conversationId", authMiddleware, async (req, res) => {
     const userId = req.userId;
     const conversationId = req.params.conversationId;
-    const conversation = await prismaClient.conversation.findFirst({
+
+    const execution = await prismaClient.execution.findFirst({
         where: {
             id: conversationId,
             userId
+        }
+    });
+
+    if (!execution) {
+        res.status(404).json({
+            message: "Execution not found"
+        });
+        return;
+    }
+
+    if (execution.type !== "CONVERSATION") {
+        res.status(400).json({
+            message: "Execution is not a conversation"
+        });
+        return;
+    }
+
+    const conversation = await prismaClient.conversation.findFirst({
+        where: {
+            id: execution?.externalId!
         },
         include: {
             messages: {
@@ -41,6 +46,7 @@ router.get("/conversations/:conversationId", authMiddleware, async (req, res) =>
             }
         }
     })
+
     res.json({
         conversation
     });
@@ -88,28 +94,39 @@ router.post("/chat", authMiddleware, async (req, res) => {
         return;
     }
 
-    const conversation = await prismaClient.conversation.findUnique({
+    const execution = await prismaClient.execution.findFirst({
         where: {
-            id: conversationId
+            id: conversationId,
+            userId
         }
-    })
+    });
     
-    if (conversation && conversation.userId !== userId) {
+    if (execution && execution.type !== "CONVERSATION") {
         res.status(400).json({
             message: "Conversation already exists and you are not the owner"
         });
         return;
     }
 
-    if (!conversation) {
-        await prismaClient.conversation.create({
-            data: {
-                id: conversationId,
-                userId,
-                title: data.message.slice(0, 20) + "..."
-            }
-        })
+    if (!execution) {
+        await prismaClient.$transaction([
+            prismaClient.execution.create({
+                data: {
+                    id: conversationId,
+                    userId,
+                    title: data.message.slice(0, 20) + "...",
+                    type: "CONVERSATION",
+                    externalId: conversationId
+                }
+            }),
+            prismaClient.conversation.create({
+                data: {
+                    id: conversationId,
+                }
+            })
+        ]);
     }
+
     if (user.credits <= 0) {
         res.status(403).json({
             message: "Insufficient credits. Please subscribe to continue.",
@@ -174,6 +191,7 @@ router.post("/chat", authMiddleware, async (req, res) => {
         role: Role.Agent,
         content: message
     })
+
     // Save messages and deduct credits in a transaction
     await prismaClient.$transaction([
         prismaClient.message.createMany({

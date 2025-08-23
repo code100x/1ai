@@ -5,8 +5,8 @@ import { BlurProvider } from "@/contexts/blur-context";
 import { Toaster } from "sonner";
 import { siteConfig } from "@/config/site";
 import { ThemeProvider } from "@/components/theme-provider";
-import { ConversationProvider } from "@/contexts/conversation-context";
 import { Plus_Jakarta_Sans } from "next/font/google";
+import { ExecutionProvider } from "@/contexts/execution-context";
 export const metadata: Metadata = siteConfig;
 
 const font = Plus_Jakarta_Sans({
@@ -20,7 +20,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${font.className}`}>
-        <ConversationProvider>
+          <ExecutionProvider>
           <ThemeProvider
             attribute="class"
             defaultTheme="dark"
@@ -34,7 +34,7 @@ export default function RootLayout({
               </BlurProvider>
             </FontProvider>
           </ThemeProvider>
-        </ConversationProvider>
+          </ExecutionProvider>
       </body>
     </html>
   );
