@@ -82,14 +82,6 @@ const UIInput = ({
     setIsWrapped((prev) => !prev);
   }, []);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
   useEffect(() => {
     if (conversation?.messages && initialConversationId) {
       setMessages(conversation.messages);
@@ -304,7 +296,7 @@ const UIInput = ({
 
   if (initialConversationId && converstionLoading) {
     return (
-      <div className="flex w-full overflow-hidden">
+      <div className="flex w-full overflow-hidden h-[96dvh]">
         <div className="relative flex h-full w-full flex-col">
           <div className="flex h-full w-full flex-col items-center justify-center">
             <div className="flex flex-col items-center gap-4">
