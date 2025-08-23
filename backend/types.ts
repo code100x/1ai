@@ -138,7 +138,7 @@ export const CreateUser = z.object({
 
 export const SignIn = z.object({
     email: z.email(),
-    otp: z.string().or(z.number().int()),
+    otp: z.string().min(1, "OTP is required").max(10, "Invalid OTP format"),
 })
 
 export type Message = {

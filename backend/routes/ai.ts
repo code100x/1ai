@@ -4,12 +4,13 @@ import { createCompletion } from "../openrouter";
 import { InMemoryStore } from "../InMemoryStore";
 import { authMiddleware } from "../auth-middleware";
 import { PrismaClient } from "../generated/prisma";
+import { apiLimiter, aiLimiter } from "../ratelimitter";
 
 const prismaClient = new PrismaClient();
 
 const router = Router();
 
-router.get("/conversations", authMiddleware, async (req, res) => {
+router.get("/conversations", apiLimiter, authMiddleware, async (req, res) => {
     const userId = req.userId;
     const conversations = await prismaClient.conversation.findMany({
         where: {
@@ -25,7 +26,7 @@ router.get("/conversations", authMiddleware, async (req, res) => {
     });
 });
 
-router.get("/conversations/:conversationId", authMiddleware, async (req, res) => {
+router.get("/conversations/:conversationId", apiLimiter, authMiddleware, async (req, res) => {
     const userId = req.userId;
     const conversationId = req.params.conversationId;
     const conversation = await prismaClient.conversation.findFirst({
@@ -46,7 +47,7 @@ router.get("/conversations/:conversationId", authMiddleware, async (req, res) =>
     });
 })
 
-router.post("/chat", authMiddleware, async (req, res) => {
+router.post("/chat", aiLimiter, authMiddleware, async (req, res) => {
     const userId = req.userId;
     const {success, data} = CreateChatSchema.safeParse(req.body);
 
@@ -203,7 +204,7 @@ router.post("/chat", authMiddleware, async (req, res) => {
 });
 
 // Get user credits endpoint
-router.get("/credits", authMiddleware, async (req, res) => {
+router.get("/credits", apiLimiter, authMiddleware, async (req, res) => {
     const userId = req.userId;
     
     try {
