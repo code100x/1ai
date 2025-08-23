@@ -30,6 +30,7 @@ import { useUser } from "@/hooks/useUser";
 import { useCredits } from "@/hooks/useCredits";
 import { groupConversationsByDate, formatChatDate } from "@/lib/date-utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import Link from "next/link";
 
 interface Chat {
   id: string;
@@ -55,7 +56,6 @@ export function UIStructure() {
     }
   }, [conversations]);
 
-
   const handleDeleteChat = (chatId: string) => {
     try {
       toast.success("Chat deleted successfully");
@@ -73,14 +73,12 @@ export function UIStructure() {
   return (
     <Sidebar className={`border py-2 pl-2`}>
       <SidebarContent className="rounded-2xl">
-        <SidebarGroup className="flex flex-col gap-8 pt-3">
+        <SidebarGroup className="flex flex-col gap-8">
           <SidebarGroupLabel className="h-fit p-0">
             <div className="flex h-12 w-full flex-col items-center gap-2 rounded-lg">
-              <div className="flex w-full items-center gap-2 rounded-lg p-1 text-lg">
+              <div className="flex w-full items-center gap-2 rounded-lg p-1 text-lg justify-between">
                 <SidebarTrigger className="shrink-0" />
-                <div className="dark:text-primary-foreground flex size-4 w-full flex-1 items-center justify-center rounded-lg">
-                  <Logo />
-                </div>
+                <Logo />
                 <span className="size-6"></span>
               </div>
               <Button
@@ -143,35 +141,35 @@ export function UIStructure() {
                                   <div
                                     className={`absolute top-1/2 -right-16 z-[10] flex h-full -translate-y-1/2 items-center justify-center gap-1.5 rounded-r-md bg-transparent px-1 backdrop-blur-xl transition-all duration-200 ease-in-out ${chat.id === hoverChatId ? "group-hover:right-0" : ""}`}
                                   >
-                                      <div
-                                        className="flex items-center justify-center rounded-md"
-                                        onClick={(e) => {
-                                          e.preventDefault();
-                                          const shareLink =
-                                            process.env.NEXT_PUBLIC_APP_URL +
-                                            `/chat/share/${chat.id}`;
-                                          navigator.clipboard.writeText(shareLink);
-                                          toast.success(
-                                            "Share link copied to clipboard"
-                                          );
-                                        }}
-                                      >
-                                        <ShareFatIcon
-                                          weight="fill"
-                                          className="hover:text-foreground size-4"
-                                        />
-                                      </div>
-
-                                      <div
-                                        className="flex items-center justify-center rounded-md"
-                                        onClick={() => handleDeleteChat(chat.id)}
-                                      >
-                                        <TrashIcon
-                                          weight={"bold"}
-                                          className="hover:text-foreground size-4"
-                                        />
-                                      </div>
+                                    <div
+                                      className="flex items-center justify-center rounded-md"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        const shareLink =
+                                          process.env.NEXT_PUBLIC_APP_URL +
+                                          `/chat/share/${chat.id}`;
+                                        navigator.clipboard.writeText(shareLink);
+                                        toast.success(
+                                          "Share link copied to clipboard"
+                                        );
+                                      }}
+                                    >
+                                      <ShareFatIcon
+                                        weight="fill"
+                                        className="hover:text-foreground size-4"
+                                      />
                                     </div>
+
+                                    <div
+                                      className="flex items-center justify-center rounded-md"
+                                      onClick={() => handleDeleteChat(chat.id)}
+                                    >
+                                      <TrashIcon
+                                        weight={"bold"}
+                                        className="hover:text-foreground size-4"
+                                      />
+                                    </div>
+                                  </div>
                                 </SidebarMenuButton>
                               </SidebarMenuItem>
                             ))}
@@ -183,9 +181,22 @@ export function UIStructure() {
             </div>
           </SidebarGroupContent>
         </SidebarGroup>
-        <SidebarFooter className="bg-background absolute bottom-0 z-[70] h-20 w-full px-4 py-3">
-          {user && (
+        <SidebarFooter className="absolute bottom-0 z-[70] flex flex-col gap-2 w-full px-4 py-3">
+          {!isUserLoading && !user ? (
             <Button
+              variant="secondary"
+              size="lg"
+              onClick={(e) => {
+                e.preventDefault();
+                router.push("/auth");
+              }}
+            >
+              Login
+            </Button>
+          ) : (
+            <Button
+              variant="secondary"
+              size="lg"
               onClick={(e) => {
                 e.preventDefault();
                 localStorage.removeItem("token");
@@ -195,16 +206,18 @@ export function UIStructure() {
               Logout
             </Button>
           )}
-          {!isUserLoading && !user && (
-            <Button
-              onClick={(e) => {
-                e.preventDefault();
-                router.push("/auth");
-              }}
-            >
-            Login
-          </Button>
-          )}
+
+          <div className="flex items-center gap-2 justify-center">
+            <Link href="/terms" target="_target" className="text-xs">
+              Terms
+            </Link>
+            <Link href="/privacy" target="_target" className="text-xs">
+              Privacy
+            </Link>
+            <Link href="/refund" target="_target" className="text-xs">
+              Refund
+            </Link>
+          </div>
         </SidebarFooter>
       </SidebarContent>
     </Sidebar>
