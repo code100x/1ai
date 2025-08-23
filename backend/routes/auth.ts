@@ -27,7 +27,7 @@ router.post("/initiate_signin", perMinuteLimiter, async (req, res) => {
 
         // Generate TOTP using email and secret`
         console.log("before send email")
-        const otp = "123456";
+        const { otp, expires } = TOTP.generate(base32.encode(data.email + process.env.JWT_SECRET!));
         console.log("email is", data.email);
         console.log("otp is", otp);
         if (process.env.NODE_ENV !== "development") {
