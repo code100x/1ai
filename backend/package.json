@@ -3,11 +3,19 @@
   "module": "index.ts",
   "type": "module",
   "devDependencies": {
-    "@types/bun": "latest"
+    "@eslint/js": "^9.34.0",
+    "@types/bun": "latest",
+    "@typescript-eslint/eslint-plugin": "^8.40.0",
+    "@typescript-eslint/parser": "^8.40.0",
+    "eslint": "^9.34.0",
+    "typescript-eslint": "^8.40.0"
   },
   "scripts": {
     "dev": "bun index.ts",
-    "start": "bun index.ts"
+    "start": "bun index.ts",
+    "prepare": "husky",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
@@ -26,5 +34,10 @@
     "razorpay": "^2.9.6",
     "totp-generator": "^1.0.0",
     "zod": "^4.0.17"
+  },
+  "lint-staged": {
+    "**/*.{js,ts}": [
+      "eslint --fix"
+    ]
   }
 }
