@@ -30,6 +30,7 @@ import { useCredits } from "@/hooks/useCredits";
 import { UpgradeCTA } from "@/components/ui/upgrade-cta";
 import { useConversationContext } from "@/contexts/conversation-context";
 import { useGlobalKeyPress } from "@/hooks/useGlobalKeyPress";
+import { useExecutionContext } from "@/contexts/execution-context";
 
 const geistMono = Geist_Mono({
   subsets: ["latin"],
@@ -77,7 +78,7 @@ const UIInput = ({
     isLoading: isCreditsLoading,
     refetchCredits,
   } = useCredits();
-  const { refreshConversations } = useConversationContext();
+  const { refreshExecutions } = useExecutionContext();
   const router = useRouter();
 
   const toggleWrap = useCallback(() => {
@@ -230,7 +231,7 @@ const UIInput = ({
     } finally {
       setIsLoading(false);
       abortControllerRef.current = null;
-      await refreshConversations();
+      await refreshExecutions();
     }
   };
 

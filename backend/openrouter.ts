@@ -2,9 +2,11 @@ import type { Message, MODEL, SUPPORTER_MODELS } from "./types";
 const OPENROUTER_KEY = process.env.OPENROUTER_KEY!;
 const MAX_TOKEN_ITERATIONS = 1000;
 
-export const createCompletion = async (messages: Message[], 
+export const createCompletion = async (
+  messages: Message[], 
     model: MODEL,
-    cb: (chunk: string) => void
+    cb: (chunk: string) => void,
+    systemPrompt?: string
 ) => {
     return new Promise<void>(async (resolve, reject) => {
         const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -17,6 +19,7 @@ export const createCompletion = async (messages: Message[],
               model,
               messages: messages,
               stream: true,
+              system: systemPrompt,
             }),
         });
           
