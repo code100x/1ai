@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { sendEmail } from "../postmark";
+import { sendEmail, createOTPEmailHTML } from "../postmark";
 import { CreateUser, SignIn } from "../types";
 import jwt from "jsonwebtoken";
 import { TOTP } from "totp-generator"
@@ -31,7 +31,9 @@ router.post("/initiate_signin", perMinuteLimiter, async (req, res) => {
         console.log("email is", data.email);
         console.log("otp is", otp);
         if (process.env.NODE_ENV !== "development") {
-            await sendEmail(data.email, "Login to 1ai", `Log into 1ai your otp is ${otp}`);
+            const htmlBody = createOTPEmailHTML(otp, data.email, expires);
+            const textBody = `Welcome to 1ai!\n\nYour secure login code is: ${otp}\n\nThis code expires in 10 minutes.\n\nIf you didn't request this code, please ignore this email.\n\nBest regards,\nThe 1ai Team`;
+            await sendEmail(data.email, "🔐 Your 1ai Login Code", textBody, htmlBody);
         } else {
             console.log(`Log into your 1ai `, otp);
         }
