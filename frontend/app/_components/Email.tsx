@@ -1,11 +1,10 @@
 "use client";
 import { toast } from "sonner";
-import { ArrowLeft } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { BACKEND_URL } from "@/lib/utils";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 const isEmailValid = (email: string) => {
@@ -21,7 +20,7 @@ export function Email({
   setStep: (step: string) => void;
   email: string;
 }) {
-  const router = useRouter();
+  
   const [sendingRequest, setSendingRequest] = useState(false);
   return (
     <div className="mx-auto max-h-screen max-w-6xl">
@@ -54,20 +53,21 @@ export function Email({
                   "Content-Type": "application/json",
                 },
               })
-                .then((res) => {
+                .then(async (res) => {
+                  const data = await res.json();
                   if (res.status === 200) {
                     setStep("otp");
                     toast.success("OTP sent to email");
                   } else {
                     toast.error(
-                      "Failed to send OTP, please retry after a few minutes"
+                      data.message || "Failed to send OTP, please retry after a few minutes"
                     );
                   }
                 })
                 .catch((err) => {
-                  console.error(err);
+                  console.error("Network error:", err);
                   toast.error(
-                    "Failed to send OTP, please retry after a few minutes"
+                    "Network error. Please check your connection and try again."
                   );
                 })
                 .finally(() => {
@@ -76,7 +76,11 @@ export function Email({
             }}
             className="w-full h-12"
           >
-            Continue with Email
+            {sendingRequest ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              "Continue with Email"
+            )}
           </Button>
         </div>
         <div className="text-muted-foreground text-sm">
