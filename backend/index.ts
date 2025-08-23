@@ -6,7 +6,7 @@ import { billingRouter } from "./routes/billing"
 import rzpWebhookRouter from "./routes/rzpWebhookRouter"
 
 const app = express();
-app.use(cors())
+app.use(cors());
 
 app.use(express.json());
 app.use("/rzp_webhook", rzpWebhookRouter);
