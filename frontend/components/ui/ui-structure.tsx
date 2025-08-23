@@ -17,19 +17,18 @@ import { useState } from "react";
 import { useEffect } from "react";
 import { Input } from "./input";
 import {
-  BookmarkIcon,
   MagnifyingGlassIcon,
   ShareFatIcon,
   TrashIcon,
 } from "@phosphor-icons/react";
-import { Separator } from "./separator";
 import { toast } from "sonner";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Logo } from "../svgs/logo";
-import { useSession } from "next-auth/react";
-import { Conversation, useConversation } from "@/hooks/useConversation";
+import { Conversation } from "@/hooks/useConversation";
 import { useUser } from "@/hooks/useUser";
+import { useCredits } from "@/hooks/useCredits";
+import { useConversationContext } from "@/contexts/conversation-context";
+import Link from "next/link";
 
 interface Chat {
   id: string;
@@ -44,7 +43,7 @@ interface Chat {
 export function UIStructure() {
   const [chats, setChats] = useState<Conversation[]>([]);
   const [hoverChatId, setHoverChatId] = useState<string>("");
-  const { conversations, loading, error } = useConversation();
+  const { conversations, loading, error, createNewConversation } = useConversationContext();
   const router = useRouter();
 
   useEffect(() => {
@@ -52,7 +51,6 @@ export function UIStructure() {
       setChats(conversations);
     }
   }, [conversations]);
-
 
   const handleDeleteChat = (chatId: string) => {
     try {
@@ -64,24 +62,24 @@ export function UIStructure() {
   };
 
   const { user, isLoading: isUserLoading } = useUser();
+  const { userCredits } = useCredits();
 
   return (
     <Sidebar className={`border py-2 pl-2`}>
       <SidebarContent className="rounded-2xl">
-        <SidebarGroup className="flex flex-col gap-8 pt-3">
+        <SidebarGroup className="flex flex-col gap-8">
           <SidebarGroupLabel className="h-fit p-0">
             <div className="flex h-12 w-full flex-col items-center gap-2 rounded-lg">
-              <div className="flex w-full items-center gap-2 rounded-lg p-1 text-lg">
+              <div className="flex w-full items-center gap-2 rounded-lg p-1 text-lg justify-between">
                 <SidebarTrigger className="shrink-0" />
-                <div className="dark:text-primary-foreground flex size-4 w-full flex-1 items-center justify-center rounded-lg">
-                  <Logo />
-                </div>
+                <Logo />
                 <span className="size-6"></span>
               </div>
               <Button
                 onClick={(e) => {
                   e.preventDefault();
-                  router.push("/ask");
+                  const id = createNewConversation();
+                  router.push(`/ask/${id}`);
                 }}
                 variant="accent"
                 className="w-full"
@@ -108,81 +106,74 @@ export function UIStructure() {
                       className="bg-primary/15 mb-2 h-7 w-full animate-pulse rounded-md"
                     />
                   ))
-                : chats
-                    .map((chat: Conversation) => (
-                      <SidebarMenuItem key={chat.id}>
-                        <SidebarMenuButton
-                          className="group hover:bg-primary/20 relative"
-                          onMouseEnter={() => setHoverChatId(chat.id)}
-                          onMouseLeave={() => setHoverChatId("")}
-                          asChild
-                        >
-                          <div className="flex w-full items-center justify-between">
-                              <span className="z-[-1]">
-                                {chat.title}
-                              </span>
-                              <div
-                                className={`absolute top-0 right-0 z-[5] h-full w-12 rounded-r-md blur-[2em] ${chat.id === hoverChatId ? "bg-primary" : ""}`}
+                : chats.map((chat: Conversation) => (
+                    <SidebarMenuItem key={chat.id}>
+                      <SidebarMenuButton
+                        className="group hover:bg-primary/20 relative"
+                        onMouseEnter={() => setHoverChatId(chat.id)}
+                        onMouseLeave={() => setHoverChatId("")}
+                        onClick={() => router.push(`/ask/${chat.id}`)}
+                      >
+                        <div className="flex w-full items-center justify-between">
+                          <span className="z-[-1] cursor-pointer truncate">
+                            {chat.title}
+                          </span>
+                          <div
+                            className={`absolute top-0 right-0 z-[5] h-full w-12 rounded-r-md blur-[2em] ${chat.id === hoverChatId ? "bg-primary" : ""}`}
+                          />
+                          <div
+                            className={`absolute top-1/2 -right-16 z-[10] flex h-full -translate-y-1/2 items-center justify-center gap-1.5 rounded-r-md bg-transparent px-1 backdrop-blur-xl transition-all duration-200 ease-in-out ${chat.id === hoverChatId ? "group-hover:right-0" : ""}`}
+                          >
+                            <div
+                              className="flex items-center justify-center rounded-md"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                const shareLink =
+                                  process.env.NEXT_PUBLIC_APP_URL +
+                                  `/chat/share/${chat.id}`;
+                                navigator.clipboard.writeText(shareLink);
+                                toast.success("Share link copied to clipboard");
+                              }}
+                            >
+                              <ShareFatIcon
+                                weight="fill"
+                                className="hover:text-foreground size-4"
                               />
-                              <div
-                                className={`absolute top-1/2 -right-16 z-[10] flex h-full -translate-y-1/2 items-center justify-center gap-1.5 rounded-r-md bg-transparent px-1 backdrop-blur-xl transition-all duration-200 ease-in-out ${chat.id === hoverChatId ? "group-hover:right-0" : ""}`}
-                              >
-                                <div
-                                  className="flex items-center justify-center rounded-md"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    const shareLink =
-                                      process.env.NEXT_PUBLIC_APP_URL +
-                                      `/chat/share/${chat.id}`;
-                                    navigator.clipboard.writeText(shareLink);
-                                    toast.success(
-                                      "Share link copied to clipboard"
-                                    );
-                                  }}
-                                >
-                                  <ShareFatIcon
-                                    weight="fill"
-                                    className="hover:text-foreground size-4"
-                                  />
-                                </div>
+                            </div>
 
-                                <div
-                                  className="flex items-center justify-center rounded-md"
-                                  onClick={() => handleDeleteChat(chat.id)}
-                                >
-                                  <TrashIcon
-                                    weight={"bold"}
-                                    className="hover:text-foreground size-4"
-                                  />
-                                </div>
-                              </div>
+                            <div
+                              className="flex items-center justify-center rounded-md"
+                              onClick={() => handleDeleteChat(chat.id)}
+                            >
+                              <TrashIcon
+                                weight={"bold"}
+                                className="hover:text-foreground size-4"
+                              />
+                            </div>
                           </div>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))}
+                        </div>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        <SidebarFooter className="bg-background absolute bottom-0 z-[70] h-20 w-full px-4 py-3">
-          {/* {user && (
-            <div className="flex items-center space-x-3">
-              <img
-                src={"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQXXckRlC33zt7zHBLpEEEeqY_MGIn89LOdGw&s"}
-                alt={user.name ?? "User"}
-                className="h-10 w-10 rounded-full object-cover"
-              />
-              <div className="flex flex-col text-sm">
-                <span className="font-medium">{user.name ?? "Anonymous"}</span>
-                {user.email && (
-                  <span className="w-36 truncate text-xs text-muted-foreground">
-                    {user.email}
-                  </span>
-                )}
-              </div>
-            </div>
-          )} */}
-          {user && (
+        <SidebarFooter className="absolute bottom-0 z-[70] flex flex-col gap-2 w-full px-4 py-3">
+          {!isUserLoading && !user ? (
             <Button
+              variant="secondary"
+              size="lg"
+              onClick={(e) => {
+                e.preventDefault();
+                router.push("/auth");
+              }}
+            >
+              Login
+            </Button>
+          ) : (
+            <Button
+              variant="secondary"
+              size="lg"
               onClick={(e) => {
                 e.preventDefault();
                 localStorage.removeItem("token");
@@ -192,16 +183,18 @@ export function UIStructure() {
               Logout
             </Button>
           )}
-          {!isUserLoading && !user && (
-            <Button
-              onClick={(e) => {
-                e.preventDefault();
-                router.push("/auth");
-              }}
-            >
-            Login
-          </Button>
-          )}
+
+          <div className="flex items-center gap-2 justify-center">
+            <Link href="/terms" target="_target" className="text-xs">
+              Terms
+            </Link>
+            <Link href="/privacy" target="_target" className="text-xs">
+              Privacy
+            </Link>
+            <Link href="/refund" target="_target" className="text-xs">
+              Refund
+            </Link>
+          </div>
         </SidebarFooter>
       </SidebarContent>
     </Sidebar>

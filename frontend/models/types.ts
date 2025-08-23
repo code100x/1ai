@@ -7,6 +7,7 @@ export interface Model {
   pricePer1kTokens: number;
   capabilities: ModelCapability[];
   isAvailable?: boolean;
+  isPremium?: boolean;
 }
 
 export enum ModelProvider {

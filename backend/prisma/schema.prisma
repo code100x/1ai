@@ -49,7 +49,7 @@ model Message {
 
 model PaymentHistory {
   paymentId     String   @id @default(uuid())
-  status        String
+  status        PaymentStatus
   paymentMethod String
   cfPaymentId   String?
   bankReference String?
@@ -62,16 +62,20 @@ model PaymentHistory {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
 model Subscription {
   id             String   @id @default(uuid())
   userId         String
   currency       String
   planId         String
-  subscriptionId String
+  rzpSubscriptionId String
   startDate      DateTime
   endDate        DateTime
-  isActive       Boolean  @default(true)
-  creditsGranted Int      @default(0)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

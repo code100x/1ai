@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Sparkles, Search, Code, BookOpen } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const TabsSuggestion = ({
   suggestedInput,
@@ -60,28 +61,36 @@ const TabsSuggestion = ({
   const activeTabData = tabs.find((tab) => tab.id === activeTab);
 
   return (
-    <div className="text-foreground mt-7 h-fit min-w-lg">
+    <div className="text-foreground max-w-xl w-full">
       <div className="flex flex-col gap-4">
         {/* Tab Navigation */}
-        <div className="mb-4 flex gap-2">
+        <div className="mb-4 flex flex-wrap gap-2">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all duration-200 cursor-pointer justify-center border  ${
+              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm transition-all duration-300 cursor-pointer justify-center border ${
                 activeTab === tab.id
                   ? "bg-primary text-primary-foreground"
-                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:text-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/60 hover:text-foreground"
               } `}
             >
               {tab.icon}
-              {tab.label}
+              {activeTab === tab.id && (
+                <span
+                  className={cn(
+                    "text-sm whitespace-nowrap overflow-hidden transition-all duration-300"
+                  )}
+                >
+                  {tab.label}
+                </span>
+              )}
             </button>
           ))}
         </div>
 
         {/* Tab Content */}
-        <div className="flex flex-col items-center gap-6">
+        <div className="flex flex-col">
           {activeTabData?.content.map((item, index) => (
             <div
               key={index}
@@ -90,14 +99,14 @@ const TabsSuggestion = ({
                   setSuggestedInput(item);
                 }
               }}
-              className="group w-full cursor-pointer transition-all duration-200 hover:text-secondary-foreground"
+              className="flex items-start gap-2 border-t border-secondary/40 py-1 first:border-none cursor-pointer font-medium"
             >
-              <p className="text-card-foreground text-sm">{item}</p>
+              <button className="w-full rounded-md py-2 text-left hover:bg-secondary sm:px-3">
+                {item}
+              </button>
             </div>
           ))}
         </div>
-
-        {/* Optional: Add some visual feedback for the active tab */}
       </div>
     </div>
   );

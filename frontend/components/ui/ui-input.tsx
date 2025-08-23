@@ -8,8 +8,6 @@ import {
   CopyIcon,
   ThumbsDownIcon,
   ThumbsUpIcon,
-  SpeakerHighIcon,
-  SpeakerXIcon,
   CheckIcon,
   CheckCircleIcon,
   ArrowsLeftRightIcon,
@@ -23,15 +21,14 @@ import TabsSuggestion from "./tabs-suggestion";
 import { ModelSelector } from "@/components/ui/model-selector";
 import { DEFAULT_MODEL_ID } from "@/models/constants";
 import { useTheme } from "next-themes";
-import {
-  ArrowUpIcon,
-  WrapText,
-} from "lucide-react";
+import { ArrowUpIcon, WrapText } from "lucide-react";
 import { atomOneDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
-import { Logo } from "../svgs/logo";
-import { Skeleton } from "./skeleton";
 import { useUser } from "@/hooks/useUser";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useConversationById } from "@/hooks/useConversation";
+import { useCredits } from "@/hooks/useCredits";
+import { UpgradeCTA } from "@/components/ui/upgrade-cta";
+import { useConversationContext } from "@/contexts/conversation-context";
 
 const geistMono = Geist_Mono({
   subsets: ["latin"],
@@ -46,9 +43,20 @@ interface Message {
   content: string;
 }
 
+<<<<<<< HEAD
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
+=======
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3000";
+>>>>>>> origin/main
 
-const UIInput = () => {
+interface UIInputProps {
+  conversationId?: string;
+}
+
+const UIInput = ({
+  conversationId: initialConversationId,
+}: UIInputProps = {}) => {
   const [model, setModel] = useState<string>(DEFAULT_MODEL_ID);
   const [query, setQuery] = useState<string>("");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -58,11 +66,26 @@ const UIInput = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const [isWrapped, setIsWrapped] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(
+    initialConversationId || v4()
+  );
   const { resolvedTheme } = useTheme();
   const { user, isLoading: isUserLoading } = useUser();
+  const { conversation, loading: converstionLoading } = useConversationById(
+    initialConversationId
+  );
+  const {
+    userCredits,
+    isLoading: isCreditsLoading,
+    refetchCredits,
+  } = useCredits();
+  const { refreshConversations } = useConversationContext();
   const router = useRouter();
+<<<<<<< HEAD
   const searchParams = useSearchParams();
   const [conversationId, setConversationId] = useState<string | null>(null);
+=======
+>>>>>>> origin/main
 
   const toggleWrap = useCallback(() => {
     setIsWrapped((prev: boolean) => !prev);
@@ -76,6 +99,7 @@ const UIInput = () => {
     scrollToBottom();
   }, [messages]);
 
+<<<<<<< HEAD
   // Initialize conversation from URL parameters
   useEffect(() => {
     const conversationParam = searchParams.get('c');
@@ -112,9 +136,29 @@ const UIInput = () => {
     }
   };
 
+=======
+  useEffect(() => {
+    if (conversation?.messages && initialConversationId) {
+      setMessages(conversation.messages);
+      setShowWelcome(false);
+    }
+  }, [conversation, initialConversationId]);
+>>>>>>> origin/main
 
   const processStream = async (response: Response, userMessage: string) => {
     if (!response.ok) {
+      // Handle credit-related errors
+      if (response.status === 403) {
+        try {
+          const errorData = await response.json();
+          if (errorData.message?.includes("Insufficient credits")) {
+            // Refetch credits to update UI
+            await refetchCredits();
+          }
+        } catch (e) {
+          console.error("Error parsing error response:", e);
+        }
+      }
       console.error("Error from API:", response.statusText);
       setIsLoading(false);
       return;
@@ -194,7 +238,7 @@ const UIInput = () => {
 
             try {
               const parsedData = JSON.parse(data) as {
-                content?: string
+                content?: string;
               };
               const content = parsedData.content;
               if (content) {
@@ -223,6 +267,7 @@ const UIInput = () => {
     } finally {
       setIsLoading(false);
       abortControllerRef.current = null;
+      await refreshConversations();
     }
   };
 
@@ -232,7 +277,14 @@ const UIInput = () => {
     if (!user) {
       router.push("/auth");
       return;
-    };
+    }
+
+    // Check if user has credits
+    if (userCredits && userCredits.credits <= 0 && !userCredits.isPremium) {
+      // Don't allow chat if no credits
+      return;
+    }
+
     if (!query.trim() || isLoading) return;
 
     setShowWelcome(false);
@@ -263,7 +315,7 @@ const UIInput = () => {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${localStorage.getItem("token")}`
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
               },
               body: JSON.stringify({
                 message: currentQuery,
@@ -274,7 +326,6 @@ const UIInput = () => {
             });
 
             await processStream(response, currentQuery);
-
           } catch (error) {
             if ((error as Error).name !== "AbortError") {
               console.error("Error sending message:", error);
@@ -293,14 +344,35 @@ const UIInput = () => {
     try {
       await navigator.clipboard.writeText(content);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000); // Reset after 2s
+      setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error("Failed to copy: ", err);
     }
   };
 
+  if (initialConversationId && converstionLoading) {
+    return (
+      <div className="flex w-full overflow-hidden">
+        <div className="relative flex h-full w-full flex-col">
+          <div className="flex h-full w-full flex-col items-center justify-center">
+            <div className="flex flex-col items-center gap-4">
+              <div className="flex items-center space-x-2">
+                <div className="bg-accent h-2.5 w-2.5 animate-bounce rounded-full [animation-delay:0s]"></div>
+                <div className="bg-accent h-2.5 w-2.5 animate-bounce rounded-full [animation-delay:0.2s] [animation-direction:reverse]"></div>
+                <div className="bg-accent h-2.5 w-2.5 animate-bounce rounded-full [animation-delay:0.4s]"></div>
+              </div>
+              <p className="text-muted-foreground text-sm">
+                Loading conversation...
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex h-[96vh] w-full overflow-hidden">
+    <div className="flex h-[96dvh] w-full overflow-hidden">
       <div className="relative flex h-full w-full flex-col">
         {!query && showWelcome && messages.length === 0 ? (
           <div className="flex h-full w-full flex-col">
@@ -323,7 +395,7 @@ const UIInput = () => {
                     className={cn(
                       "prose cursor-pointer dark:prose-invert max-w-none rounded-lg px-4 py-2",
                       message.role === "user"
-                        ? "bg-accent/40 w-fit max-w-full font-medium"
+                        ? "bg-accent/10 w-fit max-w-full font-medium"
                         : "w-full p-0"
                     )}
                   >
@@ -515,11 +587,20 @@ const UIInput = () => {
           </div>
         )}
 
-        <div className="bg-muted border-border/20 mb-4 w-full rounded-2xl border-t p-2">
+        {/* Show upgrade prompt when user has no credits */}
+        {userCredits && userCredits.credits <= 0 && !userCredits.isPremium && (
+          <div className="mb-4 w-full px-4 md:px-8">
+            <div className="mx-auto w-full max-w-4xl">
+              <UpgradeCTA variant="banner" />
+            </div>
+          </div>
+        )}
+
+        <div className="bg-muted/20 backdrop-blur-3xl border border-border/50 mb-4 w-full rounded-2xl p-1">
           <div className="mx-auto w-full max-w-4xl">
             <form
               onSubmit={handleCreateChat}
-              className="bg-accent/30 flex w-full flex-col rounded-xl p-3 pb-3"
+              className="bg-accent/30 dark:bg-accent/10 flex w-full flex-col rounded-xl p-3"
             >
               <Textarea
                 value={query}
@@ -531,23 +612,49 @@ const UIInput = () => {
                   }
                 }}
                 placeholder={
-                  "Ask whatever you want to be"
+                  userCredits &&
+                  userCredits.credits <= 0 &&
+                  !userCredits.isPremium
+                    ? "You need credits to start a chat. Please upgrade to continue."
+                    : "Ask anything"
                 }
                 className="h-[2rem] resize-none rounded-none border-none bg-transparent px-0 py-1 shadow-none ring-0 focus-visible:ring-0 dark:bg-transparent"
-                disabled={isLoading}
+                disabled={
+                  isLoading ||
+                  !!(
+                    userCredits &&
+                    userCredits.credits <= 0 &&
+                    !userCredits.isPremium
+                  )
+                }
               />
               <div className="mt-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <ModelSelector
                     value={model}
                     onValueChange={setModel}
-                    disabled={isLoading}
+                    disabled={
+                      isLoading ||
+                      !!(
+                        userCredits &&
+                        userCredits.credits <= 0 &&
+                        !userCredits.isPremium
+                      )
+                    }
                   />
                 </div>
                 <Button
                   type="submit"
                   size="icon"
-                  disabled={isLoading || !query.trim()}
+                  disabled={
+                    isLoading ||
+                    !query.trim() ||
+                    !!(
+                      userCredits &&
+                      userCredits.credits <= 0 &&
+                      !userCredits.isPremium
+                    )
+                  }
                 >
                   {isLoading ? (
                     <SpinnerGapIcon className="animate-spin" />

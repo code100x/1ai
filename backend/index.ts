@@ -4,6 +4,7 @@ import authRouter from "./routes/auth"
 import aiRouter from "./routes/ai"
 import { billingRouter } from "./routes/billing"
 import { MetricsCollector } from "./metrics";
+import rzpWebhookRouter from "./routes/rzpWebhookRouter"
 
 const app = express();
 const metrics = MetricsCollector.getInstance();
@@ -29,6 +30,7 @@ app.get("/metrics", async (req, res) => {
     res.json({ system: systemMetrics, users: userMetrics });
 });
 
+app.use("/rzp_webhook", rzpWebhookRouter);
 app.use("/ai", aiRouter);
 app.use("/auth", authRouter);
 app.use("/billing", billingRouter);

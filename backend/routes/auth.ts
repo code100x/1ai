@@ -70,6 +70,7 @@ router.post("/signin", perMinuteLimiterRelaxed, async (req, res) => {
 
     console.log("data is");
     console.log(data);
+    
     // Prevent race conditions with mutex
     if (verificationMutex.get(data.email)) {
         res.status(429).json({
@@ -137,6 +138,7 @@ router.post("/signin", perMinuteLimiterRelaxed, async (req, res) => {
     const tokenManager = AuthTokenManager.getInstance();
     const { accessToken, refreshToken } = await tokenManager.generateTokenPair(user.id);
 
+<<<<<<< HEAD
         res.json({
             accessToken,
             refreshToken,

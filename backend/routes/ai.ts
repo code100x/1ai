@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { v4 as uuidv4 } from "uuid";
-import { CreateChatSchema, Role } from "../types";
+import { CreateChatSchema, MODELS, Role } from "../types";
 import { createCompletion } from "../openrouter";
 import { InMemoryStore } from "../InMemoryStore";
 import { authMiddleware } from "../auth-middleware";
@@ -63,11 +63,19 @@ router.post("/chat", authMiddleware, perMinuteLimiterRelaxed, async (req, res) =
 
     const conversationId = data?.conversationId ?? uuidv4();
 
-    if (!success) {
+    if (!success || !conversationId) {
         res.status(411).json({
             message: "Incorrect inputs"
         })
         return
+    }
+
+    const model = MODELS.find((model) => model.id === data.model);
+    if (!model) {
+        res.status(404).json({
+            message: "Model not found"
+        });
+        return;
     }
 
     // Check user credits before processing
@@ -79,6 +87,14 @@ router.post("/chat", authMiddleware, perMinuteLimiterRelaxed, async (req, res) =
     if (!user) {
         res.status(404).json({
             message: "User not found"
+        });
+        return;
+    }
+
+    if (model.isPremium && !user?.isPremium) {
+        res.status(403).json({
+            message: "Insufficient credits. Please subscribe to continue.",
+            credits: user?.credits
         });
         return;
     }

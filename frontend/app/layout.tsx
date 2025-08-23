@@ -45,11 +45,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html
-      lang="en"
-      suppressHydrationWarning
-      className={`${proxima.variable} ${inter.variable} ${geist.variable} ${playfair.variable} ${roboto.variable}`}
-    >
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${proxima.className} ${inter.className} ${geist.className} ${playfair.className} ${roboto.className}`}
       >
@@ -59,12 +55,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-            <FontProvider>
-              <BlurProvider>
-                {children}
-                <Toaster />
-              </BlurProvider>
-            </FontProvider>
+          <FontProvider>
+            <BlurProvider>
+              {children}
+              <Toaster />
+            </BlurProvider>
+          </FontProvider>
         </ThemeProvider>
       </body>
     </html>
