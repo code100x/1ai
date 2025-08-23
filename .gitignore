@@ -1,0 +1,4 @@
+# Ignore env templates and local guides
+backend/env-template.txt
+frontend/env-template.txt
+SETUP_GUIDE.md
