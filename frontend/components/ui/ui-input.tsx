@@ -11,6 +11,8 @@ import {
   CheckIcon,
   CheckCircleIcon,
   ArrowsLeftRightIcon,
+  ImageIcon,
+  XIcon,
 } from "@phosphor-icons/react";
 import ReactMarkdown from "react-markdown";
 import SyntaxHighlighter from "react-syntax-highlighter";
@@ -28,7 +30,7 @@ import { useRouter } from "next/navigation";
 import { useConversationById } from "@/hooks/useConversation";
 import { useCredits } from "@/hooks/useCredits";
 import { UpgradeCTA } from "@/components/ui/upgrade-cta";
-import { ImageUpload } from "./image-upload";
+import { convertImageToBase64 } from "@/lib/image-utils";
 import { useConversationContext } from "@/contexts/conversation-context";
 
 const geistMono = Geist_Mono({
@@ -62,7 +64,6 @@ const UIInput = ({
   const [copied, setCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [images, setImages] = useState<string[]>([]);
-  const [imageResetTrigger, setImageResetTrigger] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const [isWrapped, setIsWrapped] = useState(false);
@@ -256,7 +257,6 @@ const UIInput = ({
 
     setQuery("");
     setImages([]); // Clear images after sending
-    setImageResetTrigger(prev => prev + 1); // Trigger image upload reset
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
 
@@ -310,6 +310,44 @@ const UIInput = ({
     }
   };
 
+  const handleImageUpload = async (file: File) => {
+    try {
+      // Convert image to base64
+      const base64 = await convertImageToBase64(file);
+      setImages([base64]);
+    } catch (error) {
+      console.error("Error converting image:", error);
+      alert("Failed to process image. Please try again.");
+    }
+  };
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    
+    if (!userCredits?.isPremium) {
+      alert("Image uploads are only available for premium users.");
+      return;
+    }
+    
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      if (file.type.startsWith('image/')) {
+        handleImageUpload(file);
+      } else {
+        alert("Please drop an image file.");
+      }
+    }
+  }, [userCredits?.isPremium]);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+  }, []);
+
   if (initialConversationId && converstionLoading) {
     return (
       <div className="flex w-full overflow-hidden">
@@ -333,7 +371,12 @@ const UIInput = ({
 
   return (
     <div className="flex h-[96dvh] w-full overflow-hidden">
-      <div className="relative flex h-full w-full flex-col">
+      <div 
+        className="relative flex h-full w-full flex-col"
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+      >
         {!query && showWelcome && messages.length === 0 ? (
           <div className="flex h-full w-full flex-col">
             <div className="flex h-full w-full flex-col items-center justify-center">
@@ -585,14 +628,29 @@ const UIInput = ({
 
         <div className="bg-muted/20 backdrop-blur-3xl border border-border/50 mb-4 w-full rounded-2xl p-1">
           <div className="mx-auto w-full max-w-4xl">
-            {/* Image Upload Section */}
-            {userCredits?.isPremium && (
+            {/* Image Preview Section - Above Input */}
+            {images.length > 0 && (
               <div className="p-3 border-b border-border/50">
-                <ImageUpload
-                  onImagesChange={setImages}
-                  disabled={isLoading}
-                  resetTrigger={imageResetTrigger}
-                />
+                <div className="flex items-center gap-3">
+                  <img
+                    src={images[0]}
+                    alt="Uploaded image"
+                    className="w-16 h-16 object-cover rounded-lg border border-border"
+                  />
+                  <div className="flex-1">
+                    <p className="text-sm text-muted-foreground">Image ready to send</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    onClick={() => setImages([])}
+                    className="h-6 w-6"
+                    title="Remove Image"
+                  >
+                    <XIcon className="w-3 h-3" />
+                  </Button>
+                </div>
               </div>
             )}
             
@@ -614,6 +672,8 @@ const UIInput = ({
                   userCredits.credits <= 0 &&
                   !userCredits.isPremium
                     ? "You need credits to start a chat. Please upgrade to continue."
+                    : userCredits?.isPremium
+                    ? "Ask anything or drag & drop an image here..."
                     : "Ask anything"
                 }
                 className="h-[2rem] resize-none rounded-none border-none bg-transparent px-0 py-1 shadow-none ring-0 focus-visible:ring-0 dark:bg-transparent"
@@ -640,6 +700,40 @@ const UIInput = ({
                       )
                     }
                   />
+                  
+                  {/* Image Upload Icon - Only for Premium Users */}
+                  {userCredits?.isPremium && (
+                    <div className="relative">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            handleImageUpload(file);
+                          }
+                          // Reset input value
+                          if (e.target) {
+                            e.target.value = '';
+                          }
+                        }}
+                        className="hidden"
+                        id="image-upload-input"
+                        disabled={isLoading}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => document.getElementById('image-upload-input')?.click()}
+                        disabled={isLoading}
+                        className="h-6 w-6"
+                        title="Upload Image"
+                      >
+                        <ImageIcon className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
                 <Button
                   type="submit"
