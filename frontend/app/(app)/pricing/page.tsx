@@ -62,76 +62,74 @@ const pricingPlans = [
 
 export default function PricingPage() {
   return (
-    <div className="h-full overflow-y-auto pt-8 pb-4">
-      <div className="container mx-auto px-4 py-8 max-w-5xl">
-        <div className="text-center flex flex-col gap-2">
-          <h1 className="text-3xl font-bold text-primary lg:text-4xl tracking-tight">
+    <div className="h-full overflow-y-auto pt-10 pb-8">
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <div className="text-center flex flex-col gap-3">
+          <h1 className="text-4xl font-bold text-primary md:text-5xl tracking-tight">
             Simple, Transparent Pricing
           </h1>
-          <p className="text-muted-foreground text-base max-w-2xl mx-auto">
+          <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto">
             Choose the plan that works best for you. All plans include access to
             our complete AI platform.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto mt-10">
           {pricingPlans.map((plan) => (
             <Card
               key={plan.name}
-              className={`relative border-muted/40 bg-muted/10 transition-all duration-300 hover:shadow-lg ${
-                plan.highlight
-                  ? "border-primary/50 bg-primary/5 scale-[1.02]"
-                  : "hover:border-muted/60"
+              className={`relative bg-card border transition-all duration-200 hover:shadow-md ${
+                plan.highlight ? "ring-2 ring-primary/70 shadow-sm" : ""
               }`}
             >
               {plan.popular && (
-                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                  <Badge className="bg-primary text-primary-foreground px-3 py-1 flex items-center gap-1">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <Badge className="bg-primary text-primary-foreground px-3 py-1 flex items-center gap-1 rounded-full shadow">
                     <StarIcon className="size-3" weight="fill" />
                     Most Popular
                   </Badge>
                 </div>
               )}
 
-              <CardHeader className="text-center pb-4">
-                <CardTitle className="text-xl font-bold">{plan.name}</CardTitle>
-                <div className="mt-3">
-                  <div className="flex items-center justify-center gap-2">
-                    <span className="text-3xl font-bold text-primary">
+              <CardHeader className="text-center pb-2">
+                <CardTitle className="text-2xl font-semibold">
+                  {plan.name}
+                </CardTitle>
+                <div className="mt-4">
+                  <div className="flex items-baseline justify-center gap-2">
+                    <span className="text-4xl font-bold text-primary">
                       {plan.currency}
                       {plan.price}
                     </span>
-                    <span className="text-muted-foreground text-sm">
+                    <span className="text-muted-foreground text-sm md:text-base">
                       {plan.interval}
                     </span>
                   </div>
                   {plan.savings && (
-                    <div className="mt-2">
-                      <Badge
-                        variant="secondary"
-                        className="bg-green-500/10 text-green-600 dark:text-green-400"
-                      >
-                        {plan.savings}
-                      </Badge>
-                    </div>
+                    <Badge
+                      variant="secondary"
+                      className="mt-3 bg-green-500/10 text-green-600 dark:text-green-400 px-2.5 py-0.5 rounded-full"
+                    >
+                      {plan.savings}
+                    </Badge>
                   )}
                 </div>
-                <p className="text-muted-foreground text-sm mt-3">
+                <p className="text-muted-foreground text-sm md:text-base mt-3">
                   {plan.description}
                 </p>
               </CardHeader>
 
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
+              <CardContent className="space-y-5 pb-6">
+                <div className="space-y-3">
                   {plan.features.map((feature, index) => (
                     <div key={index} className="flex items-center gap-3">
-                      <div className="flex size-4 items-center justify-center rounded-full bg-primary/10">
+                      <div className="flex size-5 items-center justify-center rounded-full bg-primary/10">
                         <CheckIcon
-                          className="size-2.5 text-primary"
+                          className="size-3 text-primary"
                           weight="bold"
                         />
                       </div>
-                      <span className="text-foreground/90 text-sm">
+                      <span className="text-foreground/90 text-sm leading-relaxed">
                         {feature}
                       </span>
                     </div>
@@ -145,10 +143,10 @@ export default function PricingPage() {
                     currency: plan.currency,
                     interval: plan.interval.replace("per ", ""),
                   }}
-                  className={`w-full h-10 font-semibold text-sm ${
+                  className={`w-full h-11 font-medium text-sm rounded-md ${
                     plan.highlight
-                      ? "bg-primary hover:bg-primary/90 text-primary-foreground"
-                      : "bg-muted hover:bg-muted/80 text-foreground"
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                      : "bg-muted text-foreground hover:bg-muted/80"
                   }`}
                 >
                   {plan.cta.text}
