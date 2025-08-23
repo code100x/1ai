@@ -22,11 +22,12 @@ import {
   TrashIcon,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Logo } from "../svgs/logo";
 import { Conversation, useConversation } from "@/hooks/useConversation";
 import { useUser } from "@/hooks/useUser";
 import { useCredits } from "@/hooks/useCredits";
+import { ChatService } from "@/lib/chat-service";
 
 interface Chat {
   id: string;
@@ -43,7 +44,10 @@ export function UIStructure() {
   const [hoverChatId, setHoverChatId] = useState<string>("");
   const { conversations, loading, error } = useConversation();
   const router = useRouter();
-
+  const params = useParams();
+  
+  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3000";
+  
   useEffect(() => {
     if (conversations) {
       setChats(conversations);
@@ -51,9 +55,21 @@ export function UIStructure() {
   }, [conversations]);
 
 
-  const handleDeleteChat = (chatId: string) => {
+
+  const handleDeleteChat = async (chatId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     try {
+      const success = await ChatService.deleteConversation(chatId);
+      if (!success) {
+        toast.error("Failed to delete chat");
+        return;
+      }
+
       toast.success("Chat deleted successfully");
+      if (String(params.chatId) === chatId) {
+        router.replace("/ask");
+      }
       setChats(chats.filter((chat) => chat.id !== chatId));
     } catch (error) {
       console.error("Error deleting chat:", error);
@@ -129,6 +145,7 @@ export function UIStructure() {
                                   className="flex items-center justify-center rounded-md"
                                   onClick={(e) => {
                                     e.preventDefault();
+                                    e.stopPropagation();
                                     const shareLink =
                                       process.env.NEXT_PUBLIC_APP_URL +
                                       `/chat/share/${chat.id}`;
@@ -146,7 +163,7 @@ export function UIStructure() {
 
                                 <div
                                   className="flex items-center justify-center rounded-md"
-                                  onClick={() => handleDeleteChat(chat.id)}
+                                  onClick={(e) => handleDeleteChat(chat.id, e)}
                                 >
                                   <TrashIcon
                                     weight={"bold"}
