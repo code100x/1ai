@@ -69,7 +69,9 @@ export function Email({setEmail, setStep, email}: {setEmail: (email: string) => 
             }}
             className="h-14 w-[25rem] text-lg font-semibold text-white hover:bg-primary/90"
           >
-            Continue with Email
+            { sendingRequest ? (
+              <span className="text-muted-foreground">Please Wait...</span>
+            ) : ("Continue with Email")}
           </Button>
           <div className="text-muted-foreground/80 text-sm">
             By continuing, you agree to our{" "}
