@@ -86,6 +86,8 @@ const UIInput = ({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const focusOnTypeRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -96,6 +98,22 @@ const UIInput = ({
       setShowWelcome(false);
     }
   }, [conversation, initialConversationId]);
+
+ useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only focus if typing a character or using backspace
+      if (e.key.length === 1 || e.key === "Backspace") {
+        if (document.activeElement !== focusOnTypeRef.current) {
+          focusOnTypeRef.current?.focus();
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
 
   const processStream = async (response: Response, userMessage: string) => {
     if (!response.ok) {
@@ -555,6 +573,7 @@ const UIInput = ({
               className="bg-accent/30 dark:bg-accent/10 flex w-full flex-col rounded-xl p-3"
             >
               <Textarea
+                ref={focusOnTypeRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => {
