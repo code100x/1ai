@@ -60,10 +60,10 @@ const TabsSuggestion = ({
   const activeTabData = tabs.find((tab) => tab.id === activeTab);
 
   return (
-    <div className="text-foreground mt-7 h-fit min-w-lg">
+    <div className="text-foreground mt-7 h-fit w-full max-w-full sm:max-w-lg mx-auto">
       <div className="flex flex-col gap-4">
         {/* Tab Navigation */}
-        <div className="mb-4 flex gap-2">
+        <div className="mb-4 flex flex-wrap gap-2 justify-start max-sm:justify-center">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -81,7 +81,7 @@ const TabsSuggestion = ({
         </div>
 
         {/* Tab Content */}
-        <div className="flex flex-col items-center gap-6">
+    <div className="flex flex-col items-center  gap-6 w-full">
           {activeTabData?.content.map((item, index) => (
             <div
               key={index}
@@ -92,7 +92,7 @@ const TabsSuggestion = ({
               }}
               className="group w-full cursor-pointer transition-all duration-200 hover:text-secondary-foreground"
             >
-              <p className="text-card-foreground text-sm">{item}</p>
+      <p className="text-card-foreground text-sm break-words">{item}</p>
             </div>
           ))}
         </div>
