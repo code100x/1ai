@@ -50,9 +50,9 @@ router.post("/chat", authMiddleware, async (req, res) => {
     const userId = req.userId;
     const {success, data} = CreateChatSchema.safeParse(req.body);
 
-    const conversationId = data?.conversationId ?? Bun.randomUUIDv7();
+    const conversationId = data?.conversationId;
 
-    if (!success) {
+    if (!success || !conversationId) {
         res.status(411).json({
             message: "Incorrect inputs"
         })
