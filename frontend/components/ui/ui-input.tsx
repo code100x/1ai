@@ -29,6 +29,9 @@ import { useConversationById } from "@/hooks/useConversation";
 import { useCredits } from "@/hooks/useCredits";
 import { UpgradeCTA } from "@/components/ui/upgrade-cta";
 import { useConversationContext } from "@/contexts/conversation-context";
+import { PreviewModal } from "@/components/ui/preview-modal";
+import { detectPreviewableCode } from "@/lib/code-preview-engine";
+import { Play } from "lucide-react";
 
 const geistMono = Geist_Mono({
   subsets: ["latin"],
@@ -491,6 +494,31 @@ const UIInput = ({
                       {message.content}
                     </ReactMarkdown>
                   </div>
+                  
+                  {/* Code Preview Section - Only for assistant messages with previewable code */}
+                  {message.role === "assistant" && (() => {
+                    const { hasPreviewableCode, previewableCode } = detectPreviewableCode(message.content);
+                    
+                    if (hasPreviewableCode && previewableCode) {
+                      return (
+                        <div className="mt-4 mb-2">
+                          <PreviewModal
+                            html={previewableCode.html}
+                            css={previewableCode.css}
+                            js={previewableCode.js}
+                            trigger={
+                              <button className="hover:bg-accent flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 border border-border">
+                                <Play className="h-4 w-4" />
+                                Preview Code
+                              </button>
+                            }
+                          />
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+                  
                   <div className="font-medium">
                     {message.role === "assistant" && (
                       <div className="invisible flex w-fit items-center gap-2 text-base font-semibold group-hover:visible">
