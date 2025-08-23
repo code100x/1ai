@@ -12,9 +12,12 @@ import { toast } from "sonner";
 export function Otp({email}: {email: string}) {
     const [otp, setOtp] = useState("");
     const router = useRouter();
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleLogin = async () => {
+      
       try {
+        setIsSubmitting(true);
         const response = await fetch(`${BACKEND_URL}/auth/signin`, {
           method: "POST",
           body: JSON.stringify({ email, otp }),
@@ -41,6 +44,8 @@ export function Otp({email}: {email: string}) {
         }
       } catch (error) {
         console.error("Some error occured ", error);
+      } finally {
+        setIsSubmitting(false);
       }
     }
 
@@ -77,13 +82,17 @@ export function Otp({email}: {email: string}) {
             placeholder="OTP"
             className="h-14 w-[25rem] text-lg font-semibold text-white"
             onChange={(e) => setOtp(e.target.value)}
+            disabled={isSubmitting}
           />
           <Button
             variant="accent"
             onClick={handleLogin}
-            className="h-14 w-[25rem] text-lg font-semibold text-white"
+            className="h-14 w-[25rem] text-lg font-semibold text-white hover:bg-primary/90"
+            disabled={isSubmitting || !otp}
           >
-            Login
+            { isSubmitting ? (
+              <span className="text-muted-foreground">Please Wait...</span>
+            ) : ("Login")}
           </Button>
           <div className="text-muted-foreground/80 text-sm">
             By continuing, you agree to our{" "}

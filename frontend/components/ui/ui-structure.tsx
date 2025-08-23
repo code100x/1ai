@@ -84,7 +84,7 @@ export function UIStructure() {
                   router.push("/ask");
                 }}
                 variant="accent"
-                className="w-full"
+                className="w-full hover:bg-primary/90"
               >
                 New Chat
               </Button>
