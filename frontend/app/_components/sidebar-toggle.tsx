@@ -22,18 +22,38 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-interface Chat {
-  id: string;
-  updatedAt: Date;
-  userId: string;
-  messages: {
-    content: string;
-  }[];
-}
+import { useAuthStore, useConversationStore } from "@/store";
+import { ApiService } from "@/lib/api";
 
 export const SidebarToggle = () => {
   const { open } = useSidebar();
-  const [chats, setChats] = useState<Chat[]>([]);
+  const { token } = useAuthStore();
+  const { conversations, setConversations } = useConversationStore();
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (token && conversations.length === 0) {
+      loadConversations();
+    }
+  }, [token]);
+
+  const loadConversations = async () => {
+    if (!token) return;
+    
+    setIsLoading(true);
+    try {
+      const fetchedConversations = await ApiService.getConversations(token);
+      setConversations(fetchedConversations.map(conv => ({
+        id: conv.id,
+        title: conv.title,
+        updatedAt: conv.updatedAt,
+      })));
+    } catch (error) {
+      console.error("Failed to load conversations:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div
@@ -53,11 +73,17 @@ export const SidebarToggle = () => {
           <Command>
             <CommandInput placeholder="Type a command or search..." />
             <CommandList>
-              <CommandEmpty>No results found.</CommandEmpty>
+              <CommandEmpty>
+                {isLoading ? "Loading conversations..." : "No conversations found."}
+              </CommandEmpty>
               <CommandGroup className="no-scrollbar" heading="Recent Chats">
-                {chats?.map((chat: Chat) => (
-                  <CommandItem key={chat.id}>
-                      <span>{chat.messages[0]?.content}...</span>
+                {conversations?.map((conversation) => (
+                  <CommandItem key={conversation.id} asChild>
+                    <Link href={`/ask/${conversation.id}`} className="cursor-pointer">
+                      <span className="truncate">
+                        {conversation.title || "Untitled"}
+                      </span>
+                    </Link>
                   </CommandItem>
                 ))}
               </CommandGroup>

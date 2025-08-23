@@ -8,10 +8,12 @@ import { useState } from "react";
 import { BACKEND_URL } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useAuthStore } from "@/store";
 
 export function Otp({email}: {email: string}) {
     const [otp, setOtp] = useState("");
     const router = useRouter();
+    const { setToken, setUser } = useAuthStore();
 
     const handleLogin = async () => {
       try {
@@ -35,6 +37,22 @@ export function Otp({email}: {email: string}) {
 
         if (response.status === 200) {
           localStorage.setItem("token", data.token);
+          setToken(data.token);
+          
+          // Fetch user data after successful login
+          try {
+            const userResponse = await fetch(`${BACKEND_URL}/auth/me`, {
+              headers: {
+                "Authorization": `Bearer ${data.token}`
+              }
+            });
+            if (userResponse.ok) {
+              const userData = await userResponse.json();
+              setUser(userData.user);
+            }
+          } catch (error) {
+            console.error("Failed to fetch user data:", error);
+          }
           
           window.location.href = "/";
         } else if (response.status !== 401 && response.status !== 429) {

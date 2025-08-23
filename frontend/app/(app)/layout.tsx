@@ -7,6 +7,7 @@ import { SelectTheme } from "@/components/ui/theme-toggler";
 import { UIStructure } from "@/components/ui/ui-structure";
 import { ThemeProvider } from "@/components/theme-provider";
 import { UpgradeCTA } from "@/components/ui/upgrade-cta";
+import { AuthProvider } from "@/components/auth-provider";
 
 export default function ChatLayout({
   children,
@@ -15,15 +16,16 @@ export default function ChatLayout({
 }) {
   return (
     <>
-      <SidebarProvider>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-          disableTransitionOnChange
-        > 
-        <UIStructure />
-        <SidebarInset className="!h-svh p-2">
+      <AuthProvider>
+        <SidebarProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem
+            disableTransitionOnChange
+          > 
+          <UIStructure />
+          <SidebarInset className="!h-svh p-2">
           <div className="bg-muted/60 relative h-full max-h-svh w-full rounded-xl p-4">
             <div className="absolute top-0 left-0 z-[50] flex h-12 w-full items-center justify-between px-3">
               <SidebarToggle />
@@ -46,8 +48,9 @@ export default function ChatLayout({
             </div>
             </div>
           </SidebarInset>
-        </ThemeProvider>
-      </SidebarProvider>
+          </ThemeProvider>
+        </SidebarProvider>
+      </AuthProvider>
     </>
   );
 }

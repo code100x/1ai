@@ -27,6 +27,7 @@ import { Logo } from "../svgs/logo";
 import { Conversation, useConversation } from "@/hooks/useConversation";
 import { useUser } from "@/hooks/useUser";
 import { useCredits } from "@/hooks/useCredits";
+import { useAuthStore } from "@/store";
 
 interface Chat {
   id: string;
@@ -39,22 +40,17 @@ interface Chat {
 }
 
 export function UIStructure() {
-  const [chats, setChats] = useState<Conversation[]>([]);
   const [hoverChatId, setHoverChatId] = useState<string>("");
   const { conversations, loading, error } = useConversation();
+  const { signOut } = useAuthStore();
   const router = useRouter();
-
-  useEffect(() => {
-    if (conversations) {
-      setChats(conversations);
-    }
-  }, [conversations]);
 
 
   const handleDeleteChat = (chatId: string) => {
     try {
       toast.success("Chat deleted successfully");
-      setChats(chats.filter((chat) => chat.id !== chatId));
+      // TODO: Implement actual delete functionality with API call
+      // For now, just show success message
     } catch (error) {
       console.error("Error deleting chat:", error);
     }
@@ -106,7 +102,7 @@ export function UIStructure() {
                       className="bg-primary/15 mb-2 h-7 w-full animate-pulse rounded-md"
                     />
                   ))
-                : chats
+                : conversations
                     .map((chat: Conversation) => (
                       <SidebarMenuItem key={chat.id}>
                         <SidebarMenuButton
@@ -167,6 +163,7 @@ export function UIStructure() {
               onClick={(e) => {
                 e.preventDefault();
                 localStorage.removeItem("token");
+                signOut();
                 window.location.reload();
               }}
             >
