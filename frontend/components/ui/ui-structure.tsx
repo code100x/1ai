@@ -27,6 +27,7 @@ import { Logo } from "../svgs/logo";
 import { Conversation, useConversation } from "@/hooks/useConversation";
 import { useUser } from "@/hooks/useUser";
 import { useCredits } from "@/hooks/useCredits";
+import { formatDate } from "@/lib/date"
 
 interface Chat {
   id: string;
@@ -118,6 +119,9 @@ export function UIStructure() {
                           <div className="flex w-full items-center justify-between">
                               <span className="z-[-1] cursor-pointer truncate">
                                 {chat.title}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {formatDate(chat.createdAt)}
                               </span>
                               <div
                                 className={`absolute top-0 right-0 z-[5] h-full w-12 rounded-r-md blur-[2em] ${chat.id === hoverChatId ? "bg-primary" : ""}`}
