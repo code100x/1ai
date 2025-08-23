@@ -61,6 +61,7 @@ const UIInput = ({
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isWrapped, setIsWrapped] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(
     initialConversationId || v4()
@@ -96,6 +97,44 @@ const UIInput = ({
       setShowWelcome(false);
     }
   }, [conversation, initialConversationId]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement;
+      if (
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.tagName === "SELECT" ||
+        target.isContentEditable
+      ) {
+        return;
+      }
+
+      if (event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) {
+        return;
+      }
+
+      if (
+        /^(F\d+|Tab|Escape|Enter|Backspace|Delete|Arrow\w+|Page\w+|Home|End|Insert)$/.test(
+          event.key
+        )
+      ) {
+        return;
+      }
+
+      if (textareaRef.current && !textareaRef.current.disabled) {
+        event.preventDefault();
+        textareaRef.current.focus();
+        textareaRef.current.setSelectionRange(
+          textareaRef.current.value.length,
+          textareaRef.current.value.length
+        );
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const processStream = async (response: Response, userMessage: string) => {
     if (!response.ok) {
@@ -555,6 +594,7 @@ const UIInput = ({
               className="bg-accent/30 dark:bg-accent/10 flex w-full flex-col rounded-xl p-3"
             >
               <Textarea
+                ref={textareaRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => {
