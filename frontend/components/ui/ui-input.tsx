@@ -29,6 +29,7 @@ import { useConversationById } from "@/hooks/useConversation";
 import { useCredits } from "@/hooks/useCredits";
 import { UpgradeCTA } from "@/components/ui/upgrade-cta";
 import { ImageUpload } from "./image-upload";
+import { useConversationContext } from "@/contexts/conversation-context";
 
 const geistMono = Geist_Mono({
   subsets: ["latin"],
@@ -78,6 +79,7 @@ const UIInput = ({
     isLoading: isCreditsLoading,
     refetchCredits,
   } = useCredits();
+  const { refreshConversations } = useConversationContext();
   const router = useRouter();
 
   const toggleWrap = useCallback(() => {
@@ -221,6 +223,7 @@ const UIInput = ({
     } finally {
       setIsLoading(false);
       abortControllerRef.current = null;
+      await refreshConversations();
     }
   };
 
