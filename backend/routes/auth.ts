@@ -6,7 +6,7 @@ import { TOTP } from "totp-generator"
 import base32 from "hi-base32";
 import { PrismaClient } from "../generated/prisma";
 import { authMiddleware } from "../auth-middleware";
-import { perMinuteLimiter, perMinuteLimiterRelaxed } from "../ratelimitter";
+import { perMinuteLimiter, perHourLimiter } from "../ratelimitter";
 
 const prismaClient = new PrismaClient();
 
@@ -60,7 +60,7 @@ router.post("/initiate_signin", perMinuteLimiter, async (req, res) => {
     }
 })
 
-router.post("/signin", perMinuteLimiterRelaxed, async (req, res) => {
+router.post("/signin", perHourLimiter, async (req, res) => {
     const { success, data } = SignIn.safeParse(req.body);
 
     if (!success) {
