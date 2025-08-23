@@ -12,8 +12,18 @@ const prismaClient = new PrismaClient();
 
 const router = Router();
 
-// Temporarily adding local user otp cache
-const otpCache = new Map<string, string>();
+// Temporarily adding local user otp cache with expiration
+const otpCache = new Map<string, { otp: string, expires: number }>();
+
+// Clean up expired OTPs every 5 minutes
+setInterval(() => {
+    const now = Date.now();
+    for (const [email, data] of otpCache.entries()) {
+        if (now > data.expires) {
+            otpCache.delete(email);
+        }
+    }
+}, 5 * 60 * 1000); // 5 minutes
 
 // TODO: Rate limit this
 router.post("/initiate_signin", perMinuteLimiter, async (req, res) => {
@@ -36,7 +46,11 @@ router.post("/initiate_signin", perMinuteLimiter, async (req, res) => {
             console.log(`Log into your 1ai `, otp);
         }
 
-        otpCache.set(data.email, otp);
+        // Store OTP with 5 minute expiration
+        otpCache.set(data.email, { 
+            otp, 
+            expires: Date.now() + 5 * 60 * 1000 // 5 minutes
+        });
         try {
             await prismaClient.user.create({
                 data: {
@@ -70,18 +84,41 @@ router.post("/signin", perMinuteLimiterRelaxed, async (req, res) => {
 
     console.log("data is");
     console.log(data);
-    // Verify with some totp lib
-    const { otp } = TOTP.generate(base32.encode(data.email + process.env.JWT_SECRET!));
-    console.log("expected otp is", otp);
-    console.log("otpCache is", otpCache.get(data.email));
+    
+    // Get the cached OTP for this email
+    const cachedOtpData = otpCache.get(data.email);
+    console.log("cached otp data is", cachedOtpData);
 
-    if(otp != data.otp && otp != otpCache.get(data.email)) {
+    // Check if OTP is provided and valid
+    if (!data.otp || !cachedOtpData) {
+        console.log("no otp provided or no cached otp");
+        res.status(401).json({
+            message: "Invalid otp"
+        })
+        return
+    }
+
+    // Check if OTP has expired
+    if (Date.now() > cachedOtpData.expires) {
+        console.log("otp expired");
+        otpCache.delete(data.email);
+        res.status(401).json({
+            message: "OTP expired"
+        })
+        return
+    }
+
+    // Check if OTP matches
+    if (data.otp !== cachedOtpData.otp) {
         console.log("invalid otp");
         res.status(401).json({
             message: "Invalid otp"
         })
         return
     }
+
+    // Clear the OTP from cache after successful validation
+    otpCache.delete(data.email);
 
     const user = await prismaClient.user.findUnique({
         where: {

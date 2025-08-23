@@ -57,11 +57,21 @@ export function Otp({email}: {email: string}) {
                         "Content-Type": "application/json",
                     },
                 }).then((res) => {
-                    res.json().then((data) => {
-                        localStorage.setItem("token", data.token);
-                        // hyderate user in the useUser hook
-                        //@ts-ignore
-                        window.location = "/"
+                    if (!res.ok) {
+                        return res.json().then((errorData) => {
+                            toast.error(errorData.message || "Invalid OTP");
+                            throw new Error(errorData.message || "Invalid OTP");
+                        });
+                    }
+                    return res.json().then((data) => {
+                        if (data.token) {
+                            localStorage.setItem("token", data.token);
+                            // hyderate user in the useUser hook
+                            //@ts-ignore
+                            window.location = "/"
+                        } else {
+                            toast.error("Login failed - no token received");
+                        }
                     });
                 }).catch((err) => {
                     toast.error("Invalid OTP");
