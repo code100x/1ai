@@ -24,45 +24,33 @@ import {
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Logo } from "../svgs/logo";
-import { Conversation } from "@/hooks/useConversation";
 import { useUser } from "@/hooks/useUser";
-import { useCredits } from "@/hooks/useCredits";
-import { useConversationContext } from "@/contexts/conversation-context";
 import Link from "next/link";
-
-interface Chat {
-  id: string;
-  updatedAt: Date;
-  isSaved: boolean;
-  userId: string;
-  messages: {
-    content: string;
-  }[];
-}
+import { useExecutionContext } from "@/contexts/execution-context";
+import { Execution } from "@/hooks/useExecution";
 
 export function UIStructure() {
-  const [chats, setChats] = useState<Conversation[]>([]);
+  const [uiExecutions, setUiExecutions] = useState<Execution[]>([]);
   const [hoverChatId, setHoverChatId] = useState<string>("");
-  const { conversations, loading, error, createNewConversation } = useConversationContext();
+  const { executions, loading, createNewExecution } = useExecutionContext();
   const router = useRouter();
 
   useEffect(() => {
-    if (conversations) {
-      setChats(conversations);
+    if (executions) {
+      setUiExecutions(executions);
     }
-  }, [conversations]);
+  }, [executions]);
 
-  const handleDeleteChat = (chatId: string) => {
+  const handleDeleteExecution = (executionId: string) => {
     try {
       toast.success("Chat deleted successfully");
-      setChats(chats.filter((chat) => chat.id !== chatId));
+      setUiExecutions(executions.filter((execution) => execution.id !== executionId));
     } catch (error) {
       console.error("Error deleting chat:", error);
     }
   };
 
   const { user, isLoading: isUserLoading } = useUser();
-  const { userCredits } = useCredits();
 
   return (
     <Sidebar className={`border py-2 pl-2`}>
@@ -78,7 +66,7 @@ export function UIStructure() {
               <Button
                 onClick={(e) => {
                   e.preventDefault();
-                  const id = createNewConversation();
+                  const id = createNewExecution();
                   router.push(`/ask/${id}`);
                 }}
                 variant="accent"
@@ -106,23 +94,23 @@ export function UIStructure() {
                       className="bg-primary/15 mb-2 h-7 w-full animate-pulse rounded-md"
                     />
                   ))
-                : chats.map((chat: Conversation) => (
-                    <SidebarMenuItem key={chat.id}>
+                : uiExecutions.map((execution: Execution) => (
+                    <SidebarMenuItem key={execution.id}>
                       <SidebarMenuButton
                         className="group hover:bg-primary/20 relative"
-                        onMouseEnter={() => setHoverChatId(chat.id)}
+                        onMouseEnter={() => setHoverChatId(execution.id)}
                         onMouseLeave={() => setHoverChatId("")}
-                        onClick={() => router.push(`/ask/${chat.id}`)}
+                        onClick={() => router.push(`/ask/${execution.id}`)}
                       >
                         <div className="flex w-full items-center justify-between">
                           <span className="z-[-1] cursor-pointer truncate">
-                            {chat.title}
+                            {execution.title}
                           </span>
                           <div
-                            className={`absolute top-0 right-0 z-[5] h-full w-12 rounded-r-md blur-[2em] ${chat.id === hoverChatId ? "bg-primary" : ""}`}
+                            className={`absolute top-0 right-0 z-[5] h-full w-12 rounded-r-md blur-[2em] ${execution.id === hoverChatId ? "bg-primary" : ""}`}
                           />
                           <div
-                            className={`absolute top-1/2 -right-16 z-[10] flex h-full -translate-y-1/2 items-center justify-center gap-1.5 rounded-r-md bg-transparent px-1 backdrop-blur-xl transition-all duration-200 ease-in-out ${chat.id === hoverChatId ? "group-hover:right-0" : ""}`}
+                            className={`absolute top-1/2 -right-16 z-[10] flex h-full -translate-y-1/2 items-center justify-center gap-1.5 rounded-r-md bg-transparent px-1 backdrop-blur-xl transition-all duration-200 ease-in-out ${execution.id === hoverChatId ? "group-hover:right-0" : ""}`}
                           >
                             <div
                               className="flex items-center justify-center rounded-md"
@@ -130,7 +118,7 @@ export function UIStructure() {
                                 e.preventDefault();
                                 const shareLink =
                                   process.env.NEXT_PUBLIC_APP_URL +
-                                  `/chat/share/${chat.id}`;
+                                  `/chat/share/${execution.id}`;
                                 navigator.clipboard.writeText(shareLink);
                                 toast.success("Share link copied to clipboard");
                               }}
@@ -143,7 +131,7 @@ export function UIStructure() {
 
                             <div
                               className="flex items-center justify-center rounded-md"
-                              onClick={() => handleDeleteChat(chat.id)}
+                              onClick={() => handleDeleteExecution(execution.id)}
                             >
                               <TrashIcon
                                 weight={"bold"}

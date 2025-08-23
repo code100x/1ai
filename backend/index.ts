@@ -5,6 +5,8 @@ import aiRouter from "./routes/ai"
 import { billingRouter } from "./routes/billing"
 import rzpWebhookRouter from "./routes/rzpWebhookRouter"
 import uploadRouter from "./routes/upload"
+import appsRouter from "./routes/apps";
+import executionRouter from "./routes/execution";
 
 const app = express();
 app.use(cors())
@@ -15,6 +17,8 @@ app.use("/ai", aiRouter);
 app.use("/auth", authRouter);
 app.use("/billing", billingRouter);
 app.use("/upload", uploadRouter);
+app.use("/apps", appsRouter);
+app.use("/execution", executionRouter);
 
 app.listen(3000, () => {
     console.log("Server is running on port 3000");
