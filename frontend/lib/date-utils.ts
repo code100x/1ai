@@ -8,11 +8,18 @@ export function formatChatDate(dateString: string): string {
   const messageDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   
   if (messageDate.getTime() === today.getTime()) {
-    return date.toLocaleTimeString('en-US', { 
-      hour: 'numeric', 
-      minute: '2-digit',
-      hour12: true 
-    });
+    // For today, show relative time
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (diffInSeconds < 60) {
+      return diffInSeconds <= 1 ? 'just now' : `${diffInSeconds}s ago`;
+    } else if (diffInSeconds < 3600) {
+      const minutes = Math.floor(diffInSeconds / 60);
+      return `${minutes}m ago`;
+    } else {
+      const hours = Math.floor(diffInSeconds / 3600);
+      return `${hours}h ago`;
+    }
   } else if (messageDate.getTime() === yesterday.getTime()) {
     return 'Yesterday';
   } else if (messageDate > new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)) {
@@ -75,3 +82,4 @@ export function groupConversationsByDate(conversations: any[]) {
   
   return result;
 }
+
