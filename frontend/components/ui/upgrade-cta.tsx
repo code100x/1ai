@@ -115,7 +115,7 @@ export const UpgradeCTA: React.FC<UpgradeCTAProps> = ({
 
   // Default banner variant
   return (
-    <Link href="/pricing">
+    <Link href="/ask">
       <div className={`relative rounded-xl border bg-muted/40 hover:bg-muted/60 transition-colors duration-200 p-4 sm:p-6 ${className}`}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0 flex-1">
