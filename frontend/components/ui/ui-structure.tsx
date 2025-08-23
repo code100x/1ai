@@ -42,6 +42,8 @@ interface Chat {
 
 export function UIStructure() {
   const [chats, setChats] = useState<Conversation[]>([]);
+  const [filteredChats, setFilteredChats] = useState<Conversation[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [hoverChatId, setHoverChatId] = useState<string>("");
   const { conversations, loading, error, createNewConversation } = useConversationContext();
   const router = useRouter();
@@ -49,13 +51,33 @@ export function UIStructure() {
   useEffect(() => {
     if (conversations) {
       setChats(conversations);
+      setFilteredChats(conversations);
     }
   }, [conversations]);
+
+  // Filter chats based on search query
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredChats(chats);
+    } else {
+      const filtered = chats.filter((chat) => {
+        // Search in the first message content (chat title/preview)
+        const firstMessage = chat.messages?.[0]?.content || "";
+        return firstMessage.toLowerCase().includes(searchQuery.toLowerCase());
+      });
+      setFilteredChats(filtered);
+    }
+  }, [searchQuery, chats]);
 
   const handleDeleteChat = (chatId: string) => {
     try {
       toast.success("Chat deleted successfully");
-      setChats(chats.filter((chat) => chat.id !== chatId));
+      const updatedChats = chats.filter((chat) => chat.id !== chatId);
+      setChats(updatedChats);
+      setFilteredChats(updatedChats.filter((chat) => {
+        const firstMessage = chat.messages?.[0]?.content || "";
+        return searchQuery.trim() === "" || firstMessage.toLowerCase().includes(searchQuery.toLowerCase());
+      }));
     } catch (error) {
       console.error("Error deleting chat:", error);
     }
@@ -93,6 +115,8 @@ export function UIStructure() {
               <MagnifyingGlassIcon className="text-foreground" weight="bold" />
               <Input
                 placeholder="Search for chats"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="rounded-none border-none bg-transparent px-0 py-1 shadow-none ring-0 focus-visible:ring-0 dark:bg-transparent"
               />
             </div>
@@ -106,7 +130,7 @@ export function UIStructure() {
                       className="bg-primary/15 mb-2 h-7 w-full animate-pulse rounded-md"
                     />
                   ))
-                : chats.map((chat: Conversation) => (
+                : filteredChats.map((chat: Conversation) => (
                     <SidebarMenuItem key={chat.id}>
                       <SidebarMenuButton
                         className="group hover:bg-primary/20 relative"
