@@ -13,7 +13,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Button } from "./button";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useEffect } from "react";
 import { Input } from "./input";
 import {
@@ -27,6 +27,7 @@ import { Logo } from "../svgs/logo";
 import { Conversation, useConversation } from "@/hooks/useConversation";
 import { useUser } from "@/hooks/useUser";
 import { useCredits } from "@/hooks/useCredits";
+import { useThrottle } from "@/hooks/useThrottle";
 
 interface Chat {
   id: string;
@@ -43,6 +44,9 @@ export function UIStructure() {
   const [hoverChatId, setHoverChatId] = useState<string>("");
   const { conversations, loading, error } = useConversation();
   const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const throttledSearchQuery = useThrottle(searchQuery, 300);
 
   useEffect(() => {
     if (conversations) {
@@ -50,6 +54,31 @@ export function UIStructure() {
     }
   }, [conversations]);
 
+  const filteredChats = useMemo(() => {
+    if (!throttledSearchQuery.trim()) {
+      return chats;
+    }
+
+    const query = throttledSearchQuery.toLowerCase();
+    return chats.filter((chat) => {
+      if (chat.title?.toLowerCase().includes(query)) {
+        return true;
+      }
+
+      if (chat.messages && Array.isArray(chat.messages)) {
+        return chat.messages.some((message) => {
+          return message.content?.toLowerCase().includes(query);
+        });
+      }
+
+      return false;
+    });
+  }, [chats, throttledSearchQuery]);
+
+  const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+  }, []);
 
   const handleDeleteChat = (chatId: string) => {
     try {
@@ -94,70 +123,79 @@ export function UIStructure() {
               <Input
                 placeholder="Search for chats"
                 className="rounded-none border-none bg-transparent px-0 py-1 shadow-none ring-0 focus-visible:ring-0 dark:bg-transparent"
+                value={searchQuery}
+                onChange={handleSearch}
               />
             </div>
 
             <SidebarMenu className="mt-2 w-full p-0">
               {loading
                 ? // Skeleton loader while loading saved chats
-                  Array.from({ length: 4 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="bg-primary/15 mb-2 h-7 w-full animate-pulse rounded-md"
-                    />
-                  ))
-                : chats
-                    .map((chat: Conversation) => (
-                      <SidebarMenuItem key={chat.id}>
-                        <SidebarMenuButton
-                          className="group hover:bg-primary/20 relative"
-                          onMouseEnter={() => setHoverChatId(chat.id)}
-                          onMouseLeave={() => setHoverChatId("")}
-                          onClick={() => router.push(`/ask/${chat.id}`)}
-                        >
-                          <div className="flex w-full items-center justify-between">
-                              <span className="z-[-1] cursor-pointer truncate">
-                                {chat.title}
-                              </span>
-                              <div
-                                className={`absolute top-0 right-0 z-[5] h-full w-12 rounded-r-md blur-[2em] ${chat.id === hoverChatId ? "bg-primary" : ""}`}
-                              />
-                              <div
-                                className={`absolute top-1/2 -right-16 z-[10] flex h-full -translate-y-1/2 items-center justify-center gap-1.5 rounded-r-md bg-transparent px-1 backdrop-blur-xl transition-all duration-200 ease-in-out ${chat.id === hoverChatId ? "group-hover:right-0" : ""}`}
+                        Array.from({ length: 4 }).map((_, i) => (
+                          <div
+                            key={i}
+                            className="bg-primary/15 mb-2 h-7 w-full animate-pulse rounded-md"
+                          />
+                        ))
+                      : filteredChats.length > 0 ? (
+                          filteredChats.map((chat: Conversation) => (
+                            <SidebarMenuItem key={chat.id}>
+                              <SidebarMenuButton
+                                className="group hover:bg-primary/20 relative"
+                                onMouseEnter={() => setHoverChatId(chat.id)}
+                                onMouseLeave={() => setHoverChatId("")}
+                                onClick={() => router.push(`/ask/${chat.id}`)}
                               >
-                                <div
-                                  className="flex items-center justify-center rounded-md"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    const shareLink =
-                                      process.env.NEXT_PUBLIC_APP_URL +
-                                      `/chat/share/${chat.id}`;
-                                    navigator.clipboard.writeText(shareLink);
-                                    toast.success(
-                                      "Share link copied to clipboard"
-                                    );
-                                  }}
-                                >
-                                  <ShareFatIcon
-                                    weight="fill"
-                                    className="hover:text-foreground size-4"
+                                <div className="flex w-full items-center justify-between">
+                                  <span className="z-[-1] cursor-pointer truncate">
+                                    {chat.title}
+                                  </span>
+                                  <div
+                                    className={`absolute top-0 right-0 z-[5] h-full w-12 rounded-r-md blur-[2em] ${chat.id === hoverChatId ? "bg-primary" : ""}`}
                                   />
-                                </div>
+                                  <div
+                                    className={`absolute top-1/2 -right-16 z-[10] flex h-full -translate-y-1/2 items-center justify-center gap-1.5 rounded-r-md bg-transparent px-1 backdrop-blur-xl transition-all duration-200 ease-in-out ${chat.id === hoverChatId ? "group-hover:right-0" : ""}`}
+                                  >
+                                    <div
+                                      className="flex items-center justify-center rounded-md"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        const shareLink =
+                                          process.env.NEXT_PUBLIC_APP_URL +
+                                          `/chat/share/${chat.id}`;
+                                        navigator.clipboard.writeText(shareLink);
+                                        toast.success(
+                                          "Share link copied to clipboard"
+                                        );
+                                      }}
+                                    >
+                                      <ShareFatIcon
+                                        weight="fill"
+                                        className="hover:text-foreground size-4"
+                                      />
+                                    </div>
 
-                                <div
-                                  className="flex items-center justify-center rounded-md"
-                                  onClick={() => handleDeleteChat(chat.id)}
-                                >
-                                  <TrashIcon
-                                    weight={"bold"}
-                                    className="hover:text-foreground size-4"
-                                  />
+                                    <div
+                                      className="flex items-center justify-center rounded-md"
+                                      onClick={() => handleDeleteChat(chat.id)}
+                                    >
+                                      <TrashIcon
+                                        weight={"bold"}
+                                        className="hover:text-foreground size-4"
+                                      />
+                                    </div>
+                                  </div>
                                 </div>
-                              </div>
-                          </div>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))}
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          ))
+                        ) : (
+                          searchQuery && (
+                            <div className="flex items-center justify-center py-4 text-muted-foreground">
+                              No chats found for &quot;{searchQuery}&quot;
+                            </div>
+                          )
+                        )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -180,8 +218,8 @@ export function UIStructure() {
                 router.push("/auth");
               }}
             >
-            Login
-          </Button>
+              Login
+            </Button>
           )}
         </SidebarFooter>
       </SidebarContent>
