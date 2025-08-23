@@ -31,9 +31,19 @@ router.post("/initiate_signin", perMinuteLimiter, async (req, res) => {
         console.log("email is", data.email);
         console.log("otp is", otp);
         if (process.env.NODE_ENV !== "development") {
-            await sendEmail(data.email, "Login to 1ai", `Log into 1ai your otp is ${otp}`);
+            try {
+                await sendEmail(data.email, "Login to 1ai", `Log into 1ai your otp is ${otp}`);
+            } catch (emailError) {
+                console.error("Email sending failed:", emailError);
+                res.status(500).json({
+                    message: "Failed to send OTP, please retry after a few minutes",
+                    success: false,
+                });
+                return;
+            }
         } else {
-            console.log(`Log into your 1ai `, otp);
+            // In development mode, just log the OTP and continue
+            console.log(`[DEV MODE] OTP for ${data.email}: ${otp}`);
         }
 
         otpCache.set(data.email, otp);
@@ -52,8 +62,8 @@ router.post("/initiate_signin", perMinuteLimiter, async (req, res) => {
             success: true,
         });
     } catch (e) {
-        console.log(e);
-        res.json({
+        console.error("Error in initiate_signin:", e);
+        res.status(500).json({
             message: "Internal server error",
             success: false,
         });
