@@ -25,10 +25,10 @@ export default function RefundPolicy() {
         </div>
 
         <Card className="border-muted/40 bg-muted/10">
-          <CardHeader>
+          <CardHeader className="pb-4">
             <CardTitle className="text-2xl">Policy Overview</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6 text-foreground/90 leading-relaxed">
+          <CardContent className="space-y-6 text-foreground/90 leading-relaxed pt-4">
             <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-6">
               <h3 className="text-xl font-semibold mb-4 text-red-600 dark:text-red-400">
                 Important Notice
@@ -46,11 +46,11 @@ export default function RefundPolicy() {
           </CardContent>
         </Card>
 
-        <div className="text-center mt-12 space-x-4">
-          <Button variant="outline" className="h-12 px-8" asChild>
+        <div className="flex flex-col gap-3 sm:flex-row justify-center items-center mt-12">
+          <Button variant="outline" className="h-12 px-8 w-full sm:w-auto" asChild>
             <a href="/">Back to Home</a>
           </Button>
-          <Button variant="outline" className="h-12 px-8" asChild>
+          <Button variant="outline" className="h-12 px-8 w-full sm:w-auto" asChild>
             <a href="/terms">View Terms & Conditions</a>
           </Button>
         </div>
