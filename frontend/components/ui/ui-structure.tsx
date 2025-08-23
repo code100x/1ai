@@ -22,7 +22,7 @@ import {
   TrashIcon,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Logo } from "../svgs/logo";
 import { Conversation } from "@/hooks/useConversation";
 import { useUser } from "@/hooks/useUser";
@@ -45,6 +45,10 @@ export function UIStructure() {
   const [hoverChatId, setHoverChatId] = useState<string>("");
   const { conversations, loading, error, createNewConversation } = useConversationContext();
   const router = useRouter();
+  const pathname = usePathname();
+
+  // Extract current conversation ID from pathname
+  const currentConversationId = pathname.startsWith('/ask/') ? pathname.split('/')[2] : null;
 
   useEffect(() => {
     if (conversations) {
@@ -113,6 +117,7 @@ export function UIStructure() {
                         onMouseEnter={() => setHoverChatId(chat.id)}
                         onMouseLeave={() => setHoverChatId("")}
                         onClick={() => router.push(`/ask/${chat.id}`)}
+                        isActive={chat.id === currentConversationId}
                       >
                         <div className="flex w-full items-center justify-between">
                           <span className="z-[-1] cursor-pointer truncate">
