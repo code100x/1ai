@@ -7,8 +7,7 @@
   },
   "scripts": {
     "dev": "bun index.ts",
-    "start": "bun index.ts",
-    "build": "bun build index.ts --outfile backend --target node"
+    "start": "bun index.ts"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
