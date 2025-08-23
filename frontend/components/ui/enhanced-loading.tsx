@@ -138,7 +138,7 @@ export function TypingIndicator({ className }: { className?: string }) {
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
           <RobotIcon className="h-4 w-4" weight="bold" />
         </div>
-        
+
         {/* Shimmer message bubble */}
         <div className="flex-1 space-y-2">
           <div className="flex items-center gap-2">
@@ -147,9 +147,18 @@ export function TypingIndicator({ className }: { className?: string }) {
           <div className="relative rounded-2xl bg-muted/50 px-4 py-3 max-w-[85%]">
             {/* Shimmer placeholder lines */}
             <div className="space-y-2">
-              <div className="h-3 bg-muted-foreground/20 rounded shimmer" style={{ width: "80%" }} />
-              <div className="h-3 bg-muted-foreground/20 rounded shimmer" style={{ width: "60%" }} />
-              <div className="h-3 bg-muted-foreground/20 rounded shimmer" style={{ width: "40%" }} />
+              <div
+                className="h-3 bg-muted-foreground/20 rounded shimmer"
+                style={{ width: "80%" }}
+              />
+              <div
+                className="h-3 bg-muted-foreground/20 rounded shimmer"
+                style={{ width: "60%" }}
+              />
+              <div
+                className="h-3 bg-muted-foreground/20 rounded shimmer"
+                style={{ width: "40%" }}
+              />
             </div>
             {/* Bouncing dots */}
             <div className="flex space-x-1 mt-2">
