@@ -1,0 +1,27 @@
+# Backend Environment Variables Template
+# Copy this to .env file in the backend directory
+
+# Database
+DATABASE_URL="postgresql://username:password@localhost:5432/1ai_db"
+
+# JWT Secret
+JWT_SECRET="your-super-secret-jwt-key-change-this-in-production"
+
+# OpenRouter API
+OPENROUTER_KEY="your-openrouter-api-key"
+
+# Razorpay
+RZP_KEY="your-razorpay-key"
+RZP_SECRET="your-razorpay-secret"
+RZP_ENVIRONMENT="sandbox"
+RZP_WEBHOOK_SECRET="your-razorpay-webhook-secret"
+
+# Postmark Email
+POSTMARK_SERVER_TOKEN="your-postmark-token"
+FROM_EMAIL="noreply@yourdomain.com"
+
+# Frontend URL
+FRONTEND_URL="http://localhost:3002"
+
+# Environment
+NODE_ENV="development"
