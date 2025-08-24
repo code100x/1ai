@@ -310,12 +310,13 @@ billingRouter.post("/verify-payment", authMiddleware, async (req, res) => {
         }
       });
 
-      // Update user to premium status and add credits (same as monthly flow)
+      // Update user to premium status and add credits
+      // FIX: Different credits for yearly vs monthly
       await prisma.user.update({
         where: { id: userId },
         data: {
           isPremium: true,
-          credits: { increment: 1000 } // Add 1000 credits for premium subscription
+          credits: { increment: subscription ? 1000 : 12000 },
         }
       });
 
