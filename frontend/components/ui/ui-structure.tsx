@@ -34,7 +34,6 @@ import {
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { Logo } from "../svgs/logo";
 import { useUser } from "@/hooks/useUser";
 import { useCredits } from "@/hooks/useCredits";
 import { groupConversationsByDate, formatChatDate } from "@/lib/date-utils";
@@ -45,6 +44,7 @@ import { Execution } from "@/hooks/useExecution";
 
 export function UIStructure() {
   const [uiExecutions, setUiExecutions] = useState<Execution[]>([]);
+  const [groupedExecutions, setGroupedExecutions] = useState<{ label: string; conversations: Execution[] }[]>([]);
   const [hoverChatId, setHoverChatId] = useState<string>("");
   const [isAppsDialogOpen, setIsAppsDialogOpen] = useState(false);
   const { executions, loading, createNewExecution } = useExecutionContext();
@@ -53,13 +53,16 @@ export function UIStructure() {
   useEffect(() => {
     if (executions) {
       setUiExecutions(executions);
+      setGroupedExecutions(groupConversationsByDate(executions));
     }
   }, [executions]);
 
   const handleDeleteExecution = (executionId: string) => {
     try {
       toast.success("Chat deleted successfully");
-      setUiExecutions(executions.filter((execution) => execution.id !== executionId));
+      const updatedExecutions = executions.filter((execution) => execution.id !== executionId);
+      setUiExecutions(updatedExecutions);
+      setGroupedExecutions(groupConversationsByDate(updatedExecutions));
     } catch (error) {
       console.error("Error deleting chat:", error);
     }
@@ -118,7 +121,7 @@ export function UIStructure() {
             </div>
           </SidebarHeader>
           <SidebarGroupContent>
-            <SidebarMenu className="w-full p-0">
+            <div className="mt-2 w-full">
               {loading
                 ? Array.from({ length: 4 }).map((_, i) => (
                     <div
@@ -126,56 +129,75 @@ export function UIStructure() {
                       className="bg-primary/15 mb-2 h-7 w-full animate-pulse rounded-md"
                     />
                   ))
-                : uiExecutions.map((execution: Execution) => (
-                    <SidebarMenuItem key={execution.id}>
-                      <SidebarMenuButton
-                        className="group hover:bg-primary/20 relative"
-                        onMouseEnter={() => setHoverChatId(execution.id)}
-                        onMouseLeave={() => setHoverChatId("")}
-                        onClick={() => router.push(`/ask/${execution.id}`)}
-                      >
-                        <div className="flex w-full items-center justify-between">
-                          <span className="z-[-1] cursor-pointer truncate">
-                            {execution.title}
-                          </span>
-                          <div
-                            className={`absolute top-0 right-0 z-[5] h-full w-12 rounded-r-md blur-[2em] ${execution.id === hoverChatId ? "bg-primary" : ""}`}
-                          />
-                          <div
-                            className={`absolute top-1/2 -right-16 z-[10] flex h-full -translate-y-1/2 items-center justify-center gap-1.5 rounded-r-md bg-transparent px-1 backdrop-blur-xl transition-all duration-200 ease-in-out ${execution.id === hoverChatId ? "group-hover:right-0" : ""}`}
-                          >
-                            <div
-                              className="flex items-center justify-center rounded-md"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                const shareLink =
-                                  process.env.NEXT_PUBLIC_APP_URL +
-                                  `/chat/share/${execution.id}`;
-                                navigator.clipboard.writeText(shareLink);
-                                toast.success("Share link copied to clipboard");
-                              }}
-                            >
-                              <ShareFatIcon
-                                weight="fill"
-                                className="hover:text-foreground size-4"
-                              />
-                            </div>
+                : groupedExecutions.map((group) => (
+                    <div key={group.label} className="mb-2">
+                      <Collapsible defaultOpen={group.label === "Today" || group.label === "Yesterday"}>
+                        <CollapsibleTrigger className="flex w-full items-center justify-between px-2 py-1 text-xs font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground [&[data-state=open]>svg]:rotate-90">
+                          <span>{group.label}</span>
+                          <CaretRight weight="bold" className="size-4 transition-transform duration-200" />
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <SidebarMenu className="w-full p-0">
+                            {group.conversations.map((execution: Execution) => (
+                              <SidebarMenuItem key={execution.id}>
+                                <SidebarMenuButton
+                                  className="group hover:bg-primary/20 relative"
+                                  onMouseEnter={() => setHoverChatId(execution.id)}
+                                  onMouseLeave={() => setHoverChatId("")}
+                                  onClick={() => router.push(`/ask/${execution.id}`)}
+                                >
+                                  <div className="flex w-full items-center justify-between">
+                                    <span className="z-[-1] cursor-pointer truncate flex-1 pr-2">
+                                      {execution.title}
+                                    </span>
+                                    <span className="text-muted-foreground text-xs shrink-0">
+                                      {formatChatDate(execution.createdAt)}
+                                    </span>
+                                  </div>
+                                  <div
+                                    className={`absolute top-0 right-0 z-[5] h-full w-16 rounded-r-md blur-[2em] ${execution.id === hoverChatId ? "bg-primary" : ""}`}
+                                  />
+                                  <div
+                                    className={`absolute top-1/2 -right-16 z-[10] flex h-full -translate-y-1/2 items-center justify-center gap-1.5 rounded-r-md bg-transparent px-1 backdrop-blur-xl transition-all duration-200 ease-in-out ${execution.id === hoverChatId ? "group-hover:right-0" : ""}`}
+                                  >
+                                    <div
+                                      className="flex items-center justify-center rounded-md"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        const shareLink =
+                                          process.env.NEXT_PUBLIC_APP_URL +
+                                          `/chat/share/${execution.id}`;
+                                        navigator.clipboard.writeText(shareLink);
+                                        toast.success(
+                                          "Share link copied to clipboard"
+                                        );
+                                      }}
+                                    >
+                                      <ShareFatIcon
+                                        weight="fill"
+                                        className="hover:text-foreground size-4"
+                                      />
+                                    </div>
 
-                            <div
-                              className="flex items-center justify-center rounded-md"
-                              onClick={() => handleDeleteExecution(execution.id)}
-                            >
-                              <TrashIcon
-                                weight={"bold"}
-                                className="hover:text-foreground size-4"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
+                                    <div
+                                      className="flex items-center justify-center rounded-md"
+                                      onClick={() => handleDeleteExecution(execution.id)}
+                                    >
+                                      <TrashIcon
+                                        weight={"bold"}
+                                        className="hover:text-foreground size-4"
+                                      />
+                                    </div>
+                                  </div>
+                                </SidebarMenuButton>
+                              </SidebarMenuItem>
+                            ))}
+                          </SidebarMenu>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    </div>
                   ))}
-            </SidebarMenu>
+            </div>
           </SidebarGroupContent>
         </SidebarGroup>
 
