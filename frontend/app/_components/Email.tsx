@@ -76,7 +76,9 @@ export function Email({
             }}
             className="w-full h-12"
           >
-            Continue with Email
+            { sendingRequest ? (
+              <span>Sending Otp...</span>
+            ) : ("Continue with Email")}
           </Button>
         </div>
         <div className="text-muted-foreground text-sm">
