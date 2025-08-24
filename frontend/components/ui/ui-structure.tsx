@@ -32,12 +32,13 @@ import {
   TrashIcon,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Logo } from "../svgs/logo";
 import { useUser } from "@/hooks/useUser";
 import Link from "next/link";
 import { useExecutionContext } from "@/contexts/execution-context";
 import { Execution } from "@/hooks/useExecution";
+import { ChatService } from "@/lib/chat-service";
 
 export function UIStructure() {
   const [uiExecutions, setUiExecutions] = useState<Execution[]>([]);
@@ -45,6 +46,8 @@ export function UIStructure() {
   const [isAppsDialogOpen, setIsAppsDialogOpen] = useState(false);
   const { executions, loading, createNewExecution } = useExecutionContext();
   const router = useRouter();
+  const params = useParams();
+  console.log(params)
 
   useEffect(() => {
     if (executions) {
@@ -52,9 +55,21 @@ export function UIStructure() {
     }
   }, [executions]);
 
-  const handleDeleteExecution = (executionId: string) => {
+  const handleDeleteExecution = async (executionId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     try {
+      const success = await ChatService.deleteConversation(executionId);
+
+      if (!success) {
+        toast.error("Failed to delete chat");
+        return;
+      }
       toast.success("Chat deleted successfully");
+
+      if (String(params.chatId) === executionId) {
+        router.replace(`/ask`);
+      }
       setUiExecutions(executions.filter((execution) => execution.id !== executionId));
     } catch (error) {
       console.error("Error deleting chat:", error);
@@ -160,7 +175,7 @@ export function UIStructure() {
 
                             <div
                               className="flex items-center justify-center rounded-md"
-                              onClick={() => handleDeleteExecution(execution.id)}
+                              onClick={(e) => handleDeleteExecution(execution.id, e)}
                             >
                               <TrashIcon
                                 weight={"bold"}

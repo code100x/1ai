@@ -12,11 +12,23 @@ const router = Router();
 router.get("/conversations/:conversationId", authMiddleware, async (req, res) => {
     const userId = req.userId;
     const conversationId = req.params.conversationId;
-
-    const execution = await prismaClient.execution.findFirst({
+    console.log("Fetching conversation for user:", userId, "conversationId:", conversationId);
+    const execution = await prismaClient.execution.findUnique({
         where: {
             id: conversationId,
-            userId
+            userId: userId,
+            type: "CONVERSATION"
+        },
+        include: {
+            conversation: {
+                include: {
+                    messages: {
+                        orderBy: {
+                            createdAt: "asc"
+                        }
+                    }
+                }
+            }
         }
     });
 
@@ -27,28 +39,9 @@ router.get("/conversations/:conversationId", authMiddleware, async (req, res) =>
         return;
     }
 
-    if (execution.type !== "CONVERSATION") {
-        res.status(400).json({
-            message: "Execution is not a conversation"
-        });
-        return;
-    }
-
-    const conversation = await prismaClient.conversation.findFirst({
-        where: {
-            id: execution?.externalId!
-        },
-        include: {
-            messages: {
-                orderBy: {
-                    createdAt: "asc"
-                }
-            }
-        }
-    })
 
     res.json({
-        conversation
+        conversation: execution.conversation
     });
 })
 
@@ -116,7 +109,6 @@ router.post("/chat", authMiddleware, async (req, res) => {
                     userId,
                     title: data.message.slice(0, 20) + "...",
                     type: "CONVERSATION",
-                    externalId: conversationId
                 }
             }),
             prismaClient.conversation.create({
@@ -247,5 +239,35 @@ router.get("/credits", authMiddleware, async (req, res) => {
         });
     }
 });
+
+// Delete old messages
+router.delete("/chat/:chatId", authMiddleware, async (req, res) => {
+    const userId = req.userId;
+    const chatId = req.params.chatId;
+
+    try {
+        const deleteResult = await prismaClient.execution.deleteMany({
+            where: {
+                id: chatId,
+                userId: userId
+            }
+        })
+
+        if (deleteResult.count === 0) {
+            return res.status(404).json({
+                message: "Chat not found"
+            });
+        }
+
+        res.status(200).json({
+            message: "Chat deleted successfully"
+        });
+    } catch (error) {
+        console.error("Error deleting chat:", error);
+        res.status(500).json({
+            message: "Internal server error"
+        });
+    }
+})
 
 export default router;
