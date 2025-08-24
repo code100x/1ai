@@ -16,11 +16,11 @@ export function Card({ children, className = "" }: CardProps) {
 }
 
 export function CardHeader({ children, className = "" }: CardProps) {
-  return <div className={`p-6 pb-0 ${className}`}>{children}</div>;
+  return <div className={`p-6 ${className}`}>{children}</div>;
 }
 
 export function CardContent({ children, className = "" }: CardProps) {
-  return <div className={`px-3 py-2 ${className}`}>{children}</div>;
+  return <div className={`p-6 pt-0 ${className}`}>{children}</div>;
 }
 
 export function CardTitle({ children, className = "" }: CardProps) {
