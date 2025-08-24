@@ -47,7 +47,6 @@ export function UIStructure() {
   const { executions, loading, createNewExecution } = useExecutionContext();
   const router = useRouter();
   const params = useParams();
-  console.log(params)
 
   useEffect(() => {
     if (executions) {

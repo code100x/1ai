@@ -12,7 +12,6 @@ const router = Router();
 router.get("/conversations/:conversationId", authMiddleware, async (req, res) => {
     const userId = req.userId;
     const conversationId = req.params.conversationId;
-    console.log("Fetching conversation for user:", userId, "conversationId:", conversationId);
     const execution = await prismaClient.execution.findUnique({
         where: {
             id: conversationId,
