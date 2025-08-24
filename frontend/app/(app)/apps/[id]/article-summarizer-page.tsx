@@ -26,15 +26,15 @@ interface ArticleSummarizerPageProps {
 export default function ArticleSummarizerPage({ convoId }: ArticleSummarizerPageProps) {
   const [data, setData] = useState<ArticleSummarizerData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [copied, setCopied] = useState(false);
+  const [copiedContent, setCopiedContent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { resolvedTheme } = useTheme();
 
   const handleCopy = async (content: string) => {
     try {
       await navigator.clipboard.writeText(content);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setCopiedContent(content);
+      setTimeout(() => setCopiedContent(null), 2000);
     } catch (err) {
       console.error("Failed to copy: ", err);
     }
@@ -108,12 +108,12 @@ export default function ArticleSummarizerPage({ convoId }: ArticleSummarizerPage
                   onClick={() => handleCopy(data.article)}
                   className="flex items-center gap-2"
                 >
-                  {copied ? (
+                  {copiedContent === data.article ? (
                     <CheckIcon className="h-4 w-4" />
                   ) : (
                     <CopyIcon className="h-4 w-4" />
                   )}
-                  {copied ? "Copied!" : "Copy Article"}
+                  {copiedContent === data.article ? "Copied!" : "Copy Article"}
                 </Button>
               </div>
               
@@ -133,12 +133,12 @@ export default function ArticleSummarizerPage({ convoId }: ArticleSummarizerPage
                   onClick={() => handleCopy(data.summary)}
                   className="flex items-center gap-2"
                 >
-                  {copied ? (
+                  {copiedContent === data.summary ? (
                     <CheckIcon className="h-4 w-4" />
                   ) : (
                     <CopyIcon className="h-4 w-4" />
                   )}
-                  {copied ? "Copied!" : "Copy Summary"}
+                  {copiedContent === data.summary ? "Copied!" : "Copy Summary"}
                 </Button>
               </div>
               
