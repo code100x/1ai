@@ -4,12 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  CurrencyCircleDollarIcon,
   CheckIcon,
   StarIcon,
-  LightningIcon,
 } from "@phosphor-icons/react/dist/ssr";
 import RazorpayPayment from "@/components/RazorpayPayment";
+import { redirect } from "next/navigation";
 
 const pricingPlans = [
   {
@@ -62,94 +61,105 @@ const pricingPlans = [
 
 export default function PricingPage() {
   return (
-    <div className="h-full overflow-y-auto pt-8 pb-4">
-      <div className="container mx-auto px-4 py-8 max-w-5xl">
-        <div className="text-center flex flex-col gap-2">
-          <h1 className="text-3xl font-bold text-primary lg:text-4xl tracking-tight">
+    <div className="pt-8 pb-12">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl">
+        {/* Back button */}
+        <Button
+          onClick={() => redirect("/ask")}
+          className="mb-6 bg-blue-500 text-white hover:bg-blue-600 transition-colors"
+        >
+          Back
+        </Button>
+
+        {/* Heading */}
+        <div className="text-center flex flex-col gap-3 mb-12">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-primary">
             Simple, Transparent Pricing
           </h1>
-          <p className="text-muted-foreground text-base max-w-2xl mx-auto">
-            Choose the plan that works best for you. All plans include access to
-            our complete AI platform.
+          <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
+            Choose the plan that fits your needs. All subscriptions include full access to our AI platform.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-12">
+        {/* Pricing Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10 max-w-5xl mx-auto">
           {pricingPlans.map((plan) => (
             <Card
               key={plan.name}
-              className={`relative border-muted/40 bg-muted/10 transition-all duration-300 hover:shadow-lg ${
-                plan.highlight
-                  ? "border-primary/50 bg-primary/5 scale-[1.02]"
-                  : "hover:border-muted/60"
-              }`}
+              className={`
+                relative h-full flex flex-col justify-between
+                border rounded-xl transition-all duration-300
+                ${plan.highlight
+                  ? "border-primary shadow-lg bg-primary/5 scale-[1.02]"
+                  : "border-muted/40 hover:border-muted/60 hover:shadow-md"
+                }
+              `}
             >
+              {/* Popular Badge */}
               {plan.popular && (
-                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                  <Badge className="bg-primary text-primary-foreground px-3 py-1 flex items-center gap-1">
-                    <StarIcon className="size-3" weight="fill" />
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                  <Badge className="px-3 py-1 bg-primary text-primary-foreground shadow-md flex items-center gap-1">
+                    <StarIcon className="w-4 h-4" weight="fill" />
                     Most Popular
                   </Badge>
                 </div>
               )}
 
+              {/* Header Section */}
               <CardHeader className="text-center pb-4">
-                <CardTitle className="text-xl font-bold">{plan.name}</CardTitle>
-                <div className="mt-3">
-                  <div className="flex items-center justify-center gap-2">
-                    <span className="text-3xl font-bold text-primary">
-                      {plan.currency}
-                      {plan.price}
+                <CardTitle className="text-xl sm:text-2xl font-bold">{plan.name}</CardTitle>
+                <div className="mt-3 flex flex-col items-center">
+                  <div className="flex items-end justify-center gap-2">
+                    <span className="text-4xl font-extrabold tracking-tight text-primary">
+                      {plan.currency}{plan.price}
                     </span>
-                    <span className="text-muted-foreground text-sm">
-                      {plan.interval}
-                    </span>
+                    <span className="text-muted-foreground text-sm">{plan.interval}</span>
                   </div>
                   {plan.savings && (
-                    <div className="mt-2">
-                      <Badge
-                        variant="secondary"
-                        className="bg-green-500/10 text-green-600 dark:text-green-400"
-                      >
-                        {plan.savings}
-                      </Badge>
-                    </div>
+                    <Badge
+                      variant="secondary"
+                      className="mt-2 bg-green-500/10 text-green-700 dark:text-green-400"
+                    >
+                      {plan.savings}
+                    </Badge>
                   )}
                 </div>
-                <p className="text-muted-foreground text-sm mt-3">
+                <p className="text-muted-foreground text-sm sm:text-base mt-3 px-2">
                   {plan.description}
                 </p>
               </CardHeader>
 
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
+              {/* Features + CTA */}
+              <CardContent className="flex flex-col flex-grow justify-between space-y-6">
+                {/* Features */}
+                <div className="space-y-3">
                   {plan.features.map((feature, index) => (
                     <div key={index} className="flex items-center gap-3">
-                      <div className="flex size-4 items-center justify-center rounded-full bg-primary/10">
-                        <CheckIcon
-                          className="size-2.5 text-primary"
-                          weight="bold"
-                        />
+                      <div className="flex w-5 h-5 items-center justify-center rounded-full bg-primary/10">
+                        <CheckIcon className="w-3 h-3 text-primary" weight="bold" />
                       </div>
-                      <span className="text-foreground/90 text-sm">
+                      <span className="text-foreground text-sm sm:text-base">
                         {feature}
                       </span>
                     </div>
                   ))}
                 </div>
 
+                {/* CTA Button */}
                 <RazorpayPayment
+                  aria-label={`Subscribe to ${plan.name} plan`}
                   plan={{
                     name: plan.name,
                     price: plan.price,
                     currency: plan.currency,
                     interval: plan.interval.replace("per ", ""),
                   }}
-                  className={`w-full h-10 font-semibold text-sm ${
-                    plan.highlight
-                      ? "bg-primary hover:bg-primary/90 text-primary-foreground"
+                  className={`w-full h-11 rounded-lg font-semibold text-sm sm:text-base transition-all
+                    ${plan.highlight
+                      ? "bg-primary hover:bg-primary/90 text-primary-foreground shadow-md"
                       : "bg-muted hover:bg-muted/80 text-foreground"
-                  }`}
+                    }
+                  `}
                 >
                   {plan.cta.text}
                 </RazorpayPayment>
