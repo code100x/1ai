@@ -37,7 +37,6 @@ export const createCompletion = async (
 
               tokenIterations++;
               if (tokenIterations > MAX_TOKEN_ITERATIONS) {
-                console.log("max token iterations");
                 resolve()
                 return;
               }
@@ -51,7 +50,6 @@ export const createCompletion = async (
               while (true) {
                 const lineEnd = buffer.indexOf('\n');
                 if (lineEnd === -1) { 
-                  console.log("max token iterations 2");
                     break
                 };
           

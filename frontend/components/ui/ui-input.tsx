@@ -24,7 +24,7 @@ import { useTheme } from "next-themes";
 import { ArrowUpIcon, WrapText } from "lucide-react";
 import { atomOneDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import { useUser } from "@/hooks/useUser";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useConversationById } from "@/hooks/useConversation";
 import { useCredits } from "@/hooks/useCredits";
 import { UpgradeCTA } from "@/components/ui/upgrade-cta";
@@ -77,10 +77,26 @@ const UIInput = ({
   } = useCredits();
   const { refreshExecutions } = useExecutionContext();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const toggleWrap = useCallback(() => {
-    setIsWrapped((prev) => !prev);
+    setIsWrapped((prev: boolean) => !prev);
   }, []);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  useEffect(() => {
+    const conversationParam = searchParams.get('c');
+    if (conversationParam && conversationParam !== conversationId) {
+      setConversationId(conversationParam);
+    }
+  }, [searchParams, conversationId]);
 
   useEffect(() => {
     if (conversation?.messages && initialConversationId) {
@@ -118,14 +134,14 @@ const UIInput = ({
         return;
       }
 
-      setMessages((prev) => [
+      setMessages((prev: Message[]) => [
         ...prev,
         { id: tempMessageId, role: "assistant", content: "" },
       ]);
 
       let accumulatedContent = "";
       let buffer = "";
-      let updateTimeout: NodeJS.Timeout | null = null;
+      let updateTimeout: ReturnType<typeof setTimeout> | null = null;
 
       const updateMessage = (content: string) => {
         if (updateTimeout) {
@@ -133,8 +149,8 @@ const UIInput = ({
         }
 
         updateTimeout = setTimeout(() => {
-          setMessages((prev) =>
-            prev.map((msg) =>
+          setMessages((prev: Message[]) =>
+            prev.map((msg: Message) =>
               msg.id === tempMessageId ? { ...msg, content } : msg
             )
           );
@@ -145,8 +161,8 @@ const UIInput = ({
         const { done, value } = await reader.read();
 
         if (done) {
-          setMessages((prev) =>
-            prev.map((msg) =>
+          setMessages((prev: Message[]) =>
+            prev.map((msg: Message) =>
               msg.id === tempMessageId
                 ? { ...msg, content: accumulatedContent }
                 : msg
@@ -201,8 +217,8 @@ const UIInput = ({
       }
     } catch (error) {
       console.error("Error processing stream:", error);
-      setMessages((prev) =>
-        prev.map((msg) =>
+      setMessages((prev: Message[]) =>
+        prev.map((msg: Message) =>
           msg.id === tempMessageId
             ? { ...msg, content: "Error: Failed to process response" }
             : msg
@@ -242,7 +258,7 @@ const UIInput = ({
     };
 
     setQuery("");
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages((prev: Message[]) => [...prev, userMessage]);
     setIsLoading(true);
 
     if (abortControllerRef.current) {
@@ -346,7 +362,7 @@ const UIInput = ({
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm]}
                       components={{
-                        code(props) {
+                        code(props: any) {
                           const { children, className, ...rest } = props;
                           const match = /language-(\w+)/.exec(className ?? "");
                           const isInline = !match;
@@ -452,10 +468,10 @@ const UIInput = ({
                             </div>
                           );
                         },
-                        strong: (props) => (
+                        strong: (props: any) => (
                           <span className="font-bold">{props.children}</span>
                         ),
-                        a: (props) => (
+                        a: (props: any) => (
                           <a
                             className="text-primary underline"
                             href={props.href}
@@ -463,17 +479,17 @@ const UIInput = ({
                             {props.children}
                           </a>
                         ),
-                        h1: (props) => (
+                        h1: (props: any) => (
                           <h1 className="my-4 text-2xl font-bold">
                             {props.children}
                           </h1>
                         ),
-                        h2: (props) => (
+                        h2: (props: any) => (
                           <h2 className="my-3 text-xl font-bold">
                             {props.children}
                           </h2>
                         ),
-                        h3: (props) => (
+                        h3: (props: any) => (
                           <h3 className="my-2 text-lg font-bold">
                             {props.children}
                           </h3>
@@ -549,11 +565,11 @@ const UIInput = ({
               <Textarea
                 autoFocus
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={(e) => {
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setQuery(e.target.value)}
+                onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
-                    void handleCreateChat(e);
+                    void handleCreateChat(e as any);
                   }
                 }}
                 placeholder={

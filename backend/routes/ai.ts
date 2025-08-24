@@ -1,14 +1,40 @@
 import { Router } from "express";
+import { v4 as uuidv4 } from "uuid";
 import { CreateChatSchema, MODELS, Role } from "../types";
 import { createCompletion } from "../openrouter";
 import { InMemoryStore } from "../InMemoryStore";
 import { authMiddleware } from "../auth-middleware";
 import { PrismaClient } from "../generated/prisma";
+import { perMinuteLimiterRelaxed } from "../ratelimitter";
+import CacheManager from "../redis";
 
 const prismaClient = new PrismaClient();
 
 const router = Router();
 
+router.get("/conversations", authMiddleware, async (req, res) => {
+    const userId = req.userId;
+    const cacheKey = `conversations:${userId}`;
+    
+    const cached = await CacheManager.get(cacheKey);
+    if (cached) {
+        return res.json(JSON.parse(cached));
+    }
+
+    const conversations = await prismaClient.conversation.findMany({
+        where: {
+            userId
+        },
+        orderBy: {
+            updatedAt: "desc"
+        }
+    })
+
+    await CacheManager.set(cacheKey, JSON.stringify({ conversations }), 300);
+    res.json({
+        conversations
+    });
+});
 router.get("/conversations/:conversationId", authMiddleware, async (req, res) => {
     const userId = req.userId;
     const conversationId = req.params.conversationId;
@@ -52,11 +78,11 @@ router.get("/conversations/:conversationId", authMiddleware, async (req, res) =>
     });
 })
 
-router.post("/chat", authMiddleware, async (req, res) => {
+router.post("/chat", authMiddleware, perMinuteLimiterRelaxed, async (req, res) => {
     const userId = req.userId;
     const {success, data} = CreateChatSchema.safeParse(req.body);
 
-    const conversationId = data?.conversationId;
+    const conversationId = data?.conversationId ?? uuidv4();
 
     if (!success || !conversationId) {
         res.status(411).json({
@@ -152,7 +178,7 @@ router.post("/chat", authMiddleware, async (req, res) => {
         existingMessages = InMemoryStore.getInstance().get(conversationId);
     }
 
-    // Set proper SSE headers
+    // Set proper SSE headers (server-sent events)
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -189,10 +215,13 @@ router.post("/chat", authMiddleware, async (req, res) => {
 
     InMemoryStore.getInstance().add(conversationId, {
         role: Role.Agent,
+        // Cache invalidation (from security/perf improvements PR): ensure conversation lists/details refresh
         content: message
     })
 
-    // Save messages and deduct credits in a transaction
+    // Invalidate cache for conversation lists and details to reflect new messages
+    await CacheManager.del(`conversations:${userId}`);
+    await CacheManager.del(`conversation:${conversationId}`);
     await prismaClient.$transaction([
         prismaClient.message.createMany({
             data: [
@@ -208,7 +237,6 @@ router.post("/chat", authMiddleware, async (req, res) => {
                 },
             ]
         }),
-        // Deduct 1 credit for the message
         prismaClient.user.update({
             where: { id: userId },
             data: {

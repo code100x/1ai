@@ -16,7 +16,7 @@ export class InMemoryStore {
         this.store = {};    
         this.clock = setInterval(() => {
             Object.entries(this.store).forEach(([key, {evictionTime}]) => {
-                if (evictionTime > Date.now()) {
+                if (evictionTime <= Date.now()) {
                     delete this.store[key]
                 }
             });

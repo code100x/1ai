@@ -167,7 +167,7 @@ export function ModelSelector({
               <span>Premium Models</span>
             </div>
             {!userCredits?.isPremium && (
-              <Link href="/pricing">
+              <Link href="/ask">
                 <Button
                   size="sm"
                   variant="default"

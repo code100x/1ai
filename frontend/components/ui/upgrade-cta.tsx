@@ -55,7 +55,7 @@ export const UpgradeCTA: React.FC<UpgradeCTAProps> = ({
             {Math.max(0, userCredits.credits)}
           </span>
         </div>
-        <Link href="/pricing">
+        <Link href="/ask">
           <Button size="sm" variant="outline" className="h-7 px-1.5 sm:px-2 text-xs">
             <span className="hidden sm:inline">Upgrade</span>
             <span className="sm:hidden">Up</span>
@@ -74,7 +74,7 @@ export const UpgradeCTA: React.FC<UpgradeCTAProps> = ({
             {Math.max(0, userCredits.credits)} credit{userCredits.credits === 1 ? '' : 's'} remaining
           </span>
         </div>
-        <Link href="/pricing">
+        <Link href="/ask">
           <Button size="sm" variant="outline" className="h-8 w-full sm:w-auto">
             Upgrade
             <ArrowRight className="ml-1 h-3 w-3" />
@@ -100,7 +100,7 @@ export const UpgradeCTA: React.FC<UpgradeCTAProps> = ({
                 </p>
               </div>
             </div>
-            <Link href="/pricing" className="w-full sm:w-auto flex-shrink-0">
+            <Link href="/ask" className="w-full sm:w-auto flex-shrink-0">
               <Button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 w-full sm:w-auto">
                 <Crown className="mr-2 h-4 w-4" />
                 <span className="hidden sm:inline">Upgrade to Pro</span>

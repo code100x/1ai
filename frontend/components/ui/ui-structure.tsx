@@ -41,6 +41,7 @@ import { Execution } from "@/hooks/useExecution";
 
 export function UIStructure() {
   const [uiExecutions, setUiExecutions] = useState<Execution[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [hoverChatId, setHoverChatId] = useState<string>("");
   const [isAppsDialogOpen, setIsAppsDialogOpen] = useState(false);
   const { executions, loading, createNewExecution } = useExecutionContext();
@@ -109,6 +110,8 @@ export function UIStructure() {
               <MagnifyingGlassIcon className="text-foreground" weight="bold" />
               <Input
                 placeholder="Search for chats"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="rounded-none border-none bg-transparent px-0 py-1 shadow-none ring-0 focus-visible:ring-0 dark:bg-transparent"
               />
             </div>
@@ -123,7 +126,13 @@ export function UIStructure() {
                       className="bg-primary/15 mb-2 h-7 w-full animate-pulse rounded-md"
                     />
                   ))
-                : uiExecutions.map((execution: Execution) => (
+                : uiExecutions
+                    .filter((execution: Execution) =>
+                      searchQuery.trim()
+                        ? (execution.title || "").toLowerCase().includes(searchQuery.toLowerCase())
+                        : true
+                    )
+                    .map((execution: Execution) => (
                     <SidebarMenuItem key={execution.id}>
                       <SidebarMenuButton
                         className="group hover:bg-primary/20 relative"

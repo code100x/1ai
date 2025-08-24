@@ -136,7 +136,7 @@ export default function AboutUs() {
               <a href="/contact">Contact Us</a>
             </Button>
             <Button variant="outline" className="h-12 px-8" asChild>
-              <a href="/pricing">View Pricing</a>
+              <a href="/ask">Start Chatting</a>
             </Button>
           </div>
         </div>
