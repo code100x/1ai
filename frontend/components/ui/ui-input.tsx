@@ -21,7 +21,7 @@ import TabsSuggestion from "./tabs-suggestion";
 import { ModelSelector } from "@/components/ui/model-selector";
 import { DEFAULT_MODEL_ID } from "@/models/constants";
 import { useTheme } from "next-themes";
-import { ArrowUpIcon, WrapText } from "lucide-react";
+import { ArrowUpIcon, WrapText, X } from "lucide-react";
 import { atomOneDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import { useUser } from "@/hooks/useUser";
 import { useRouter } from "next/navigation";
@@ -29,6 +29,8 @@ import { useConversationById } from "@/hooks/useConversation";
 import { useCredits } from "@/hooks/useCredits";
 import { UpgradeCTA } from "@/components/ui/upgrade-cta";
 import { useExecutionContext } from "@/contexts/execution-context";
+import { FileAttachment, type UploadedFile } from "@/components/ui/file-attachment";
+import { FilePreview } from "@/components/ui/file-preview";
 
 const geistMono = Geist_Mono({
   subsets: ["latin"],
@@ -41,6 +43,7 @@ interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
+  attachments?: UploadedFile[];
 }
 
 const BACKEND_URL =
@@ -65,6 +68,7 @@ const UIInput = ({
   const [conversationId, setConversationId] = useState<string | null>(
     initialConversationId || v4()
   );
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const { resolvedTheme } = useTheme();
   const { user, isLoading: isUserLoading } = useUser();
   const { conversation, loading: converstionLoading } = useConversationById(
@@ -239,10 +243,12 @@ const UIInput = ({
       id: `user-${Date.now()}`,
       role: "user",
       content: currentQuery,
+      ...(uploadedFiles.length > 0 && { attachments: uploadedFiles }),
     };
 
     setQuery("");
     setMessages((prev) => [...prev, userMessage]);
+    setUploadedFiles([]); // Clear uploaded files after sending
     setIsLoading(true);
 
     if (abortControllerRef.current) {
@@ -265,6 +271,7 @@ const UIInput = ({
                 message: currentQuery,
                 model: model,
                 conversationId: conversationId,
+                ...(uploadedFiles.length > 0 && { attachments: uploadedFiles }),
               }),
               signal: abortControllerRef.current?.signal,
             });
@@ -343,6 +350,13 @@ const UIInput = ({
                         : "w-full p-0"
                     )}
                   >
+                    {/* File Attachments */}
+                    {message.attachments && message.attachments.length > 0 && (
+                      <div className="mb-3">
+                        <FilePreview files={message.attachments} />
+                      </div>
+                    )}
+                    
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm]}
                       components={{
@@ -546,6 +560,25 @@ const UIInput = ({
               onSubmit={handleCreateChat}
               className="bg-accent/30 dark:bg-accent/10 flex w-full flex-col rounded-xl p-3"
             >
+              {/* Uploaded Files Preview */}
+              {uploadedFiles.length > 0 && (
+                <div className="mb-3 p-2 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                      Files ready to send ({uploadedFiles.length})
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setUploadedFiles([])}
+                      className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-200"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <FilePreview files={uploadedFiles} />
+                </div>
+              )}
+              
               <Textarea
                 autoFocus
                 value={query}
@@ -561,6 +594,8 @@ const UIInput = ({
                   userCredits.credits <= 0 &&
                   !userCredits.isPremium
                     ? "You need credits to start a chat. Please upgrade to continue."
+                    : uploadedFiles.length > 0
+                    ? "Add a message or just send the files..."
                     : "Ask anything"
                 }
                 className="h-[2rem] resize-none rounded-none border-none bg-transparent px-0 py-1 shadow-none ring-0 focus-visible:ring-0 dark:bg-transparent"
@@ -587,13 +622,24 @@ const UIInput = ({
                       )
                     }
                   />
+                  <FileAttachment
+                    onFilesUploaded={setUploadedFiles}
+                    disabled={
+                      isLoading ||
+                      !!(
+                        userCredits &&
+                        userCredits.credits <= 0 &&
+                        !userCredits.isPremium
+                      )
+                    }
+                  />
                 </div>
                 <Button
                   type="submit"
                   size="icon"
                   disabled={
                     isLoading ||
-                    !query.trim() ||
+                    (!query.trim() && uploadedFiles.length === 0) ||
                     !!(
                       userCredits &&
                       userCredits.credits <= 0 &&
