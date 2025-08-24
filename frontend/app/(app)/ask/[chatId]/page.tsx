@@ -7,7 +7,7 @@ const ChatPage = () => {
   const params = useParams();
   const chatId = params.chatId as string;
   const [token, setToken] = useState<string | null>(null);
-  
+
   useEffect(() => {
     const savedToken = localStorage.getItem("turnstileToken");
     if (savedToken) {
@@ -15,13 +15,8 @@ const ChatPage = () => {
     }
   }, []);
 
-  return (
-    <div className="flex w-full max-w-screen flex-col items-center justify-center gap-4">
-      <div className="flex w-full flex-col items-center gap-4">
-        <UIInput conversationId={chatId} />
-      </div>
-    </div>
-  );
+  // removed the code repetation
+  return <UIInput conversationId={chatId} />;
 };
 
-export default ChatPage; 
+export default ChatPage;
