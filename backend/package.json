@@ -7,7 +7,13 @@
   },
   "scripts": {
     "dev": "bun --hot index.ts",
-    "start": "bun index.ts"
+    "start": "bun index.ts",
+    "build": "bun build index.ts --outfile ./dist/index.js --target node",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio",
+    "prisma:push": "prisma db push"
+    
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
@@ -17,6 +23,7 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/uuid": "^10.0.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "express-rate-limit": "^8.0.1",
@@ -25,6 +32,8 @@
     "prisma": "^6.14.0",
     "razorpay": "^2.9.6",
     "totp-generator": "^1.0.0",
+    "youtube-transcript-plus": "^1.1.1",
+    "ytdl-core": "^4.11.5",
     "zod": "^4.0.17"
   }
 }

@@ -170,3 +170,16 @@ html {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Additional scrollbar hiding for all browsers */
+.no-scrollbar::-webkit-scrollbar-track {
+  display: none;
+}
+
+.no-scrollbar::-webkit-scrollbar-thumb {
+  display: none;
+}
+
+.no-scrollbar::-webkit-scrollbar-corner {
+  display: none;
+}

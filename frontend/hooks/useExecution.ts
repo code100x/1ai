@@ -12,7 +12,8 @@ export interface Execution {
   
 enum ExecutionType {
     CONVERSATION = "CONVERSATION",
-    ARTICLE_SUMMARIZER = "ARTICLE_SUMMARIZER"
+    ARTICLE_SUMMARIZER = "ARTICLE_SUMMARIZER",
+    YOUTUBE_SUMMARIZER = "YOUTUBE_SUMMARIZER"
 }
   
 export function useExecution() {
