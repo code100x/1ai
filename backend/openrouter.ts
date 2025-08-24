@@ -2,10 +2,12 @@ import type { Message, MODEL, SUPPORTER_MODELS } from "./types";
 const OPENROUTER_KEY = process.env.OPENROUTER_KEY!;
 const MAX_TOKEN_ITERATIONS = 1000;
 
-export const createCompletion = async (messages: Message[], 
+export const createCompletion = async (
+  messages: Message[], 
     model: MODEL,
     cb: (chunk: string) => void,
-    images?: string[]
+    images?: string[],
+    systemPrompt?: string
 ) => {
     return new Promise<void>(async (resolve, reject) => {
         // Convert messages to OpenRouter format
@@ -77,6 +79,7 @@ export const createCompletion = async (messages: Message[],
               model,
               messages: openRouterMessages,
               stream: true,
+              system: systemPrompt,
             }),
         });
           
