@@ -16,67 +16,124 @@ const razorPayCredentials = {
 };
 
 const createOrderUrl = razorPayCredentials.environment === "sandbox" ? 'https://api.razorpay.com/v1/orders' : 'https://api.razorpay.com/v1/orders';
+
 const subscriptionUrl = razorPayCredentials.environment === "sandbox" ? "https://api.razorpay.com/v1/subscriptions" : "https://api.razorpay.com/v1/subscriptions";
-const plans = [{
-  name: "Premium",
-  monthly_price: 99,
-  plan_id: "plan_R8lQ4opIQbMwPK",
-  currency: "INR",
-  symbol: "₹",
-  pricing_currency: [
-    {
-      plan_id: "plan_R8lQ4opIQbMwPK",
-      monthly_price: 99,
-      currency: "INR",
-      symbol: "₹"
-    },
-    {
-      plan_id: "plan_R8lOdy52StfdXe",
-      monthly_price: 1,
-      currency: "USD",
-      symbol: "$"
-    }
-  ]
-}]
 
+// NOTE: added `yearly_price` for one-time annual payment
+const plans = [
+  {
+    name: "Premium",
+    monthly_price: 99,
+    yearly_price: 999, // used for yearly one-time order
+    plan_id: "plan_R8lQ4opIQbMwPK",
+    currency: "INR",
+    symbol: "₹",
+    pricing_currency: [
+      {
+        plan_id: "plan_R8lQ4opIQbMwPK",
+        monthly_price: 99,
+        yearly_price: 999,
+        currency: "INR",
+        symbol: "₹",
+      },
+      {
+        plan_id: "plan_R8lOdy52StfdXe",
+        monthly_price: 1,
+        yearly_price: 10,
+        currency: "USD",
+        symbol: "$",
+      },
+    ],
+  },
+];
 
+// Create subscription (monthly) OR order (yearly)
 billingRouter.post("/init-subscribe", authMiddleware, async (req, res) => {
   const userId = req.userId;
-  const { planType = "monthly" } = req.body; // Default to monthly plan
+  const { planType = "monthly" } = req.body; // monthly or yearly
 
   const authHeader = 'Basic ' + Buffer.from(razorPayCredentials.key + ':' + razorPayCredentials.secret).toString('base64');
   const headers = {
-    'Authorization': authHeader,
-    'Content-Type': 'application/json'
+    Authorization: authHeader,
+    "Content-Type": 'application/json',
   };
 
-  // Select plan based on request, defaulting to INR monthly
-  let wp = plans[0]?.pricing_currency[0]; // Default INR plan
-  if (planType === "yearly") {
-    // Add yearly plan support if needed - for now using monthly
-    wp = plans[0]?.pricing_currency[0];
+  // default to INR plan entry
+  let wp =
+    plans[0]?.pricing_currency?.find((p) => p.currency === "INR") ??
+    plans[0]?.pricing_currency?.[0];
+
+  if (!wp) {
+    return res.status(500).json({ error: "No plan configuration found" });
   }
 
-  const orderData = {
-    plan_id: wp.plan_id,
-    customer_notify: 1,
-    total_count: 12,
-    notes: {
-      customer_id: userId,
-      return_url: `${process.env.FRONTEND_URL}`,
-      app_name: "1AI",
-    }
-  };
-
   try {
-    
+    if (String(planType).toLowerCase() === "yearly") {
+      // yearly one-time order
+      const receipt = uuidv4();
+      const amountPaise = Number((wp as any).yearly_price ?? 999) * 100;
+
+      const orderPayload = {
+        amount: amountPaise,
+        currency: wp.currency,
+        receipt,
+        notes: {
+          customer_id: userId,
+          planType: "yearly",
+          app_name: "1AI",
+        },
+      };
+
+      const orderResponse = await axios.post(createOrderUrl, orderPayload, {
+        headers,
+      });
+
+      const { id } = orderResponse.data;
+      if (!id) {
+        return res
+          .status(500)
+          .json({ error: "Missing order ID from Razorpay" });
+      }
+
+      await prisma.paymentHistory.create({
+        data: {
+          status: "PENDING",
+          paymentMethod: "RAZORPAY",
+          cfPaymentId: "",
+          bankReference: id, // store order_id here
+          amount: (wp as any).yearly_price ?? 999,
+          userId: userId,
+          currency: wp.currency,
+        },
+      });
+
+      return res.json({
+        orderId: id,
+        mode: "order", // for frontend
+        rzpKey: razorPayCredentials.key,
+        currency: wp.currency,
+      });
+    }
+
+    // monthly subcription like the way it is working right now
+    const orderData = {
+      plan_id: wp.plan_id,
+      customer_notify: 1,
+      total_count: 12,
+      notes: {
+        customer_id: userId,
+        return_url: `${process.env.FRONTEND_URL}`,
+        app_name: "1AI",
+      },
+    };
+
     const orderResponse = await axios.post(subscriptionUrl, orderData, {
       headers,
     });
     const { id } = orderResponse.data;
 
     if (!id) {
-      return res.status(500).json({ error: "Missing payment session ID" });
+      return res.status(500).json({ error: "Missing subscription ID" });
     }
 
     await prisma.paymentHistory.create({
@@ -102,9 +159,14 @@ billingRouter.post("/init-subscribe", authMiddleware, async (req, res) => {
       }
     });
 
-    return res.json({ orderId: id, rzpKey: razorPayCredentials.key, currency: wp.currency });
+    return res.json({
+      orderId: id,
+      mode: "subscription", // for frontend 
+      rzpKey: razorPayCredentials.key,
+      currency: wp.currency,
+    });
   } catch (error: any) {
-    console.error("Error creating order:", error);
+    console.error("Error creating order/subscription:", error?.response?.data || error);
     return res.status(500).json({
       error: "Internal server error during order creation",
       details: error.response?.data || error.message,
@@ -166,32 +228,42 @@ billingRouter.get("/subscriptions/:userId", authMiddleware, async (req, res) => 
   }
 });
 
-billingRouter.post('/get-plans', async (req, res) => {
+billingRouter.post('/get-plans', async (_req, res) => {
   return res.json(plans);
 });
 
-// Verify payment signature for subscription payments
+// Verify payment signature for both monthly and yearly
 billingRouter.post("/verify-payment", authMiddleware, async (req, res) => {
   const userId = req.userId;
-  const { signature, razorpay_payment_id, orderId } = req.body;
+
+  const { signature, razorpay_payment_id, orderId, razorpay_order_id } = req.body;
 
   if (!signature || !razorpay_payment_id) {
-    return res.status(400).json({ 
-      success: false, 
-      error: "Missing signature or payment ID" 
+    return res.status(400).json({
+        success: false,
+        error: "Missing signature or payment ID"
     });
   }
 
   try {
     // Find the pending payment record for this user
+    const bankRef = orderId || razorpay_order_id;
+    if (!bankRef) {
+      return res.status(400).json({
+        success: false,
+        error: "Missing order/subscription reference",
+      });
+    }
+
+    // Find the pending payment record for this user
     const paymentRecord = await prisma.paymentHistory.findFirst({
       where: {
         userId: userId,
         status: "PENDING",
-        bankReference: orderId
+        bankReference: bankRef
       },
       orderBy: {
-        createdAt: "desc"
+        createdAt: "desc" 
       }
     });
 
@@ -202,26 +274,30 @@ billingRouter.post("/verify-payment", authMiddleware, async (req, res) => {
       });
     }
 
-    // Find the subscription record to get the subscription_id
+    // Check whether this bankRef is a subscription or an order
     const subscription = await prisma.subscription.findFirst({
       where: {
         userId: userId,
-        rzpSubscriptionId: orderId
+        rzpSubscriptionId: bankRef,
       }
     });
 
-    if (!subscription) {
-      return res.status(404).json({
-        success: false,
-        error: "Subscription not found"
-      });
-    }
+    let expectedSignature: string;
 
-    // Generate signature using subscription_id (not razorpay_subscription_id)
-    const expectedSignature = crypto
-      .createHmac("sha256", razorPayCredentials.secret)
-      .update(razorpay_payment_id + "|" + subscription.rzpSubscriptionId)
-      .digest("hex");
+    if (subscription) {
+      // subscription verification
+      expectedSignature = crypto
+        .createHmac("sha256", razorPayCredentials.secret)
+        .update(razorpay_payment_id + "|" + subscription.rzpSubscriptionId)
+        .digest("hex");
+    } else {
+      // order verification (yearly one-time)
+      const ordId = razorpay_order_id || bankRef; // prefer explicit field if sent
+      expectedSignature = crypto
+        .createHmac("sha256", razorPayCredentials.secret)
+        .update(ordId + "|" + razorpay_payment_id)
+        .digest("hex");
+    }
 
     // Verify signature
     if (expectedSignature === signature) {
@@ -234,7 +310,7 @@ billingRouter.post("/verify-payment", authMiddleware, async (req, res) => {
         }
       });
 
-      // Update user to premium status and add credits
+      // Update user to premium status and add credits (same as monthly flow)
       await prisma.user.update({
         where: { id: userId },
         data: {
@@ -253,7 +329,7 @@ billingRouter.post("/verify-payment", authMiddleware, async (req, res) => {
       // Invalid signature
       await prisma.paymentHistory.update({
         where: { paymentId: paymentRecord.paymentId },
-        data: {
+        data: { 
           status: "FAILED"
         }
       });
@@ -286,7 +362,7 @@ billingRouter.get("/credits/:userId", authMiddleware, async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
-``
+
     return res.json({ 
       credits: user.credits, 
       isPremium: user.isPremium 
