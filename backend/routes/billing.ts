@@ -53,10 +53,60 @@ billingRouter.post("/init-subscribe", authMiddleware, async (req, res) => {
   // Select plan based on request, defaulting to INR monthly
   let wp = plans[0]?.pricing_currency[0]; // Default INR plan
   if (planType === "yearly") {
-    // Add yearly plan support if needed - for now using monthly
+    // Treat yearly as a one-time payment: compute annual amount (monthly_price * 10)
     wp = plans[0]?.pricing_currency[0];
+    const annualAmount = wp.monthly_price * 10;
+
+    const orderData = {
+      amount: annualAmount,
+      currency: wp.currency,
+      receipt: uuidv4(),
+      notes: {
+        customer_id: userId,
+        return_url: `${process.env.FRONTEND_URL}`,
+        app_name: "1AI",
+        plan_type: "yearly",
+      }
+    };
+
+    try {
+      const orderResponse = await axios.post(createOrderUrl, orderData, { headers });
+      const { id } = orderResponse.data;
+
+      if (!id) {
+        return res.status(500).json({ error: "Missing payment session ID" });
+      }
+
+      await prisma.paymentHistory.create({
+        data: {
+          status: "PENDING",
+          paymentMethod: 'RAZORPAY',
+          cfPaymentId: "",
+          bankReference: id,
+          amount: annualAmount,
+          userId: userId,
+          currency: wp.currency
+        }
+      });
+
+      return res.json({ 
+        orderId: id, 
+        rzpKey: razorPayCredentials.key, 
+        currency: wp.currency, 
+        orderType: "one_time", 
+        amount: annualAmount,
+        planType: "yearly"
+      });
+    } catch (error: any) {
+      console.error("Error creating one-time order:", error);
+      return res.status(500).json({
+        error: "Internal server error during order creation",
+        details: error.response?.data || error.message,
+      });
+    }
   }
 
+  // Monthly subscription logic
   const orderData = {
     plan_id: wp.plan_id,
     customer_notify: 1,
@@ -65,6 +115,7 @@ billingRouter.post("/init-subscribe", authMiddleware, async (req, res) => {
       customer_id: userId,
       return_url: `${process.env.FRONTEND_URL}`,
       app_name: "1AI",
+      plan_type: "monthly",
     }
   };
 
@@ -102,7 +153,12 @@ billingRouter.post("/init-subscribe", authMiddleware, async (req, res) => {
       }
     });
 
-    return res.json({ orderId: id, rzpKey: razorPayCredentials.key, currency: wp.currency });
+    return res.json({ 
+      orderId: id, 
+      rzpKey: razorPayCredentials.key, 
+      currency: wp.currency,
+      planType: "monthly"
+    });
   } catch (error: any) {
     console.error("Error creating order:", error);
     return res.status(500).json({
@@ -202,66 +258,116 @@ billingRouter.post("/verify-payment", authMiddleware, async (req, res) => {
       });
     }
 
-    // Find the subscription record to get the subscription_id
-    const subscription = await prisma.subscription.findFirst({
-      where: {
-        userId: userId,
-        rzpSubscriptionId: orderId
+    // Check if this is a yearly one-time payment or monthly subscription
+    const isYearlyPlan = paymentRecord.amount >= 990; // Yearly plan amount (99 * 10)
+    
+    if (isYearlyPlan) {
+      // Handle yearly one-time payment
+      // Generate signature using order_id for one-time payments
+      const expectedSignature = crypto
+        .createHmac("sha256", razorPayCredentials.secret)
+        .update(razorpay_payment_id + "|" + orderId)
+        .digest("hex");
+
+      // Verify signature
+      if (expectedSignature === signature) {
+        // Payment is authentic - update records
+        await prisma.paymentHistory.update({
+          where: { paymentId: paymentRecord.paymentId },
+          data: {
+            status: "SUCCESS",
+            cfPaymentId: razorpay_payment_id
+          }
+        });
+
+        // Update user to premium status and add 12k credits for yearly plan
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            isPremium: true,
+            credits: { increment: 12000 } // Add 12k credits for yearly plan
+          }
+        });
+
+        return res.json({
+          success: true,
+          message: "Yearly plan payment verified successfully. You now have 12,000 credits!"
+        });
+      } else {
+        // Invalid signature
+        await prisma.paymentHistory.update({
+          where: { paymentId: paymentRecord.paymentId },
+          data: {
+            status: "FAILED"
+          }
+        });
+
+        return res.status(400).json({
+          success: false,
+          error: "Invalid payment signature"
+        });
       }
-    });
-
-    if (!subscription) {
-      return res.status(404).json({
-        success: false,
-        error: "Subscription not found"
-      });
-    }
-
-    // Generate signature using subscription_id (not razorpay_subscription_id)
-    const expectedSignature = crypto
-      .createHmac("sha256", razorPayCredentials.secret)
-      .update(razorpay_payment_id + "|" + subscription.rzpSubscriptionId)
-      .digest("hex");
-
-    // Verify signature
-    if (expectedSignature === signature) {
-      // Payment is authentic - update records
-      await prisma.paymentHistory.update({
-        where: { paymentId: paymentRecord.paymentId },
-        data: {
-          status: "SUCCESS",
-          cfPaymentId: razorpay_payment_id
-        }
-      });
-
-      // Update user to premium status and add credits
-      await prisma.user.update({
-        where: { id: userId },
-        data: {
-          isPremium: true,
-          credits: { increment: 1000 } // Add 1000 credits for premium subscription
-        }
-      });
-
-      // Subscription is already created and active based on endDate
-
-      return res.json({
-        success: true,
-        message: "Payment verified successfully"
-      });
     } else {
-      // Invalid signature
-      await prisma.paymentHistory.update({
-        where: { paymentId: paymentRecord.paymentId },
-        data: {
-          status: "FAILED"
+      // Handle monthly subscription payment
+      // Find the subscription record to get the subscription_id
+      const subscription = await prisma.subscription.findFirst({
+        where: {
+          userId: userId,
+          rzpSubscriptionId: orderId
         }
       });
 
-      return res.status(400).json({
-        success: false,
-        error: "Invalid payment signature"
-      });
+      if (!subscription) {
+        return res.status(404).json({
+          success: false,
+          error: "Subscription not found"
+        });
+      }
+
+      // Generate signature using subscription_id
+      const expectedSignature = crypto
+        .createHmac("sha256", razorPayCredentials.secret)
+        .update(razorpay_payment_id + "|" + subscription.rzpSubscriptionId)
+        .digest("hex");
+
+      // Verify signature
+      if (expectedSignature === signature) {
+        // Payment is authentic - update records
+        await prisma.paymentHistory.update({
+          where: { paymentId: paymentRecord.paymentId },
+          data: {
+            status: "SUCCESS",
+            cfPaymentId: razorpay_payment_id
+          }
+        });
+
+        // Update user to premium status and add credits
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            isPremium: true,
+            credits: { increment: 1000 } // Add 1000 credits for monthly subscription
+          }
+        });
+
+        return res.json({
+          success: true,
+          message: "Payment verified successfully"
+        });
+      } else {
+        // Invalid signature
+        await prisma.paymentHistory.update({
+          where: { paymentId: paymentRecord.paymentId },
+          data: {
+            status: "FAILED"
+          }
+        });
+
+        return res.status(400).json({
+          success: false,
+          error: "Invalid payment signature"
+        });
+      }
     }
   } catch (error: any) {
     console.error("Error verifying payment:", error);
@@ -286,7 +392,7 @@ billingRouter.get("/credits/:userId", authMiddleware, async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
-``
+
     return res.json({ 
       credits: user.credits, 
       isPremium: user.isPremium 
