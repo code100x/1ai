@@ -11,6 +11,12 @@ const app = express();
 app.use(cors())
 
 app.use(express.json());
+
+// Health check endpoint for Docker
+app.get("/health", (req, res) => {
+    res.status(200).json({ status: "healthy", timestamp: new Date().toISOString() });
+});
+
 app.use("/rzp_webhook", rzpWebhookRouter);
 app.use("/ai", aiRouter);
 app.use("/auth", authRouter);
