@@ -99,7 +99,7 @@ const TabsSuggestion = ({
                   setSuggestedInput(item);
                 }
               }}
-              className="flex items-start gap-2 border-t border-secondary/40 py-1 first:border-none cursor-pointer font-medium"
+              className="flex items-start gap-2 border-t border-secondary/40 py-1 first:border-none cursor-pointer"
             >
               <button className="w-full rounded-md py-2 text-left hover:bg-secondary sm:px-3">
                 {item}

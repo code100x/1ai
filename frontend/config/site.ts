@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-const TITLE = "1AI | Multi-model AI chat app";
+const TITLE = "1ai | Multi-model AI chat app";
 const DESCRIPTION =
   "1ai is a platform that allows you to chat with different LLMs via a unified interface.";
 
@@ -10,7 +10,18 @@ export const siteConfig: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   icons: {
-    icon: "/logo.svg",
+    icon: [
+      {
+        media: "(prefers-color-scheme: light)",
+        url: "/favicon-dark.svg",
+        type: "image/svg+xml",
+      },
+      {
+        media: "(prefers-color-scheme: dark)",
+        url: "/favicon.svg",
+        type: "image/svg+xml",
+      },
+    ],
   },
 
   category: "AI",
