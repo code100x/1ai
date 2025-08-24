@@ -5,6 +5,24 @@ import { PrismaClient } from "../../generated/prisma";
 
 const router = Router();
 
+/**
+ * @swagger
+ * /apps:
+ *   get:
+ *     tags: [Apps]
+ *     summary: List available apps
+ *     description: Get a list of all available AI-powered applications
+ *     responses:
+ *       200:
+ *         description: List of available apps
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: string
+ *               example: ["article-summarizer"]
+ */
 router.get("/", (req, res) => {
     res.json(["article-summarizer"]);
 });
@@ -44,6 +62,49 @@ router.get("/article-summarizer/:executionId", authMiddleware, async (req, res) 
     });
 });
 
+/**
+ * @swagger
+ * /apps/article-summarizer:
+ *   post:
+ *     tags: [Apps]
+ *     summary: Summarize article
+ *     description: Generate a summary of the provided article text using AI
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - article
+ *             properties:
+ *               article:
+ *                 type: string
+ *                 description: Article text to summarize
+ *                 example: "This is a long article about artificial intelligence..."
+ *     responses:
+ *       200:
+ *         description: Streaming summary response
+ *         content:
+ *           text/event-stream:
+ *             schema:
+ *               type: string
+ *               description: Server-sent events with summary chunks
+ *       400:
+ *         description: Invalid input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post("/article-summarizer", authMiddleware, (req, res) => {
     // Set SSE headers
     res.setHeader('Content-Type', 'text/event-stream');

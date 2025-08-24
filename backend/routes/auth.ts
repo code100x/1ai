@@ -16,7 +16,53 @@ const router = Router();
 // Temporarily adding local user otp cache
 const otpCache = new Map<string, string>();
 
-// TODO: Rate limit this
+/**
+ * @swagger
+ * /auth/initiate_signin:
+ *   post:
+ *     tags: [Authentication]
+ *     summary: Initiate user sign-in process
+ *     description: Sends an OTP to the user's email for authentication
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: user@example.com
+ *     responses:
+ *       200:
+ *         description: OTP sent successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Check your email
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *       411:
+ *         description: Invalid input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post("/initiate_signin", perMinuteLimiter, async (req, res) => {
     try {
         const { success, data } = CreateUser.safeParse(req.body);
@@ -66,6 +112,55 @@ router.post("/initiate_signin", perMinuteLimiter, async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /auth/signin:
+ *   post:
+ *     tags: [Authentication]
+ *     summary: Complete user sign-in
+ *     description: Verify OTP and return JWT token
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - otp
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: user@example.com
+ *               otp:
+ *                 type: string
+ *                 example: "123456"
+ *     responses:
+ *       200:
+ *         description: Authentication successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ *                   description: JWT authentication token
+ *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *       401:
+ *         description: Invalid OTP
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       411:
+ *         description: Invalid input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post("/signin", perMinuteLimiterRelaxed, async (req, res) => {
     const { success, data } = SignIn.safeParse(req.body);
 
@@ -109,6 +204,39 @@ router.post("/signin", perMinuteLimiterRelaxed, async (req, res) => {
     })
 })
 
+/**
+ * @swagger
+ * /auth/me:
+ *   get:
+ *     tags: [Authentication]
+ *     summary: Get current user information
+ *     description: Returns the authenticated user's profile information
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User information retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       format: uuid
+ *                     email:
+ *                       type: string
+ *                       format: email
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get("/me", authMiddleware, async (req, res) => {
     const user = await prismaClient.user.findUnique({
         where: { id: req.userId }

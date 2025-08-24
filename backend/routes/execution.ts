@@ -6,6 +6,34 @@ const prismaClient = new PrismaClient();
 
 const router = Router();
 
+/**
+ * @swagger
+ * /execution:
+ *   get:
+ *     tags: [Executions]
+ *     summary: Get user executions
+ *     description: Retrieve all executions (conversations and apps) for the authenticated user
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Executions retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 executions:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Execution'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get("/", authMiddleware, async (req, res) => {
     const userId = req.userId;
     const executions = await prismaClient.execution.findMany({

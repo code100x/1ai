@@ -40,6 +40,51 @@ const plans = [{
 }]
 
 
+/**
+ * @swagger
+ * /billing/init-subscribe:
+ *   post:
+ *     tags: [Billing]
+ *     summary: Initialize subscription
+ *     description: Create a new subscription order with Razorpay
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               planType:
+ *                 type: string
+ *                 enum: [monthly, yearly]
+ *                 default: monthly
+ *                 description: Subscription plan type
+ *     responses:
+ *       200:
+ *         description: Subscription order created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 orderId:
+ *                   type: string
+ *                   description: Razorpay order ID
+ *                 rzpKey:
+ *                   type: string
+ *                   description: Razorpay public key
+ *                 currency:
+ *                   type: string
+ *                   description: Payment currency
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 billingRouter.post("/init-subscribe", authMiddleware, async (req, res) => {
   const userId = req.userId;
   const { planType = "monthly" } = req.body; // Default to monthly plan

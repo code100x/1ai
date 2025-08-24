@@ -9,6 +9,46 @@ const prismaClient = new PrismaClient();
 
 const router = Router();
 
+/**
+ * @swagger
+ * /ai/conversations/{conversationId}:
+ *   get:
+ *     tags: [AI Chat]
+ *     summary: Get conversation by ID
+ *     description: Retrieve a specific conversation with all messages
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: conversationId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Conversation ID
+ *     responses:
+ *       200:
+ *         description: Conversation retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 conversation:
+ *                   $ref: '#/components/schemas/Conversation'
+ *       404:
+ *         description: Conversation not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get("/conversations/:conversationId", authMiddleware, async (req, res) => {
     const userId = req.userId;
     const conversationId = req.params.conversationId;
@@ -52,6 +92,77 @@ router.get("/conversations/:conversationId", authMiddleware, async (req, res) =>
     });
 })
 
+/**
+ * @swagger
+ * /ai/chat:
+ *   post:
+ *     tags: [AI Chat]
+ *     summary: Send message to AI
+ *     description: Send a message to an AI model and receive a streaming response
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - message
+ *               - model
+ *             properties:
+ *               conversationId:
+ *                 type: string
+ *                 format: uuid
+ *                 description: Optional conversation ID (creates new if not provided)
+ *               message:
+ *                 type: string
+ *                 maxLength: 1000
+ *                 description: User message to send to AI
+ *                 example: "Hello, how are you?"
+ *               model:
+ *                 type: string
+ *                 description: AI model to use
+ *                 example: "google/gemini-2.5-flash"
+ *                 enum: [
+ *                   "google/gemini-2.5-pro",
+ *                   "google/gemini-2.5-flash",
+ *                   "agentica-org/deepcoder-14b-preview:free",
+ *                   "deepseek/deepseek-r1:free"
+ *                 ]
+ *     responses:
+ *       200:
+ *         description: Streaming AI response
+ *         content:
+ *           text/event-stream:
+ *             schema:
+ *               type: string
+ *               description: Server-sent events with AI response chunks
+ *       403:
+ *         description: Insufficient credits or premium required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Insufficient credits. Please subscribe to continue."
+ *                 credits:
+ *                   type: integer
+ *       404:
+ *         description: Model or user not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       411:
+ *         description: Invalid input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post("/chat", authMiddleware, async (req, res) => {
     const userId = req.userId;
     const {success, data} = CreateChatSchema.safeParse(req.body);
@@ -220,7 +331,44 @@ router.post("/chat", authMiddleware, async (req, res) => {
     ])
 });
 
-// Get user credits endpoint
+/**
+ * @swagger
+ * /ai/credits:
+ *   get:
+ *     tags: [AI Chat]
+ *     summary: Get user credits
+ *     description: Retrieve current user's available credits and premium status
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Credits retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 credits:
+ *                   type: integer
+ *                   description: Available credits
+ *                   example: 100
+ *                 isPremium:
+ *                   type: boolean
+ *                   description: Premium subscription status
+ *                   example: true
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get("/credits", authMiddleware, async (req, res) => {
     const userId = req.userId;
     
@@ -246,6 +394,32 @@ router.get("/credits", authMiddleware, async (req, res) => {
             message: "Internal server error"
         });
     }
+});
+
+/**
+ * @swagger
+ * /ai/models:
+ *   get:
+ *     tags: [AI Chat]
+ *     summary: Get available AI models
+ *     description: Retrieve list of all available AI models with their details
+ *     responses:
+ *       200:
+ *         description: Models retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 models:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Model'
+ */
+router.get("/models", (req, res) => {
+    res.json({
+        models: MODELS
+    });
 });
 
 export default router;
