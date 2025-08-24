@@ -38,6 +38,7 @@ import { useUser } from "@/hooks/useUser";
 import Link from "next/link";
 import { useExecutionContext } from "@/contexts/execution-context";
 import { Execution } from "@/hooks/useExecution";
+import { formatDate } from "@/lib/date";
 
 export function UIStructure() {
   const [uiExecutions, setUiExecutions] = useState<Execution[]>([]);
@@ -134,6 +135,9 @@ export function UIStructure() {
                         <div className="flex w-full items-center justify-between">
                           <span className="z-[-1] cursor-pointer truncate">
                             {execution.title}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {formatDate(execution.createdAt)}
                           </span>
                           <div
                             className={`absolute top-0 right-0 z-[5] h-full w-12 rounded-r-md blur-[2em] ${execution.id === hoverChatId ? "bg-primary" : ""}`}
