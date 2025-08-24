@@ -2,7 +2,7 @@
 
 import { BACKEND_URL } from "@/lib/utils";
 import React, { useState } from "react";
-import { useRazorpay, RazorpayOrderOptions } from "react-razorpay";
+import { useRazorpay } from "react-razorpay";
 import axios from "axios";
 import { Button } from "./ui/button";
 import { toast } from "sonner";
@@ -15,19 +15,19 @@ const RZP_KEY = process.env.NEXT_PUBLIC_RZP_KEY ?? "rzp_live_haOcAMPhYa4O6r";
 
 interface RazorpayPaymentProps {
   plan: {
-    name: string;
+    name: string;     // monthly or yearly
     price: number;
     currency: string;
-    interval: string;
+    interval: string; // month or year
   };
   className?: string;
   children?: React.ReactNode;
 }
 
-const RazorpayPayment: React.FC<RazorpayPaymentProps> = ({ 
-  plan, 
+const RazorpayPayment: React.FC<RazorpayPaymentProps> = ({
+  plan,
   className,
-  children 
+  children
 }) => {
   const { error, isLoading: rzpLoading, Razorpay } = useRazorpay();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -51,92 +51,103 @@ const RazorpayPayment: React.FC<RazorpayPaymentProps> = ({
     try {
       setIsProcessing(true);
       toast.loading("Initializing payment...", { id: "payment-init" });
-      
-      // Call the backend to create subscription order
+
+      // call the backend to create monthly subscription or yearly order
       const res = await axios.post(
-        `${BACKEND_URL}/billing/init-subscribe`, 
-        { 
-          planType: plan.name.toLowerCase() 
-        }, 
+        `${BACKEND_URL}/billing/init-subscribe`,
+        {
+          planType: plan.name.toLowerCase(), // monthly or yearly
+        },
         {
           headers: {
-            "Authorization": `Bearer ${localStorage.getItem("token")}`
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           }
         }
       );
 
       toast.dismiss("payment-init");
 
-      if (res.data.orderId) {
-        const options = {
+      if (res.data?.orderId) {
+        const isYearly = String(plan.name).toLowerCase() === "yearly";
+
+        const options: any = {
           key: res.data.rzpKey || RZP_KEY,
-          subscription_id: res.data.orderId,
           name: "1AI",
-          description: `${plan.name} Subscription`,
+          description: isYearly ? `${plan.name} – One-time` : `${plan.name} Subscription`,
           prefill: {
             name: user.name || "User",
             email: user.email || "",
           },
           handler: async (response: any) => {
             // Payment successful
-            if (response.razorpay_payment_id) {
-              toast.success("Payment successful! Your subscription is being activated...", {
-                duration: 3000
-              });
-
-              let signature = response.razorpay_signature;
-              let razorpay_payment_id = response.razorpay_payment_id;
-
-              try {
-                console.log(BACKEND_URL);
-                console.log(response);
-                const response2 = await axios.post(
-                    `${BACKEND_URL}/billing/verify-payment`,
-                    {
-                      signature,
-                      razorpay_payment_id,
-                      orderId: res.data.orderId
-                    },
-                    {
-                      headers: {
-                        "Authorization": `Bearer ${localStorage.getItem("token")}`
-                      }
-                    }
-                  );
-    
-                  if (response2.data.success) {
-                    toast.success("Payment successful! Your subscription is being activated...", {
-                      duration: 3000
-                    });
-                  } else {
-                    toast.error("Payment failed! Please try again.");
-                  }
-              } catch (error: any) {
-                console.error("Error verifying payment:", error);
-                toast.error(error?.response?.data?.error || "Payment failed! Please try again.");
+            try {
+              const payload: any = {
+                signature: response.razorpay_signature,
+                razorpay_payment_id: response.razorpay_payment_id,
+                orderId: res.data.orderId, // bankReference we stored
+              };
+              if (isYearly) {
+                payload.razorpay_order_id = response.razorpay_order_id;
               }
+              const response2 = await axios.post(
+                `${BACKEND_URL}/billing/verify-payment`,
+                payload,
+                {
+                  headers: {
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                  },
+                },
+              );
+
+              if (response2.data.success) {
+                toast.success(
+                  isYearly
+                    ? "Payment successful! Premium activated."
+                    : "Payment successful! Your subscription is being activated...",
+                  { duration: 3000 },
+                );
+              } else {
+                toast.error("Payment failed! Please try again.");
+              }
+            } catch (err: any) {
+              console.error("Error verifying payment:", err);
+              toast.error(
+                err?.response?.data?.error ||
+                  "Payment verification failed! Please contact support.",
+              );
+            } finally {
+              setIsProcessing(false);
             }
           },
           modal: {
             ondismiss: () => {
               setIsProcessing(false);
               toast.info("Payment cancelled");
-            }
+            },
           },
-          theme: {
+          theme: { 
             color: "#F37254",
           },
         };
 
-        const razorpayInstance = new Razorpay(options as any);
-        razorpayInstance.open();
+        // subscription or order
+        if (isYearly) {
+          // One-time order
+          options.order_id = res.data.orderId;
+        } else {
+          // Subscription
+          options.subscription_id = res.data.orderId;
+        }
+
+        const rzp = new Razorpay(options as any);
+        rzp.open();
       } else {
-        throw new Error("No subscription ID received from server");
+        throw new Error("No order/subscription ID received from server");
       }
     } catch (error: any) {
       console.error("Payment initialization error:", error);
       toast.dismiss("payment-init");
-      
+
       if (error?.response?.status === 401) {
         toast.error("Please login again to continue");
         router.push("/auth");
@@ -144,9 +155,9 @@ const RazorpayPayment: React.FC<RazorpayPaymentProps> = ({
         toast.error("Too many requests. Please try again later.");
       } else {
         toast.error(
-          error?.response?.data?.error || 
-          error?.message ||
-          "Failed to initialize payment. Please try again."
+          error?.response?.data?.error ||
+            error?.message ||
+            "Failed to initialize payment. Please try again.",
         );
       }
     } finally {
@@ -177,6 +188,3 @@ const RazorpayPayment: React.FC<RazorpayPaymentProps> = ({
 };
 
 export default RazorpayPayment;
-
-
-
