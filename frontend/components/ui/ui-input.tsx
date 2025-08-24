@@ -79,6 +79,10 @@ const UIInput = ({
   const [editorValue, setEditorValue] = useState<Descendant[]>([
     { type: "paragraph", children: [{ text: "" }] },
   ]);
+  const editor = useMemo(() => withHistory(withReact(createEditor())), []);
+  const [showModal, setShowModal] = useState(false);
+  const [modalContent, setModalContent] = useState('');
+  
   const [messages, setMessages] = useState<Message[]>([]);
   const [showWelcome, setShowWelcome] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -337,9 +341,7 @@ const UIInput = ({
     );
   }
 
-  const editor = useMemo(() => withHistory(withReact(createEditor())), []);
-  const [showModal, setShowModal] = useState(false);
-  const [modalContent, setModalContent] = useState('');
+ 
 
   const handlePaste = useCallback(
     (event: React.ClipboardEvent) => {
