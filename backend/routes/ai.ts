@@ -146,7 +146,7 @@ router.post("/chat", authMiddleware, perMinuteLimiterRelaxed, async (req, res) =
         existingMessages = InMemoryStore.getInstance().get(conversationId);
     }
 
-    // Set proper SSE headers
+    // Set proper SSE headers (server-sent events)
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -183,9 +183,11 @@ router.post("/chat", authMiddleware, perMinuteLimiterRelaxed, async (req, res) =
 
     InMemoryStore.getInstance().add(conversationId, {
         role: Role.Agent,
+        // Cache invalidation (from security/perf improvements PR): ensure conversation lists/details refresh
         content: message
     })
 
+    // Invalidate cache for conversation lists and details to reflect new messages
     await CacheManager.del(`conversations:${userId}`);
     await CacheManager.del(`conversation:${conversationId}`);
 
