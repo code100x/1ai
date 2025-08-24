@@ -16,7 +16,7 @@ const PricingSection: React.FC = () => {
           Simple pricing
         </h2>
         <p className="mt-2">
-          These are our most simple and affordable pricing for thiss application
+          These are our most simple and affordable pricing for this application
         </p>
       </div>
 
