@@ -4,6 +4,7 @@ import authRouter from "./routes/auth"
 import aiRouter from "./routes/ai"
 import { billingRouter } from "./routes/billing"
 import rzpWebhookRouter from "./routes/rzpWebhookRouter"
+import uploadRouter from "./routes/upload"
 import appsRouter from "./routes/apps";
 import executionRouter from "./routes/execution";
 
@@ -15,6 +16,7 @@ app.use("/rzp_webhook", rzpWebhookRouter);
 app.use("/ai", aiRouter);
 app.use("/auth", authRouter);
 app.use("/billing", billingRouter);
+app.use("/upload", uploadRouter);
 app.use("/apps", appsRouter);
 app.use("/execution", executionRouter);
 

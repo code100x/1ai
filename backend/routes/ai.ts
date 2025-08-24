@@ -42,6 +42,9 @@ router.get("/conversations/:conversationId", authMiddleware, async (req, res) =>
             messages: {
                 orderBy: {
                     createdAt: "asc"
+                },
+                include: {
+                    attachments: true
                 }
             }
         }
@@ -141,13 +144,27 @@ router.post("/chat", authMiddleware, async (req, res) => {
         const messages = await prismaClient.message.findMany({
             where: {
                 conversationId
+            },
+            include: {
+                attachments: true
+            },
+            orderBy: {
+                createdAt: "asc"
             }
         })
         messages.map((message) => {
-            InMemoryStore.getInstance().add(conversationId, {
+            const messageWithAttachments = {
                 role: message.role as Role,
-                content: message.content
-            })
+                content: message.content,
+                attachments: message.attachments?.map(att => ({
+                    fileName: att.fileName,
+                    fileUrl: att.fileUrl,
+                    fileType: att.fileType,
+                    fileSize: att.fileSize,
+                    extractedContent: att.extractedContent || undefined
+                }))
+            };
+            InMemoryStore.getInstance().add(conversationId, messageWithAttachments)
         })
         existingMessages = InMemoryStore.getInstance().get(conversationId);
     }
@@ -163,9 +180,33 @@ router.post("/chat", authMiddleware, async (req, res) => {
     let message = "";
     
     try {
+        // Prepare the user message with attachment context
+        let userMessageContent = data.message;
+        
+        // If there are attachments, add their context to the message
+        if (data.attachments && data.attachments.length > 0) {
+            const attachmentContext = data.attachments.map(attachment => {
+                let context = `\n\n[Attached file: ${attachment.fileName} (${attachment.fileType})]`;
+                
+                // If it's a document with extracted content, include that
+                if (attachment.extractedContent && attachment.extractedContent.trim()) {
+                    context += `\nFile content:\n${attachment.extractedContent.slice(0, 3000)}${attachment.extractedContent.length > 3000 ? '...' : ''}`;
+                }
+                
+                // If it's an image, note that it's available for analysis
+                if (attachment.fileType.startsWith('image/')) {
+                    context += `\nThis image is available for visual analysis at: ${attachment.fileUrl}`;
+                }
+                
+                return context;
+            }).join('\n');
+            
+            userMessageContent += attachmentContext;
+        }
+
         await createCompletion([...existingMessages, {
             role: Role.User,
-            content: data.message
+            content: userMessageContent
         }], data.model, (chunk: string) => {
             message += chunk;
             // Format as proper SSE data
@@ -182,10 +223,13 @@ router.post("/chat", authMiddleware, async (req, res) => {
         res.end(); // Always end the response
     }
 
-    InMemoryStore.getInstance().add(conversationId, {
+    const userMessage = {
         role: Role.User,
-        content: data.message
-    })
+        content: data.message,
+        attachments: data.attachments
+    };
+    
+    InMemoryStore.getInstance().add(conversationId, userMessage)
 
     InMemoryStore.getInstance().add(conversationId, {
         role: Role.Agent,
@@ -193,31 +237,49 @@ router.post("/chat", authMiddleware, async (req, res) => {
     })
 
     // Save messages and deduct credits in a transaction
-    await prismaClient.$transaction([
-        prismaClient.message.createMany({
-            data: [
-                {
-                    conversationId,
-                    content: data.message,
-                    role: Role.User
-                },
-                {
-                    conversationId,
-                    content: message,
-                    role: Role.Agent,
-                },
-            ]
-        }),
+    await prismaClient.$transaction(async (tx) => {
+        // Create user message
+        const userMessage = await tx.message.create({
+            data: {
+                conversationId,
+                content: data.message,
+                role: Role.User
+            }
+        });
+
+        // Create attachments for user message if any
+        if (data.attachments && data.attachments.length > 0) {
+            await tx.messageAttachment.createMany({
+                data: data.attachments.map(attachment => ({
+                    messageId: userMessage.id,
+                    fileName: attachment.fileName,
+                    fileUrl: attachment.fileUrl,
+                    fileType: attachment.fileType,
+                    fileSize: attachment.fileSize,
+                    extractedContent: attachment.extractedContent
+                }))
+            });
+        }
+
+        // Create assistant message
+        await tx.message.create({
+            data: {
+                conversationId,
+                content: message,
+                role: Role.Agent,
+            }
+        });
+
         // Deduct 1 credit for the message
-        prismaClient.user.update({
+        await tx.user.update({
             where: { id: userId },
             data: {
                 credits: {
                     decrement: 1
                 }
             }
-        })
-    ])
+        });
+    })
 });
 
 // Get user credits endpoint
