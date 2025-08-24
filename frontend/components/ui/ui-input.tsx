@@ -77,6 +77,8 @@ const UIInput = ({
   } = useCredits();
   const { refreshExecutions } = useExecutionContext();
   const router = useRouter();
+  // for setting the copyied message id and verifying while rendering it.
+  const [copiedMessageId, setCopiedMessageId] = useState<string>("");
 
   const toggleWrap = useCallback(() => {
     setIsWrapped((prev) => !prev);
@@ -284,8 +286,9 @@ const UIInput = ({
     }
   };
 
-  const handleCopy = async (content: string) => {
+  const handleCopy = async (content: string, id: string) => {
     try {
+      setCopiedMessageId(id);
       await navigator.clipboard.writeText(content);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -392,11 +395,14 @@ const UIInput = ({
                                     )}
                                   </button>
                                   <button
-                                    onClick={() => handleCopy(codeContent)}
+                                    onClick={() =>
+                                      handleCopy(codeContent, message.id)
+                                    }
                                     className={`hover:bg-muted/40 sticky top-10 flex items-center gap-1.5 rounded px-2 py-1 text-xs font-medium transition-all duration-200`}
                                     aria-label="Copy code"
                                   >
-                                    {copied ? (
+                                    {copied &&
+                                    copiedMessageId === message.id ? (
                                       <>
                                         <CheckCircleIcon
                                           weight="bold"
@@ -493,26 +499,28 @@ const UIInput = ({
                           <ThumbsDownIcon weight="bold" />
                         </button>
                         <button
-                          onClick={() => handleCopy(message.content)}
+                          onClick={() =>
+                            handleCopy(message.content, message.id)
+                          }
                           className="hover:bg-accent flex size-7 items-center justify-center rounded-lg"
                         >
-                          {!copied ? (
-                            <CopyIcon weight="bold" />
-                          ) : (
+                          {copied && copiedMessageId === message.id ? (
                             <CheckIcon weight="bold" />
+                          ) : (
+                            <CopyIcon weight="bold" />
                           )}
                         </button>
                       </div>
                     )}
                     {message.role === "user" && (
                       <button
-                        onClick={() => handleCopy(message.content)}
+                        onClick={() => handleCopy(message.content, message.id)}
                         className="hover:bg-accent flex size-7 items-center justify-center rounded-lg"
                       >
-                        {!copied ? (
-                          <CopyIcon weight="bold" />
-                        ) : (
+                        {copied && copiedMessageId === message.id ? (
                           <CheckIcon weight="bold" />
+                        ) : (
+                          <CopyIcon weight="bold" />
                         )}
                       </button>
                     )}
