@@ -11,6 +11,8 @@ import {
   CheckIcon,
   CheckCircleIcon,
   ArrowsLeftRightIcon,
+  ImageIcon,
+  XIcon,
 } from "@phosphor-icons/react";
 import ReactMarkdown from "react-markdown";
 import SyntaxHighlighter from "react-syntax-highlighter";
@@ -28,6 +30,7 @@ import { useRouter } from "next/navigation";
 import { useConversationById } from "@/hooks/useConversation";
 import { useCredits } from "@/hooks/useCredits";
 import { UpgradeCTA } from "@/components/ui/upgrade-cta";
+import { convertImageToBase64 } from "@/lib/image-utils";
 import { useExecutionContext } from "@/contexts/execution-context";
 
 const geistMono = Geist_Mono({
@@ -41,6 +44,7 @@ interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
+  images?: string[];
 }
 
 const BACKEND_URL =
@@ -59,6 +63,7 @@ const UIInput = ({
   const [showWelcome, setShowWelcome] = useState(true);
   const [copied, setCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [images, setImages] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const [isWrapped, setIsWrapped] = useState(false);
@@ -239,9 +244,11 @@ const UIInput = ({
       id: `user-${Date.now()}`,
       role: "user",
       content: currentQuery,
+      images: images.length > 0 ? [...images] : undefined, // Include images in the message
     };
 
     setQuery("");
+    setImages([]); // Clear images after sending
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
 
@@ -265,6 +272,7 @@ const UIInput = ({
                 message: currentQuery,
                 model: model,
                 conversationId: conversationId,
+                images: images, // Send images with the request
               }),
               signal: abortControllerRef.current?.signal,
             });
@@ -294,6 +302,44 @@ const UIInput = ({
     }
   };
 
+  const handleImageUpload = async (file: File) => {
+    try {
+      // Convert image to base64
+      const base64 = await convertImageToBase64(file);
+      setImages([base64]);
+    } catch (error) {
+      console.error("Error converting image:", error);
+      alert("Failed to process image. Please try again.");
+    }
+  };
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    
+    if (!userCredits?.isPremium) {
+      alert("Image uploads are only available for premium users.");
+      return;
+    }
+    
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      if (file.type.startsWith('image/')) {
+        handleImageUpload(file);
+      } else {
+        alert("Please drop an image file.");
+      }
+    }
+  }, [userCredits?.isPremium]);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+  }, []);
+
   if (initialConversationId && converstionLoading) {
     return (
       <div className="flex w-full overflow-hidden h-[96dvh]">
@@ -317,7 +363,12 @@ const UIInput = ({
 
   return (
     <div className="flex h-[96dvh] w-full overflow-hidden">
-      <div className="relative flex h-full w-full flex-col">
+      <div 
+        className="relative flex h-full w-full flex-col"
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+      >
         {!query && showWelcome && messages.length === 0 ? (
           <div className="flex h-full w-full flex-col">
             <div className="flex h-full w-full flex-col items-center justify-center">
@@ -343,6 +394,20 @@ const UIInput = ({
                         : "w-full p-0"
                     )}
                   >
+                    {/* Show images if they exist */}
+                    {message.images && message.images.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {message.images.map((image, index) => (
+                          <img
+                            key={index}
+                            src={image}
+                            alt={`Image ${index + 1}`}
+                            className="w-32 h-32 object-cover rounded-lg border border-border"
+                          />
+                        ))}
+                      </div>
+                    )}
+                    
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm]}
                       components={{
@@ -540,8 +605,47 @@ const UIInput = ({
           </div>
         )}
 
+        {/* Show image upload info for non-premium users */}
+        {userCredits && !userCredits.isPremium && (
+          <div className="mb-4 w-full px-4 md:px-8">
+            <div className="mx-auto w-full max-w-4xl">
+              <div className="bg-accent/20 border border-border rounded-lg p-4 text-center">
+                <p className="text-sm text-muted-foreground">
+                  🖼️ <strong>Image Analysis Available!</strong> Upgrade to Premium to analyze images with AI models.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="bg-muted/20 backdrop-blur-3xl border border-border/50 mb-4 w-full rounded-2xl p-1">
           <div className="mx-auto w-full max-w-4xl">
+            {/* Image Preview Section - Above Input */}
+            {images.length > 0 && (
+              <div className="p-3 border-b border-border/50">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={images[0]}
+                    alt="Uploaded image"
+                    className="w-16 h-16 object-cover rounded-lg border border-border"
+                  />
+                  <div className="flex-1">
+                    <p className="text-sm text-muted-foreground">Image ready to send</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    onClick={() => setImages([])}
+                    className="h-6 w-6"
+                    title="Remove Image"
+                  >
+                    <XIcon className="w-3 h-3" />
+                  </Button>
+                </div>
+              </div>
+            )}
+            
             <form
               onSubmit={handleCreateChat}
               className="bg-accent/30 dark:bg-accent/10 flex w-full flex-col rounded-xl p-3"
@@ -561,6 +665,8 @@ const UIInput = ({
                   userCredits.credits <= 0 &&
                   !userCredits.isPremium
                     ? "You need credits to start a chat. Please upgrade to continue."
+                    : userCredits?.isPremium
+                    ? "Ask anything or drag & drop an image here..."
                     : "Ask anything"
                 }
                 className="h-[2rem] resize-none rounded-none border-none bg-transparent px-0 py-1 shadow-none ring-0 focus-visible:ring-0 dark:bg-transparent"
@@ -587,6 +693,40 @@ const UIInput = ({
                       )
                     }
                   />
+                  
+                  {/* Image Upload Icon - Only for Premium Users */}
+                  {userCredits?.isPremium && (
+                    <div className="relative">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            handleImageUpload(file);
+                          }
+                          // Reset input value
+                          if (e.target) {
+                            e.target.value = '';
+                          }
+                        }}
+                        className="hidden"
+                        id="image-upload-input"
+                        disabled={isLoading}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => document.getElementById('image-upload-input')?.click()}
+                        disabled={isLoading}
+                        className="h-6 w-6"
+                        title="Upload Image"
+                      >
+                        <ImageIcon className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
                 <Button
                   type="submit"
