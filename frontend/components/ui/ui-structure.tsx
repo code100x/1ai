@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 import {
   Sidebar,
@@ -33,7 +32,7 @@ import {
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { Logo } from "../svgs/logo";
+
 import { useUser } from "@/hooks/useUser";
 import Link from "next/link";
 import { useExecutionContext } from "@/contexts/execution-context";
@@ -71,12 +70,47 @@ export function UIStructure() {
       description: "Summarize long articles into concise, easy-to-read summaries",
       icon: "📄",
       credits: 2
+    },
+    {
+      id: "youtube-summarizer",
+      name: "YouTube Summarizer",
+      description: "Summarize YouTube videos using their transcripts",
+      icon: "📺",
+      credits: 2
     }
   ];
 
   const handleAppNavigation = (appId: string) => {
     router.push(`/apps/${appId}/`);
     setIsAppsDialogOpen(false);
+  };
+
+  // Get icon for execution type
+  const getExecutionIcon = (type: string) => {
+    switch (type) {
+      case "CONVERSATION":
+        return "💬";
+      case "ARTICLE_SUMMARIZER":
+        return "📄";
+      case "YOUTUBE_SUMMARIZER":
+        return "📺";
+      default:
+        return "💬";
+    }
+  };
+
+  // Get navigation path for execution
+  const getExecutionPath = (execution: Execution) => {
+    switch (execution.type) {
+      case "CONVERSATION":
+        return `/ask/${execution.id}`;
+      case "ARTICLE_SUMMARIZER":
+        return `/apps/article-summarizer/${execution.id}`;
+      case "YOUTUBE_SUMMARIZER":
+        return `/apps/youtube-summarizer/${execution.id}`;
+      default:
+        return `/ask/${execution.id}`;
+    }
   };
 
   return (
@@ -129,12 +163,15 @@ export function UIStructure() {
                         className="group hover:bg-primary/20 relative"
                         onMouseEnter={() => setHoverChatId(execution.id)}
                         onMouseLeave={() => setHoverChatId("")}
-                        onClick={() => router.push(`/ask/${execution.id}`)}
+                        onClick={() => router.push(getExecutionPath(execution))}
                       >
                         <div className="flex w-full items-center justify-between">
-                          <span className="z-[-1] cursor-pointer truncate">
-                            {execution.title}
-                          </span>
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <span className="text-sm">{getExecutionIcon(execution.type)}</span>
+                            <span className="z-[-1] cursor-pointer truncate">
+                              {execution.title}
+                            </span>
+                          </div>
                           <div
                             className={`absolute top-0 right-0 z-[5] h-full w-12 rounded-r-md blur-[2em] ${execution.id === hoverChatId ? "bg-primary" : ""}`}
                           />

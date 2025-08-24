@@ -88,7 +88,7 @@ export default function ArticleSummarizerPage({ convoId }: ArticleSummarizerPage
 
   return (
     <div className="flex h-full w-full flex-col items-center justify-start gap-6 p-6">
-      <div className="w-full max-w-4xl">
+      <div className="w-full max-w-4xl overflow-hidden">
         <h1 className="text-2xl font-bold mb-2">
           Article Summarizer
         </h1>
@@ -117,8 +117,8 @@ export default function ArticleSummarizerPage({ convoId }: ArticleSummarizerPage
                 </Button>
               </div>
               
-              <div className="bg-muted/10 border border-border/50 rounded-lg p-6">
-                <div className="prose dark:prose-invert max-w-none">
+              <div className="bg-muted/10 border border-border/50 rounded-lg p-6 overflow-hidden w-full max-w-full">
+                <div className="prose dark:prose-invert max-w-none break-words overflow-wrap-anywhere whitespace-normal">
                   <p className="whitespace-pre-wrap">{data.article}</p>
                 </div>
               </div>
@@ -142,8 +142,8 @@ export default function ArticleSummarizerPage({ convoId }: ArticleSummarizerPage
                 </Button>
               </div>
               
-              <div className="bg-muted/10 border border-border/50 rounded-lg p-6">
-                <div className="prose dark:prose-invert max-w-none">
+              <div className="bg-muted/10 border border-border/50 rounded-lg p-6 overflow-hidden w-full max-w-full">
+                <div className="prose dark:prose-invert max-w-none break-words overflow-wrap-anywhere whitespace-normal">
                   <ReactMarkdown 
                     remarkPlugins={[remarkGfm]}
                     components={{

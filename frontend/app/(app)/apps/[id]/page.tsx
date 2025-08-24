@@ -9,6 +9,8 @@ import SyntaxHighlighter from "react-syntax-highlighter";
 import { atomOneDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
+import { useExecutionContext } from "@/contexts/execution-context";
+import { useCredits } from "@/hooks/useCredits";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3000";
 
@@ -25,6 +27,8 @@ export default function AppPage({ params }: AppPageProps) {
   const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const { resolvedTheme } = useTheme();
+  const { refreshExecutions } = useExecutionContext();
+  const { refetchCredits } = useCredits();
 
   React.useEffect(() => {
     params.then(({ id }) => setAppId(id));
@@ -89,7 +93,10 @@ export default function AppPage({ params }: AppPageProps) {
                 try {
                   const parsedData = JSON.parse(data);
                   if (parsedData.error) {
-                    setResponse(prev => prev + `Error: ${parsedData.error}\n`);
+                    const errorMessage = parsedData.error.includes("Insufficient credits") 
+                      ? "❌ Insufficient Credits\n\nYou need 2 credits to use YouTube Summarizer. Please upgrade to premium or purchase more credits to continue."
+                      : `Error: ${parsedData.error}`;
+                    setResponse(prev => prev + errorMessage + "\n");
                     continue;
                   }
                 } catch {
@@ -113,6 +120,9 @@ export default function AppPage({ params }: AppPageProps) {
     } finally {
       setIsLoading(false);
       abortControllerRef.current = null;
+      
+      // Refresh credits after successful processing
+      await refetchCredits();
     }
   };
 
@@ -120,6 +130,56 @@ export default function AppPage({ params }: AppPageProps) {
     e.preventDefault();
 
     if (!input.trim() || isLoading) return;
+
+    // For YouTube summarizer, create execution first and redirect
+    if (appId === "youtube-summarizer") {
+      try {
+        setIsLoading(true);
+        setResponse("");
+        setError(null);
+
+        const createResponse = await fetch(`${BACKEND_URL}/apps/youtube-summarizer/create-execution`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({ youtubeUrl: input }),
+        });
+
+        if (!createResponse.ok) {
+          const errorText = await createResponse.text();
+          console.error("Error creating execution:", createResponse.statusText, errorText);
+          
+          try {
+            const errorData = JSON.parse(errorText);
+            if (errorData.error && errorData.error.includes("Insufficient credits")) {
+              setError("Insufficient Credits\n\nYou need 2 credits to use YouTube Summarizer. Please upgrade to premium or purchase more credits to continue.");
+            } else {
+              setError(`Error: ${errorData.error || createResponse.statusText}`);
+            }
+          } catch {
+            setError(`Error ${createResponse.status}: ${createResponse.statusText}`);
+          }
+          
+          setIsLoading(false);
+          return;
+        }
+
+        const { executionId } = await createResponse.json();
+
+        // Refresh sidebar history to show the new execution immediately
+        await refreshExecutions();
+
+        window.location.href = `/apps/youtube-summarizer/${executionId}`;
+        return;
+      } catch (error) {
+        console.error("Error creating execution:", error);
+        setError("Error: Failed to create execution");
+        setIsLoading(false);
+        return;
+      }
+    }
 
     setIsLoading(true);
     setResponse("");
@@ -132,19 +192,17 @@ export default function AppPage({ params }: AppPageProps) {
     abortControllerRef.current = new AbortController();
 
     try {
-      console.log(input);
-      console.log(appId);
-      console.log(BACKEND_URL);
-      console.log(`${BACKEND_URL}/apps/${appId}`);
       const response = await fetch(`${BACKEND_URL}/apps/${appId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${localStorage.getItem("token")}`,
         },
-        body: JSON.stringify({
-          article: input,
-        }),
+        body: JSON.stringify(
+          appId === "article-summarizer" 
+            ? { article: input }
+            : { }
+        ),
         signal: abortControllerRef.current?.signal,
       });
 
@@ -159,14 +217,16 @@ export default function AppPage({ params }: AppPageProps) {
   };
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-start gap-6 p-6">
-      <div className="w-full max-w-4xl">
+    <div className="flex h-screen w-full flex-col items-center justify-start gap-6 p-6 overflow-y-auto no-scrollbar">
+      <div className="w-full max-w-4xl min-h-0 flex-1 flex flex-col">
         <h1 className="text-2xl font-bold mb-2">
           {appId ? appId.replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase()) : "App"}
         </h1>
         <p className="text-muted-foreground mb-6">
           {appId === "article-summarizer" 
             ? "Enter article text to get a summary"
+            : appId === "youtube-summarizer"
+            ? "Enter YouTube URL to get a summary (works best with videos that have captions enabled)"
             : `Use the ${appId} app`
           }
         </p>
@@ -185,6 +245,8 @@ export default function AppPage({ params }: AppPageProps) {
               placeholder={
                 appId === "article-summarizer" 
                   ? "Paste article text here..."
+                  : appId === "youtube-summarizer"
+                  ? "Paste YouTube URL here (e.g., https://www.youtube.com/watch?v=...)!"
                   : "Enter your input..."
               }
               className="min-h-[100px] resize-none border-none bg-transparent shadow-none ring-0 focus-visible:ring-0"
@@ -207,7 +269,7 @@ export default function AppPage({ params }: AppPageProps) {
         </form>
 
         {(response || isLoading || error) && (
-          <div className="mt-6 w-full">
+          <div className="mt-6 w-full flex-1 min-h-0 flex flex-col">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">Response:</h2>
               {response && (
@@ -227,7 +289,7 @@ export default function AppPage({ params }: AppPageProps) {
               )}
             </div>
             
-            <div className="bg-muted/10 border border-border/50 rounded-lg p-6 min-h-[200px]">
+            <div className="bg-muted/10 border border-border/50 rounded-lg p-6 min-h-[200px] flex-1 overflow-y-auto w-full no-scrollbar">
               {error && (
                 <div className="flex items-center space-x-2 text-destructive">
                   <div className="h-2 w-2 rounded-full bg-destructive"></div>
@@ -245,7 +307,7 @@ export default function AppPage({ params }: AppPageProps) {
               )}
               
               {response && (
-                <div className="prose dark:prose-invert max-w-none">
+                <div className="prose dark:prose-invert max-w-none break-words overflow-wrap-anywhere">
                   <ReactMarkdown 
                     remarkPlugins={[remarkGfm]}
                     components={{

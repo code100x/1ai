@@ -53,6 +53,17 @@ router.get("/:executionId", authMiddleware, async (req, res) => {
                 response: articleSummarizer
             });
             break;
+        case "YOUTUBE_SUMMARIZER":
+            const youtubeSummarizer = await prismaClient.youTubeSummarizer.findFirst({
+                where: {
+                    executionId: execution.id
+                }
+            });
+
+            res.json({
+                response: youtubeSummarizer
+            });
+            break;
         default:
             res.status(400).json({
                 error: "Invalid execution type"
