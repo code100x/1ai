@@ -35,14 +35,34 @@ router.get("/conversations", authMiddleware, async (req, res) => {
         conversations
     });
 });
-
 router.get("/conversations/:conversationId", authMiddleware, async (req, res) => {
     const userId = req.userId;
     const conversationId = req.params.conversationId;
-    const conversation = await prismaClient.conversation.findFirst({
+
+    const execution = await prismaClient.execution.findFirst({
         where: {
             id: conversationId,
             userId
+        }
+    });
+
+    if (!execution) {
+        res.status(404).json({
+            message: "Execution not found"
+        });
+        return;
+    }
+
+    if (execution.type !== "CONVERSATION") {
+        res.status(400).json({
+            message: "Execution is not a conversation"
+        });
+        return;
+    }
+
+    const conversation = await prismaClient.conversation.findFirst({
+        where: {
+            id: execution?.externalId!
         },
         include: {
             messages: {
@@ -52,6 +72,7 @@ router.get("/conversations/:conversationId", authMiddleware, async (req, res) =>
             }
         }
     })
+
     res.json({
         conversation
     });
@@ -99,28 +120,39 @@ router.post("/chat", authMiddleware, perMinuteLimiterRelaxed, async (req, res) =
         return;
     }
 
-    const conversation = await prismaClient.conversation.findUnique({
+    const execution = await prismaClient.execution.findFirst({
         where: {
-            id: conversationId
+            id: conversationId,
+            userId
         }
-    })
+    });
     
-    if (conversation && conversation.userId !== userId) {
+    if (execution && execution.type !== "CONVERSATION") {
         res.status(400).json({
             message: "Conversation already exists and you are not the owner"
         });
         return;
     }
 
-    if (!conversation) {
-        await prismaClient.conversation.create({
-            data: {
-                id: conversationId,
-                userId,
-                title: data.message.slice(0, 20) + "..."
-            }
-        })
+    if (!execution) {
+        await prismaClient.$transaction([
+            prismaClient.execution.create({
+                data: {
+                    id: conversationId,
+                    userId,
+                    title: data.message.slice(0, 20) + "...",
+                    type: "CONVERSATION",
+                    externalId: conversationId
+                }
+            }),
+            prismaClient.conversation.create({
+                data: {
+                    id: conversationId,
+                }
+            })
+        ]);
     }
+
     if (user.credits <= 0) {
         res.status(403).json({
             message: "Insufficient credits. Please subscribe to continue.",
@@ -190,7 +222,6 @@ router.post("/chat", authMiddleware, perMinuteLimiterRelaxed, async (req, res) =
     // Invalidate cache for conversation lists and details to reflect new messages
     await CacheManager.del(`conversations:${userId}`);
     await CacheManager.del(`conversation:${conversationId}`);
-
     await prismaClient.$transaction([
         prismaClient.message.createMany({
             data: [

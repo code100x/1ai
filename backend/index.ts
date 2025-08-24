@@ -5,6 +5,8 @@ import aiRouter from "./routes/ai"
 import { billingRouter } from "./routes/billing"
 import { MetricsCollector } from "./metrics";
 import rzpWebhookRouter from "./routes/rzpWebhookRouter"
+import appsRouter from "./routes/apps";
+import executionRouter from "./routes/execution";
 
 const app = express();
 const metrics = MetricsCollector.getInstance();
@@ -34,6 +36,8 @@ app.use("/rzp_webhook", rzpWebhookRouter);
 app.use("/ai", aiRouter);
 app.use("/auth", authRouter);
 app.use("/billing", billingRouter);
+app.use("/apps", appsRouter);
+app.use("/execution", executionRouter);
 
 app.listen(3000, () => {
     console.log("Server is running on port 3000");

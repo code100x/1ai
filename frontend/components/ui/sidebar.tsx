@@ -22,7 +22,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { SidebarIcon } from "@phosphor-icons/react/dist/ssr";
+import { SidebarSimpleIcon } from "@phosphor-icons/react";
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
@@ -275,7 +275,11 @@ function SidebarTrigger({
       }}
       {...props}
     >
-      <SidebarIcon weight="bold" className="size-5 cursor-pointer" />
+      <SidebarSimpleIcon
+        size={24}
+        weight="bold"
+        className="size-5 cursor-pointer"
+      />
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   );
