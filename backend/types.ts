@@ -129,7 +129,14 @@ export type ModelFull = {
 export const CreateChatSchema = z.object({
     conversationId: z.uuid().optional(),
     message: z.string().max(MAX_INPUT_TOKENS),
-    model: z.enum(SUPPORTER_MODELS)
+    model: z.enum(SUPPORTER_MODELS),
+    attachments: z.array(z.object({
+        filename: z.string(),
+        originalName: z.string(),
+        mimetype: z.string(),
+        size: z.number(),
+        path: z.string()
+    })).optional()
 })
 
 export const CreateUser = z.object({
@@ -144,6 +151,13 @@ export const SignIn = z.object({
 export type Message = {
     content: string;
     role: Role;
+    attachments?: Array<{
+        filename: string;
+        originalName: string;
+        mimetype: string;
+        size: number;
+        path: string;
+    }>;
 }
 
 export type Messages = Message[];

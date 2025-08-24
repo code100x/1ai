@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { CreateChatSchema, MODELS, Role } from "../types";
+import { CreateChatSchema, MODELS, Role, type Message } from "../types";
 import { createCompletion } from "../openrouter";
 import { InMemoryStore } from "../InMemoryStore";
 import { authMiddleware } from "../auth-middleware";
-import { PrismaClient } from "../generated/prisma";
+import { PrismaClient } from "@prisma/client";
 
 const prismaClient = new PrismaClient();
 
@@ -143,7 +143,7 @@ router.post("/chat", authMiddleware, async (req, res) => {
                 conversationId
             }
         })
-        messages.map((message) => {
+        messages.map((message: any) => {
             InMemoryStore.getInstance().add(conversationId, {
                 role: message.role as Role,
                 content: message.content
@@ -163,10 +163,16 @@ router.post("/chat", authMiddleware, async (req, res) => {
     let message = "";
     
     try {
-        await createCompletion([...existingMessages, {
+        // Prepare user message with attachments if any
+        const userMessage: Message = {
             role: Role.User,
-            content: data.message
-        }], data.model, (chunk: string) => {
+            content: data.message,
+            ...(data.attachments && data.attachments.length > 0 && {
+                attachments: data.attachments
+            })
+        };
+
+        await createCompletion([...existingMessages, userMessage], data.model, (chunk: string) => {
             message += chunk;
             // Format as proper SSE data
             res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
@@ -184,7 +190,10 @@ router.post("/chat", authMiddleware, async (req, res) => {
 
     InMemoryStore.getInstance().add(conversationId, {
         role: Role.User,
-        content: data.message
+        content: data.message,
+        ...(data.attachments && data.attachments.length > 0 && {
+            attachments: data.attachments
+        })
     })
 
     InMemoryStore.getInstance().add(conversationId, {
