@@ -22,7 +22,7 @@ export default function Hero() {
         </p>
         <div className="mt-5 flex items-center gap-4">
           <Button className="h-10 w-40 rounded-xl">
-            <Link href="/ask">Chat with T3</Link>
+            <Link href="/ask">Chat with 1ai.co</Link>
           </Button>
           <Button className="h-10 w-40 rounded-xl" variant="outline">
             <Link className="flex items-center gap-2" href="/login">
