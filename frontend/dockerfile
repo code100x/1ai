@@ -1,0 +1,42 @@
+# ---- Build Stage ----
+FROM oven/bun:latest AS build
+
+WORKDIR /usr/src/app
+
+# Copy package files first for better caching
+COPY package.json bun.lock ./
+
+# Install dependencies (allow lockfile updates if needed)
+RUN bun install
+
+# Copy source code
+COPY . .
+
+# Build Next.js application
+RUN bun run build
+
+# ---- Run Stage ----
+FROM oven/bun:1 AS run
+
+WORKDIR /usr/src/app
+
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Copy standalone Next.js output
+COPY --from=build --chown=nextjs:nodejs /usr/src/app/.next/standalone ./
+COPY --from=build --chown=nextjs:nodejs /usr/src/app/.next/static ./.next/static
+COPY --from=build --chown=nextjs:nodejs /usr/src/app/public ./public
+
+# Switch to non-root user
+USER nextjs
+
+ENV NODE_ENV=production
+ENV PORT=3002
+ENV HOSTNAME="0.0.0.0"
+
+EXPOSE 3002
+
+CMD ["bun", "server.js"]
+

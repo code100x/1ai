@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev --port 3002",
     "build": "next build",
+    "start": "next start",
     "check": "next lint && tsc --noEmit",
     "db:generate": "prisma migrate dev",
     "db:migrate": "prisma migrate deploy",
@@ -15,7 +16,6 @@
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "preview": "next build && next start",
-    "start": "next start",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -54,6 +54,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "framer-motion": "^12.16.0",
+    "input-otp": "^1.1.0",
     "lucide-react": "^0.514.0",
     "next": "^15.2.3",
     "next-auth": "5.0.0-beta.25",

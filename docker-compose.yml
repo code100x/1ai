@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:alpine
+    container_name: backend-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: 1ai
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydb
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - backend-net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: backend-app
+    container_name: backend-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://1ai:mypassword@db:5432/mydb"
+    depends_on:
+      - db
+    networks:
+      - backend-net
+      - frontend-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: frontend-app
+    container_name: frontend-app
+    restart: unless-stopped
+    ports:
+      - "3001:3002"
+    environment:
+      NODE_ENV: production
+    depends_on:
+      - backend
+    networks:
+      - frontend-net
+
+volumes:
+  db-data:
+
+networks:
+  backend-net:
+  frontend-net:

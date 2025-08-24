@@ -1,0 +1,27 @@
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+*.tgz
+*.tar.gz
+Dockerfile*
+.dockerignore
+.git
+.gitignore
+README.md
+.env
+.env.local
+.env.*.local
+coverage/
+.nyc_output
+.coverage
+test/
+tests/
+__tests__/
+.turbo
+dist/  # Remove this line if you need the dist folder in the image
+
+# Prisma specific
+prisma/migrations/**/migration.sql  # Keep migration files but not the actual SQL
+.env.example
