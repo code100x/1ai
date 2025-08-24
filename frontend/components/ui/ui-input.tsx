@@ -28,6 +28,7 @@ import { useRouter } from "next/navigation";
 import { useConversationById } from "@/hooks/useConversation";
 import { useCredits } from "@/hooks/useCredits";
 import { UpgradeCTA } from "@/components/ui/upgrade-cta";
+import { useExecutionContext } from "@/contexts/execution-context";
 
 const geistMono = Geist_Mono({
   subsets: ["latin"],
@@ -74,19 +75,12 @@ const UIInput = ({
     isLoading: isCreditsLoading,
     refetchCredits,
   } = useCredits();
+  const { refreshExecutions } = useExecutionContext();
   const router = useRouter();
 
   const toggleWrap = useCallback(() => {
     setIsWrapped((prev) => !prev);
   }, []);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
 
   useEffect(() => {
     if (conversation?.messages && initialConversationId) {
@@ -217,6 +211,7 @@ const UIInput = ({
     } finally {
       setIsLoading(false);
       abortControllerRef.current = null;
+      await refreshExecutions();
     }
   };
 
@@ -301,7 +296,7 @@ const UIInput = ({
 
   if (initialConversationId && converstionLoading) {
     return (
-      <div className="flex w-full overflow-hidden">
+      <div className="flex w-full overflow-hidden h-[96dvh]">
         <div className="relative flex h-full w-full flex-col">
           <div className="flex h-full w-full flex-col items-center justify-center">
             <div className="flex flex-col items-center gap-4">
