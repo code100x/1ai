@@ -340,7 +340,7 @@ const UIInput = ({
 
   if (initialConversationId && converstionLoading) {
     return (
-      <div className="flex w-full overflow-hidden">
+      <div className="flex w-full overflow-hidden h-[96dvh]">
         <div className="relative flex h-full w-full flex-col">
           <div className="flex h-full w-full flex-col items-center justify-center">
             <div className="flex flex-col items-center gap-4">
@@ -621,6 +621,7 @@ const UIInput = ({
                 </div>
               )}
               <Textarea
+                autoFocus
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => {

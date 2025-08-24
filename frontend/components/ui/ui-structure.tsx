@@ -6,7 +6,7 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
+  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -16,6 +16,16 @@ import { Button } from "./button";
 import { useState } from "react";
 import { useEffect } from "react";
 import { Input } from "./input";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   MagnifyingGlassIcon,
   ShareFatIcon,
@@ -32,6 +42,7 @@ import { Execution } from "@/hooks/useExecution";
 export function UIStructure() {
   const [uiExecutions, setUiExecutions] = useState<Execution[]>([]);
   const [hoverChatId, setHoverChatId] = useState<string>("");
+  const [isAppsDialogOpen, setIsAppsDialogOpen] = useState(false);
   const { executions, loading, createNewExecution } = useExecutionContext();
   const router = useRouter();
 
@@ -52,15 +63,33 @@ export function UIStructure() {
 
   const { user, isLoading: isUserLoading } = useUser();
 
+  // Available AI Apps
+  const availableApps = [
+    {
+      id: "article-summarizer",
+      name: "Article Summarizer",
+      description: "Summarize long articles into concise, easy-to-read summaries",
+      icon: "📄",
+      credits: 2
+    }
+  ];
+
+  const handleAppNavigation = (appId: string) => {
+    router.push(`/apps/${appId}/`);
+    setIsAppsDialogOpen(false);
+  };
+
   return (
     <Sidebar className={`border py-2 pl-2`}>
-      <SidebarContent className="rounded-2xl">
+      <SidebarContent className="h-full justify-between">
         <SidebarGroup className="flex flex-col gap-8">
-          <SidebarGroupLabel className="h-fit p-0">
-            <div className="flex h-12 w-full flex-col items-center gap-2 rounded-lg">
+          <SidebarHeader className="sticky top-0 !p-0">
+            <div className="flex w-full flex-col items-center gap-2 rounded-lg">
               <div className="flex w-full items-center gap-2 rounded-lg p-1 text-lg justify-between">
                 <SidebarTrigger className="shrink-0" />
-                <Logo />
+                <h1 className="text-2xl font-bold text-foreground">
+                  1<span className="text-yellow-500">ai</span>
+                </h1>
                 <span className="size-6"></span>
               </div>
               <Button
@@ -75,17 +104,17 @@ export function UIStructure() {
                 New Chat
               </Button>
             </div>
-          </SidebarGroupLabel>
-          <SidebarGroupContent className="mt-4">
-            <div className="mb-4 flex items-center gap-2 border-b">
+
+            <div className="flex items-center gap-2 pb-2 border-b">
               <MagnifyingGlassIcon className="text-foreground" weight="bold" />
               <Input
                 placeholder="Search for chats"
                 className="rounded-none border-none bg-transparent px-0 py-1 shadow-none ring-0 focus-visible:ring-0 dark:bg-transparent"
               />
             </div>
-
-            <SidebarMenu className="mt-2 w-full p-0">
+          </SidebarHeader>
+          <SidebarGroupContent>
+            <SidebarMenu className="w-full p-0">
               {loading
                 ? // Skeleton loader while loading saved chats
                   Array.from({ length: 4 }).map((_, i) => (
@@ -146,21 +175,66 @@ export function UIStructure() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        <SidebarFooter className="absolute bottom-0 z-[70] flex flex-col gap-2 w-full px-4 py-3">
-          {!isUserLoading && !user ? (
+
+        <SidebarFooter className="sticky bottom-0 flex flex-col gap-2 w-full p-3 bg-background">
+          {!isUserLoading && !user && (
+            <Link href="/auth">
+              <Button variant="secondary" className="w-full" size="lg">
+                Login
+              </Button>
+            </Link>
+          )}
+          <Dialog open={isAppsDialogOpen} onOpenChange={setIsAppsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant="secondary"
+                className="w-full"
+                size="lg"
+              >
+                AI Apps
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[525px]">
+              <DialogHeader>
+                <DialogTitle>AI Apps</DialogTitle>
+                <DialogDescription>
+                  Choose from our collection of AI-powered applications to enhance your productivity.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="grid gap-4 py-4">
+                {availableApps.map((app) => (
+                  <div
+                    key={app.id}
+                    className="flex items-center gap-4 p-4 rounded-lg border hover:bg-accent/50 cursor-pointer transition-colors"
+                    onClick={() => handleAppNavigation(app.id)}
+                  >
+                    <div className="text-2xl">{app.icon}</div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-lg">{app.name}</h3>
+                      <p className="text-sm text-muted-foreground">{app.description}</p>
+                      <div className="flex items-center gap-1 mt-1">
+                        <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
+                          {app.credits} credits per use
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline">Close</Button>
+                </DialogClose>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {user && (
             <Button
-              variant="secondary"
-              size="lg"
-              onClick={(e) => {
-                e.preventDefault();
-                router.push("/auth");
-              }}
-            >
-              Login
-            </Button>
-          ) : (
-            <Button
-              variant="secondary"
+              variant="destructive"
+              className="w-full"
               size="lg"
               onClick={(e) => {
                 e.preventDefault();
