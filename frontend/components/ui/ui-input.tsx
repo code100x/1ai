@@ -61,6 +61,7 @@ const UIInput = ({
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isWrapped, setIsWrapped] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(
     initialConversationId || v4()
@@ -88,6 +89,44 @@ const UIInput = ({
       setShowWelcome(false);
     }
   }, [conversation, initialConversationId]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.target instanceof HTMLInputElement ||
+        event.target instanceof HTMLTextAreaElement
+      ) {
+        return;
+      }
+
+      if (
+        event.ctrlKey ||
+        event.metaKey ||
+        event.altKey ||
+        event.key.startsWith("F") ||
+        ["Tab","Escape","Enter","Backspace","Delete","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(event.key)
+      ) {
+        return;
+      }
+
+      if (event.key.length === 1 && textareaRef.current) {
+        event.preventDefault();
+        textareaRef.current.focus();
+
+        const currentValue = textareaRef.current.value;
+        textareaRef.current.value = currentValue + event.key;
+
+        const length = textareaRef.current.value.length;
+        textareaRef.current.setSelectionRange(length, length);
+
+        const inputEvent = new Event("input", { bubbles: true });
+        textareaRef.current.dispatchEvent(inputEvent);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const processStream = async (response: Response, userMessage: string) => {
     if (!response.ok) {
@@ -547,6 +586,7 @@ const UIInput = ({
               className="bg-accent/30 dark:bg-accent/10 flex w-full flex-col rounded-xl p-3"
             >
               <Textarea
+                ref={textareaRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => {
