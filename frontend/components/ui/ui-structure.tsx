@@ -27,9 +27,18 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import {
   MagnifyingGlassIcon,
   ShareFatIcon,
   TrashIcon,
+  DotsThreeIcon,
+  PencilIcon,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -38,11 +47,17 @@ import { useUser } from "@/hooks/useUser";
 import Link from "next/link";
 import { useExecutionContext } from "@/contexts/execution-context";
 import { Execution } from "@/hooks/useExecution";
+import { BACKEND_URL } from "@/lib/utils";
 
 export function UIStructure() {
   const [uiExecutions, setUiExecutions] = useState<Execution[]>([]);
   const [hoverChatId, setHoverChatId] = useState<string>("");
   const [isAppsDialogOpen, setIsAppsDialogOpen] = useState(false);
+  const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
+  const [renameExecutionId, setRenameExecutionId] = useState<string>("");
+  const [newTitle, setNewTitle] = useState<string>("");
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { executions, loading, createNewExecution } = useExecutionContext();
   const router = useRouter();
 
@@ -52,13 +67,94 @@ export function UIStructure() {
     }
   }, [executions]);
 
-  const handleDeleteExecution = (executionId: string) => {
+  const handleRenameExecution = async (executionId: string, title: string) => {
     try {
-      toast.success("Chat deleted successfully");
-      setUiExecutions(executions.filter((execution) => execution.id !== executionId));
-    } catch (error) {
-      console.error("Error deleting chat:", error);
+      setIsRenaming(true);
+      const token = localStorage.getItem("token");
+      
+      if (!token) {
+        toast.error("Please login to rename chats");
+        return;
+      }
+
+      const response = await fetch(`${BACKEND_URL}/execution/${executionId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ title }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to rename chat");
+      }
+
+      const data = await response.json();
+      
+      setUiExecutions(prev => 
+        prev.map(exec => 
+          exec.id === executionId 
+            ? { ...exec, title: data.execution.title }
+            : exec
+        )
+      );
+      
+      toast.success("Chat renamed successfully");
+      setIsRenameDialogOpen(false);
+      setNewTitle("");
+      setRenameExecutionId("");
+    } catch (error: any) {
+      console.error("Error renaming chat:", error);
+      toast.error(error.message || "Failed to rename chat");
+    } finally {
+      setIsRenaming(false);
     }
+  };
+
+  const handleDeleteExecution = async (executionId: string) => {
+    try {
+      setIsDeleting(true);
+      const token = localStorage.getItem("token");
+      
+      if (!token) {
+        toast.error("Please login to delete chats");
+        return;
+      }
+
+      const response = await fetch(`${BACKEND_URL}/execution/${executionId}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to delete chat");
+      }
+
+      setUiExecutions(prev => prev.filter(exec => exec.id !== executionId));
+      toast.success("Chat deleted successfully");
+    } catch (error: any) {
+      console.error("Error deleting chat:", error);
+      toast.error(error.message || "Failed to delete chat");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleCopyShareLink = (executionId: string) => {
+    const shareLink = `${process.env.NEXT_PUBLIC_APP_URL}/chat/share/${executionId}`;
+    navigator.clipboard.writeText(shareLink);
+    toast.success("Share link copied to clipboard");
+  };
+
+  const openRenameDialog = (executionId: string, currentTitle: string) => {
+    setRenameExecutionId(executionId);
+    setNewTitle(currentTitle);
+    setIsRenameDialogOpen(true);
   };
 
   const { user, isLoading: isUserLoading } = useUser();
@@ -126,48 +222,63 @@ export function UIStructure() {
                 : uiExecutions.map((execution: Execution) => (
                     <SidebarMenuItem key={execution.id}>
                       <SidebarMenuButton
-                        className="group hover:bg-primary/20 relative"
-                        onMouseEnter={() => setHoverChatId(execution.id)}
-                        onMouseLeave={() => setHoverChatId("")}
+                        className="group hover:bg-primary/20 relative pr-8"
                         onClick={() => router.push(`/ask/${execution.id}`)}
                       >
                         <div className="flex w-full items-center justify-between">
-                          <span className="z-[-1] cursor-pointer truncate">
+                          <span className="cursor-pointer truncate flex-1 text-left">
                             {execution.title}
                           </span>
-                          <div
-                            className={`absolute top-0 right-0 z-[5] h-full w-12 rounded-r-md blur-[2em] ${execution.id === hoverChatId ? "bg-primary" : ""}`}
-                          />
-                          <div
-                            className={`absolute top-1/2 -right-16 z-[10] flex h-full -translate-y-1/2 items-center justify-center gap-1.5 rounded-r-md bg-transparent px-1 backdrop-blur-xl transition-all duration-200 ease-in-out ${execution.id === hoverChatId ? "group-hover:right-0" : ""}`}
-                          >
-                            <div
-                              className="flex items-center justify-center rounded-md"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                const shareLink =
-                                  process.env.NEXT_PUBLIC_APP_URL +
-                                  `/chat/share/${execution.id}`;
-                                navigator.clipboard.writeText(shareLink);
-                                toast.success("Share link copied to clipboard");
-                              }}
+                          
+                          <DropdownMenu>
+                            <DropdownMenuTrigger 
+                              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={(e) => e.stopPropagation()}
                             >
-                              <ShareFatIcon
-                                weight="fill"
-                                className="hover:text-foreground size-4"
+                              <DotsThreeIcon 
+                                className="size-4 text-muted-foreground hover:text-foreground" 
+                                weight="bold" 
                               />
-                            </div>
-
-                            <div
-                              className="flex items-center justify-center rounded-md"
-                              onClick={() => handleDeleteExecution(execution.id)}
-                            >
-                              <TrashIcon
-                                weight={"bold"}
-                                className="hover:text-foreground size-4"
-                              />
-                            </div>
-                          </div>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openRenameDialog(execution.id, execution.title);
+                                }}
+                                className="cursor-pointer"
+                              >
+                                <PencilIcon className="size-4 mr-2" />
+                                Rename
+                              </DropdownMenuItem>
+                              
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCopyShareLink(execution.id);
+                                }}
+                                className="cursor-pointer"
+                              >
+                                <ShareFatIcon className="size-4 mr-2" weight="fill" />
+                                Copy Link
+                              </DropdownMenuItem>
+                              
+                              <DropdownMenuSeparator />
+                              
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteExecution(execution.id);
+                                }}
+                                className="cursor-pointer text-destructive focus:text-destructive"
+                                variant="destructive"
+                                disabled={isDeleting}
+                              >
+                                <TrashIcon className="size-4 mr-2" weight="bold" />
+                                {isDeleting ? "Deleting..." : "Delete"}
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -259,6 +370,51 @@ export function UIStructure() {
           </div>
         </SidebarFooter>
       </SidebarContent>
+
+      <Dialog open={isRenameDialogOpen} onOpenChange={setIsRenameDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Rename Chat</DialogTitle>
+            <DialogDescription>
+              Enter a new name for this chat conversation.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Input
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              placeholder="Enter new chat name"
+              className="w-full"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && newTitle.trim() && !isRenaming) {
+                  handleRenameExecution(renameExecutionId, newTitle);
+                }
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline" disabled={isRenaming}>
+                Cancel
+              </Button>
+            </DialogClose>
+            <Button 
+              onClick={() => handleRenameExecution(renameExecutionId, newTitle)}
+              disabled={!newTitle.trim() || isRenaming}
+              className="min-w-[80px]"
+            >
+              {isRenaming ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                  Saving...
+                </>
+              ) : (
+                "Rename"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Sidebar>
   );
 }
