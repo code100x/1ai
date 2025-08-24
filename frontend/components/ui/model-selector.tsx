@@ -36,12 +36,6 @@ interface ModelSelectorProps {
   showIcons?: boolean;
 }
 
-let preferredModel = localStorage.getItem("preferredModel");
-if (!preferredModel) {
-  preferredModel = DEFAULT_MODEL_ID;
-}
-console.log("logging preferredModel: ", preferredModel);
-
 export function ModelSelector({
   value,
   onValueChange,
@@ -49,29 +43,34 @@ export function ModelSelector({
   showIcons = true,
 }: ModelSelectorProps) {
   const [selectedModel, setSelectedModel] = useState<string>(
-    value ?? preferredModel!
+    value ?? DEFAULT_MODEL_ID
   );
   const { userCredits } = useCredits();
 
   useEffect(() => {
     if (value && value !== selectedModel) {
       setSelectedModel(value);
-      localStorage.setItem("preferredModel", selectedModel);
     }
   }, [value]);
 
+  useEffect(() => {
+    const storedModel = localStorage.getItem("preferredModel");
+    if (storedModel) {
+      handleValueChange(storedModel);
+    }
+  }, []);
+
   const handleValueChange = (newValue: string) => {
-    setSelectedModel(newValue);
-    console.log("logging from handleValueChange point 1");
-    localStorage.setItem("preferredModel", newValue);
-    console.log("logging from handleValueChange point 2");
     if (onValueChange) {
       onValueChange(newValue);
+      if (newValue) {
+        localStorage.setItem("preferredModel", newValue);
+        setSelectedModel(newValue);
+      }
     }
   };
 
-  const selectedModelObj = getModelById(preferredModel!);
-  console.log("selectedModelObj: ", selectedModelObj);
+  const selectedModelObj = getModelById(selectedModel);
 
   const getModelStatusIcon = (model: Model) => {
     if (model.isAvailable === false) {
