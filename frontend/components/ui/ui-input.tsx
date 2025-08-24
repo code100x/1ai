@@ -100,35 +100,35 @@ const UIInput = ({
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement;
       if (
-        target.tagName === "INPUT" ||
-        target.tagName === "TEXTAREA" ||
-        target.tagName === "SELECT" ||
-        target.isContentEditable
+        event.target instanceof HTMLInputElement ||
+        event.target instanceof HTMLTextAreaElement
       ) {
         return;
       }
 
-      if (event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) {
-        return;
-      }
-
       if (
-        /^(F\d+|Tab|Escape|Enter|Backspace|Delete|Arrow\w+|Page\w+|Home|End|Insert)$/.test(
-          event.key
-        )
+        event.ctrlKey ||
+        event.metaKey ||
+        event.altKey ||
+        event.key.startsWith("F") ||
+        ["Tab","Escape","Enter","Backspace","Delete","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(event.key)
       ) {
         return;
       }
 
-      if (textareaRef.current && !textareaRef.current.disabled) {
+      if (event.key.length === 1 && textareaRef.current) {
         event.preventDefault();
         textareaRef.current.focus();
-        textareaRef.current.setSelectionRange(
-          textareaRef.current.value.length,
-          textareaRef.current.value.length
-        );
+
+        const currentValue = textareaRef.current.value;
+        textareaRef.current.value = currentValue + event.key;
+
+        const length = textareaRef.current.value.length;
+        textareaRef.current.setSelectionRange(length, length);
+
+        const inputEvent = new Event("input", { bubbles: true });
+        textareaRef.current.dispatchEvent(inputEvent);
       }
     };
 
