@@ -1,6 +1,6 @@
 "use client";
 import { v4 } from "uuid";
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +29,27 @@ import { useConversationById } from "@/hooks/useConversation";
 import { useCredits } from "@/hooks/useCredits";
 import { UpgradeCTA } from "@/components/ui/upgrade-cta";
 import { useExecutionContext } from "@/contexts/execution-context";
+import { Slate, Editable, withReact, useSlateStatic, DefaultElement } from "slate-react";
+import { createEditor, Transforms } from "slate";
+import type { Descendant, BaseEditor } from "slate";
+import { ReactEditor } from "slate-react";
+import type { HistoryEditor } from "slate-history";
+import { withHistory } from "slate-history";
+import { Node } from 'slate';
+import { PreviewElement } from "./PreviewElement";
+import { createPortal } from "react-dom";
+
+declare module 'slate' {
+  interface CustomTypes {
+    Editor: BaseEditor & ReactEditor & HistoryEditor
+    Element: CustomElement
+    Text: { text: string }
+  }
+}
+
+type CustomText = { text: string }
+
+type CustomElement = { type: "paragraph"; children: CustomText[] } | { type: "preview"; children: CustomText[] };
 
 const geistMono = Geist_Mono({
   subsets: ["latin"],
@@ -55,6 +76,9 @@ const UIInput = ({
 }: UIInputProps = {}) => {
   const [model, setModel] = useState<string>(DEFAULT_MODEL_ID);
   const [query, setQuery] = useState<string>("");
+  const [editorValue, setEditorValue] = useState<Descendant[]>([
+    { type: "paragraph", children: [{ text: "" }] },
+  ]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [showWelcome, setShowWelcome] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -91,12 +115,10 @@ const UIInput = ({
 
   const processStream = async (response: Response, userMessage: string) => {
     if (!response.ok) {
-      // Handle credit-related errors
       if (response.status === 403) {
         try {
           const errorData = await response.json();
           if (errorData.message?.includes("Insufficient credits")) {
-            // Refetch credits to update UI
             await refetchCredits();
           }
         } catch (e) {
@@ -223,9 +245,7 @@ const UIInput = ({
       return;
     }
 
-    // Check if user has credits
     if (userCredits && userCredits.credits <= 0 && !userCredits.isPremium) {
-      // Don't allow chat if no credits
       return;
     }
 
@@ -242,6 +262,8 @@ const UIInput = ({
     };
 
     setQuery("");
+    // Reset editor state
+    setEditorValue([{ type: "paragraph", children: [{ text: "" }] }]);
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
 
@@ -314,6 +336,46 @@ const UIInput = ({
       </div>
     );
   }
+
+  const editor = useMemo(() => withHistory(withReact(createEditor())), []);
+  const [showModal, setShowModal] = useState(false);
+  const [modalContent, setModalContent] = useState('');
+
+  const handlePaste = useCallback(
+    (event: React.ClipboardEvent) => {
+      const pasted = event.clipboardData.getData("text");
+      const lineCount = pasted.split("\n").length;
+
+      if (pasted.length >  1000 || lineCount > 20) {
+        event.preventDefault();
+        Transforms.insertNodes(editor, {
+          type: "preview",
+          content: pasted,
+          children: [{ text: "" }],
+        } as CustomElement);
+      }
+    },
+    [editor]
+  );
+
+  const handleDeletePreview = (element: CustomElement) => {
+    Transforms.removeNodes(editor, {
+      at: ReactEditor.findPath(editor, element),
+    });
+  };
+
+  const renderElement = useCallback((props: any) => {
+    switch (props.element.type) {
+      case "preview":
+        return <PreviewElement {...props} onPreviewClick={(content: string) => {
+          setModalContent(content);
+          setShowModal(true);
+        }} 
+        onDelete={handleDeletePreview} />;
+      default:
+        return <DefaultElement {...props} />;
+    }
+  }, []);
 
   return (
     <div className="flex h-[96dvh] w-full overflow-hidden">
@@ -546,32 +608,52 @@ const UIInput = ({
               onSubmit={handleCreateChat}
               className="bg-accent/30 dark:bg-accent/10 flex w-full flex-col rounded-xl p-3"
             >
-              <Textarea
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    void handleCreateChat(e);
-                  }
+              <Slate
+                editor={editor}
+                initialValue={editorValue}
+                onChange={(newValue) => {
+                  setEditorValue(newValue);
+                  const plainText = newValue.map((n) => Node.string(n)).join("\n");
+                  setQuery(plainText);
                 }}
-                placeholder={
-                  userCredits &&
-                  userCredits.credits <= 0 &&
-                  !userCredits.isPremium
-                    ? "You need credits to start a chat. Please upgrade to continue."
-                    : "Ask anything"
-                }
-                className="h-[2rem] resize-none rounded-none border-none bg-transparent px-0 py-1 shadow-none ring-0 focus-visible:ring-0 dark:bg-transparent"
-                disabled={
-                  isLoading ||
-                  !!(
+              >
+                <Editable
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey ) {
+                      e.preventDefault();
+                      void handleCreateChat(e);
+                    }
+                  }}
+                  onPaste={handlePaste}
+                  renderElement={renderElement}
+                  placeholder={
                     userCredits &&
-                    userCredits.credits <= 0 &&
-                    !userCredits.isPremium
-                  )
-                }
-              />
+                      userCredits.credits <= 0 &&
+                      !userCredits.isPremium
+                      ? "You need credits to start a chat. Please upgrade to continue."
+                      : "Ask anything"
+                  }
+                  className={cn(
+                    "min-h-[2rem] max-h-[200px] resize-none rounded-none border-none bg-transparent px-0 py-2 shadow-none ring-0 focus-visible:ring-0 dark:bg-transparent",
+                    "text-sm leading-6 text-foreground placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                  )}
+                  style={{
+                    fontFamily: 'inherit',
+                    fontSize: '14px',
+                    lineHeight: '1.5',
+                    overflowY: 'auto',
+                  }}
+                  disabled={
+                    isLoading ||
+                    !!(
+                      userCredits &&
+                      userCredits.credits <= 0 &&
+                      !userCredits.isPremium
+                    )
+                  }
+                />
+              </Slate>
+
               <div className="mt-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <ModelSelector
@@ -610,6 +692,52 @@ const UIInput = ({
             </form>
           </div>
         </div>
+
+        {/* Modal Popup */}
+        {showModal &&
+          createPortal(
+            <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity">
+              {/* Close Button */}
+              <button
+                onClick={() => setShowModal(false)}
+                className="absolute top-6 right-6 text-white/70 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-full z-20"
+                aria-label="Close modal"
+              >
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M18 6L6 18M6 6L18 18"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+
+              {/* Modal Content */}
+              <div className="relative w-full h-full max-w-5xl max-h-[90vh] p-6">
+                <div className="w-full h-full overflow-y-auto rounded-2xl shadow-2xl bg-gray-900 border border-gray-700">
+                  <pre
+                    className={cn(
+                      "whitespace-pre-wrap text-sm text-gray-200 leading-relaxed overflow-x-auto p-6",
+                      geistMono.className
+                    )}
+                  >
+                    {modalContent}
+                  </pre>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )
+        }
+
       </div>
     </div>
   );
