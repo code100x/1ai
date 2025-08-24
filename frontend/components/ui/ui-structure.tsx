@@ -137,7 +137,7 @@ export function UIStructure() {
                           </span>
                           <div
                             className={`absolute top-0 right-0 z-[5] h-full w-12 rounded-r-md blur-[2em] ${execution.id === hoverChatId ? "bg-primary" : ""}`}
-                          />
+                          />c
                           <div
                             className={`absolute top-1/2 -right-16 z-[10] flex h-full -translate-y-1/2 items-center justify-center gap-1.5 rounded-r-md bg-transparent px-1 backdrop-blur-xl transition-all duration-200 ease-in-out ${execution.id === hoverChatId ? "group-hover:right-0" : ""}`}
                           >
@@ -145,9 +145,8 @@ export function UIStructure() {
                               className="flex items-center justify-center rounded-md"
                               onClick={(e) => {
                                 e.preventDefault();
-                                const shareLink =
-                                  process.env.NEXT_PUBLIC_APP_URL +
-                                  `/chat/share/${execution.id}`;
+                                const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+                                const shareLink = `${baseUrl}/chat/share/${execution.id}`;
                                 navigator.clipboard.writeText(shareLink);
                                 toast.success("Share link copied to clipboard");
                               }}
