@@ -3,12 +3,23 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BACKEND_URL } from "@/lib/utils";
 import { toast } from "sonner";
 
+
 export function Otp({ email }: { email: string }) {
   const [otp, setOtp] = useState("");
+  const [timer, setTimer] = useState(30);
+  const [isResending, setIsResending] = useState(false);
+
+  useEffect(() => {
+    if (timer === 0) return;
+    const interval = setInterval(() => {
+      setTimer((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [timer]);
 
   const handleLogin = async () => {
     try {
@@ -32,13 +43,36 @@ export function Otp({ email }: { email: string }) {
 
       if (response.status === 200) {
         localStorage.setItem("token", data.token);
-
         window.location.href = "/";
       } else if (response.status !== 401 && response.status !== 429) {
         toast(data.message || "An unexpected error occurred");
       }
     } catch (error) {
       console.error("Some error occured ", error);
+    }
+  };
+
+  const ResendOtp = async () => {
+    setIsResending(true);
+    try {
+  const response = await fetch(`${BACKEND_URL}/auth/initiate_signin`, {
+        method: "POST",
+        body: JSON.stringify({ email }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await response.json();
+      if (response.status === 200) {
+        toast("OTP resent to your email");
+        setTimer(30);
+      } else {
+        toast(data.message || "Failed to resend OTP");
+      }
+    } catch {
+      toast("Failed to resend OTP");
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -68,6 +102,14 @@ export function Otp({ email }: { email: string }) {
             className="w-full h-12"
           >
             Login
+          </Button>
+          <Button
+            variant="outline"
+            onClick={ResendOtp}
+            className="w-full h-12 mt-2"
+            disabled={timer > 0 || isResending}
+          >
+            {timer > 0 ? `Resend OTP in ${timer}s` : isResending ? "Resending..." : "Resend OTP"}
           </Button>
         </div>
         <div className="text-muted-foreground text-sm">
