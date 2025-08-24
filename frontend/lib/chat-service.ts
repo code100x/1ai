@@ -229,4 +229,35 @@ export class ChatService {
       return null;
     }
   }
+
+  /**
+   * Delete a conversation
+   */
+
+  static async deleteConversation(conversationId: string): Promise<boolean> {
+    const token = this.getAuthToken();
+
+    if (!token) {
+      throw new Error("Authentication token not found. Please login again.");
+    }
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/ai/chat/${conversationId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Error deleting conversation:", error);
+      return false;
+    }
+  }
 }
