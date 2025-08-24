@@ -133,12 +133,12 @@ export const CreateChatSchema = z.object({
 })
 
 export const CreateUser = z.object({
-    email: z.email()
+    email: z.string().trim().toLowerCase().email(),
 })
 
 export const SignIn = z.object({
-    email: z.email(),
-    otp: z.string().or(z.number().int()),
+    email: z.string().trim().toLowerCase().email(),
+    otp: z.string().trim().regex(/^\d{6}$/).or(z.number().int()),
 })
 
 export type Message = {
@@ -152,3 +152,5 @@ export enum Role {
     Agent = "assistant",
     User = "user"
 }
+
+
