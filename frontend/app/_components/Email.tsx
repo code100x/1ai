@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { BACKEND_URL } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import type React from "react";
 
 const isEmailValid = (email: string) => {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -23,10 +24,50 @@ export function Email({
 }) {
   const router = useRouter();
   const [sendingRequest, setSendingRequest] = useState(false);
+
+  const handleEmailSubmission = () => {
+    if (!isEmailValid(email) || sendingRequest) return;
+
+    setSendingRequest(true);
+    fetch(`${BACKEND_URL}/auth/initiate_signin`, {
+      method: "POST",
+      body: JSON.stringify({ email }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => {
+        if (res.status === 200) {
+          setStep("otp");
+          toast.success("OTP sent to email");
+        } else {
+          toast.error(
+            "Failed to send OTP, please retry after a few minutes"
+          );
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        toast.error(
+          "Failed to send OTP, please retry after a few minutes"
+        );
+      })
+      .finally(() => {
+        setSendingRequest(false);
+      });
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleEmailSubmission();
+    }
+  };
+
   return (
     <div className="mx-auto max-h-screen max-w-6xl">
       <div className="absolute top-4 left-4">
-        {/* <Button asChild variant="ghost" className="font-semibold" onClick={() => router.push("/")}>
+        {/* <Button asChild variant="ghost" className="font-semibold" onClick={() => router.push("/")}> 
             <Link className="flex items-center gap-2" href="/">
               <ArrowLeft className="size-4" />
               Back to chat
@@ -40,40 +81,13 @@ export function Email({
         <div className="w-full flex flex-col gap-2">
           <Input
             onChange={(e) => setEmail(e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder="Email"
           />
           <Button
             disabled={!isEmailValid(email) || sendingRequest}
             variant="accent"
-            onClick={() => {
-              setSendingRequest(true);
-              fetch(`${BACKEND_URL}/auth/initiate_signin`, {
-                method: "POST",
-                body: JSON.stringify({ email }),
-                headers: {
-                  "Content-Type": "application/json",
-                },
-              })
-                .then((res) => {
-                  if (res.status === 200) {
-                    setStep("otp");
-                    toast.success("OTP sent to email");
-                  } else {
-                    toast.error(
-                      "Failed to send OTP, please retry after a few minutes"
-                    );
-                  }
-                })
-                .catch((err) => {
-                  console.error(err);
-                  toast.error(
-                    "Failed to send OTP, please retry after a few minutes"
-                  );
-                })
-                .finally(() => {
-                  setSendingRequest(false);
-                });
-            }}
+            onClick={handleEmailSubmission}
             className="w-full h-12"
           >
             Continue with Email
