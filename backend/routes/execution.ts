@@ -65,7 +65,6 @@ router.delete("/:executionId", authMiddleware, async (req, res) => {
   try {
     const userId = req.userId;
     const executionId = req.params.executionId;
-
     const execution = await prismaClient.execution.findFirst({
       where: { id: executionId, userId },
     });
@@ -74,18 +73,20 @@ router.delete("/:executionId", authMiddleware, async (req, res) => {
       return res.status(404).json({ message: "Execution not found" });
     }
 
-    if (execution.type === "CONVERSATION") {
-      await prismaClient.conversation.delete({
-        where: { id: execution.externalId! },
-      });
-    } else if (execution.type === "ARTICLE_SUMMARIZER") {
-      await prismaClient.articleSummarizer.delete({
-        where: { id: execution.externalId! },
-      });
-    }
+    await prismaClient.$transaction(async (tx) => {
+      if (execution.type === "CONVERSATION") {
+        await tx.conversation.delete({
+          where: { id: execution.externalId! },
+        });
+      } else if (execution.type === "ARTICLE_SUMMARIZER") {
+        await tx.articleSummarizer.delete({
+          where: { id: execution.externalId! },
+        });
+      }
 
-    await prismaClient.execution.delete({
-      where: { id: executionId },
+      await tx.execution.delete({
+        where: { id: executionId },
+      });
     });
 
     return res.json({
