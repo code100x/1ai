@@ -65,6 +65,12 @@ export function Otp({ email }: { email: string }) {
           <Button
             variant="accent"
             onClick={handleLogin}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleLogin();
+              }
+            }}
             className="w-full h-12"
           >
             Login
