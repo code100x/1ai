@@ -13,10 +13,10 @@ export class InMemoryStore {
     private clock: NodeJS.Timeout;
 
     private constructor() {
-        this.store = {};    
+        this.store = {};
         this.clock = setInterval(() => {
-            Object.entries(this.store).forEach(([key, {evictionTime}]) => {
-                if (evictionTime > Date.now()) {
+            Object.entries(this.store).forEach(([key, { evictionTime }]) => {
+                if (evictionTime < Date.now()) {
                     delete this.store[key]
                 }
             });
