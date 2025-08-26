@@ -2,12 +2,16 @@ import { z } from "zod";
 import { App, AppType } from "./app";
 import { createCompletion } from "../../openrouter";
 import { Role } from "../../types";
+import { PrismaClient } from "../../generated/prisma";
+import { PrismaClientInitializationError } from "../../generated/prisma/runtime/edge";
 
 const ArticleSummarizerSchema = z.object({
     article: z.string(),
+    userId: z.string()
 });
 
 const MODEL = "gpt-4o-mini";
+const prismaClient = new PrismaClient();
 
 const SYSTEM_PROMPT = `
     You are a helpful assistant that summarizes articles. Summarize the article in a way that is easy to understand and concise.
@@ -46,6 +50,34 @@ export class ArticleSummarizer extends App {
             },
             SYSTEM_PROMPT
         );
+
+        // Save the article and summary to the database
+        try {
+            await prismaClient.$transaction(async (tx) => {
+                await tx.articleSummarizer.create({
+                    data: {
+                    article: article,
+                    summary: response
+                    }
+
+                });
+                await tx.execution.create({
+                    data: {
+                        title: "Article Summarizer",
+                        type: "ARTICLE_SUMMARIZER",
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                        user: {
+                            connect: {
+                                id: data.userId
+                            }
+                        }
+                    }
+                });
+            });
+        } catch (error) {
+            console.error("Error saving article summary to database:", error);
+        }
 
         return response;
     }
