@@ -31,7 +31,7 @@ const TabsSuggestion = ({
         "Analyze the themes in contemporary dystopian literature",
         "Compare different narrative structures in modern novels",
         "Explore the evolution of science fiction from the 1950s to today",
-        "Discuss the impact of AI on creative writing",
+        "Discuss the impact of AI on creative writing", 
       ],
     },
     {
