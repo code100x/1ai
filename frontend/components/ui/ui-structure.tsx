@@ -95,8 +95,22 @@ export function UIStructure() {
               <Button
                 onClick={(e) => {
                   e.preventDefault();
-                  const id = createNewExecution();
-                  router.push(`/ask/${id}`);
+
+                  // Check if there is an existing "unsaved" or "empty" execution
+                  let currentExecution = uiExecutions.find(
+                    (exe) => exe.title === "New Execution" || exe.messages.length === 0
+                  );
+
+                  // If no empty execution exists, create one
+                  if (!currentExecution) {
+                    const id = createNewExecution();
+                    currentExecution = executions.find((exe) => exe.id === id);
+                  }
+
+                  // Navigate to that execution
+                  if (currentExecution) {
+                    router.push(`/ask/${currentExecution.id}`);
+                  }
                 }}
                 variant="accent"
                 className="w-full"

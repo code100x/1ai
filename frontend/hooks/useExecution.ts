@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 
 
 export interface Execution {
+    messages: any;
     id: string;
     title: string;
     createdAt: string;
