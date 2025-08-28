@@ -43,14 +43,24 @@ export function UIStructure() {
   const [uiExecutions, setUiExecutions] = useState<Execution[]>([]);
   const [hoverChatId, setHoverChatId] = useState<string>("");
   const [isAppsDialogOpen, setIsAppsDialogOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const { executions, loading, createNewExecution } = useExecutionContext();
   const router = useRouter();
 
   useEffect(() => {
     if (executions) {
-      setUiExecutions(executions);
+      const term = searchTerm.trim().toLowerCase();
+      if (!term) {
+        setUiExecutions(executions);
+      } else {
+        setUiExecutions(
+          executions.filter((execution) =>
+            (execution.title ?? "").toLowerCase().includes(term)
+          )
+        );
+      }
     }
-  }, [executions]);
+  }, [executions, searchTerm]);
 
   const handleDeleteExecution = (executionId: string) => {
     try {
@@ -110,6 +120,8 @@ export function UIStructure() {
               <Input
                 placeholder="Search for chats"
                 className="rounded-none border-none bg-transparent px-0 py-1 shadow-none ring-0 focus-visible:ring-0 dark:bg-transparent"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
           </SidebarHeader>
