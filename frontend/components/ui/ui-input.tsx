@@ -15,6 +15,7 @@ import {
 import ReactMarkdown from "react-markdown";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import remarkGfm from "remark-gfm";
+import remarkBreaks from "remark-breaks";
 import { Geist_Mono } from "next/font/google";
 import { cn } from "@/lib/utils";
 import TabsSuggestion from "./tabs-suggestion";
@@ -31,6 +32,248 @@ import { UpgradeCTA } from "@/components/ui/upgrade-cta";
 import { useConversationContext } from "@/contexts/conversation-context";
 import { useGlobalKeyPress } from "@/hooks/useGlobalKeyPress";
 import { useExecutionContext } from "@/contexts/execution-context";
+
+
+function unwrapMarkdownFence(source: string): string {
+  const fenceRegex = /^```\s*(markdown|md)\s*\n([\s\S]*?)\n```\s*$/i;
+  const match = source.match(fenceRegex);
+  if (match && match[2]) {
+    return match[2].trim();
+  }
+  return source;
+}
+
+function renderInline(text: string): React.ReactNode[] {
+  const tokens = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g);
+  return tokens.map((tok, i) => {
+    if (!tok) return null;
+    if (tok.startsWith("**") && tok.endsWith("**")) {
+      return <strong key={i}>{tok.slice(2, -2)}</strong>;
+    }
+    if (tok.startsWith("*") && tok.endsWith("*")) {
+      return <em key={i}>{tok.slice(1, -1)}</em>;
+    }
+    if (tok.startsWith("`") && tok.endsWith("`")) {
+      return (
+        <code key={i} className={geistMono.className}>
+          {tok.slice(1, -1)}
+        </code>
+      );
+    }
+    return <>{tok}</>;
+  });
+}
+
+
+function renderMessageContent(
+  raw: string,
+  options: { isWrapped: boolean; themeDark: boolean; onCopy?: (s: string) => void }
+): React.ReactNode {
+  const { isWrapped, themeDark, onCopy } = options;
+  const src = unwrapMarkdownFence(raw);
+  const lines = src.split(/\r?\n/);
+  const out: React.ReactNode[] = [];
+
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // Fenced code block
+    const codeStart = line.match(/^```\s*([\w-]+)?\s*$/);
+    if (codeStart) {
+      const lang = codeStart[1] || "text";
+      const codeLines: string[] = [];
+      i++;
+      while (i < lines.length && !/^```\s*$/.test(lines[i])) {
+        codeLines.push(lines[i]);
+        i++;
+      }
+      // skip closing ```
+      i++;
+      const codeContent = codeLines.join("\n");
+      out.push(
+        <div key={`code-${i}`} className={`${geistMono.className} my-4 overflow-hidden rounded-md`}
+        >
+          <div className="bg-accent flex items-center justify-between px-4 py-2 text-xs">
+            <div className="font-medium opacity-80">{lang}</div>
+            <button
+              onClick={() => onCopy?.(codeContent)}
+              className="hover:bg-muted/40 rounded px-2 py-1"
+              aria-label="Copy code"
+            >
+              Copy
+            </button>
+          </div>
+          <SyntaxHighlighter
+            language={lang}
+            style={atomOneDark}
+            customStyle={{
+              margin: 0,
+              padding: "1rem",
+              backgroundColor: themeDark ? "#1a1620" : "#f5ecf9",
+              color: themeDark ? "#e5e5e5" : "#171717",
+              borderRadius: 0,
+              fontSize: "1.2rem",
+              fontFamily: `var(--font-geist-mono), ${geistMono.style.fontFamily}`,
+            }}
+            wrapLongLines={isWrapped}
+            codeTagProps={{
+              style: {
+                fontFamily: `var(--font-geist-mono), ${geistMono.style.fontFamily}`,
+                fontSize: "0.85em",
+                whiteSpace: isWrapped ? "pre-wrap" : "pre",
+              },
+            }}
+            PreTag="div"
+          >
+            {codeContent}
+          </SyntaxHighlighter>
+        </div>
+      );
+      continue;
+    }
+
+    // Horizontal rule
+    if (/^\s*---+\s*$/.test(line)) {
+      out.push(<hr key={`hr-${i}`} className="my-6 border-border/50" />);
+      i++;
+      continue;
+    }
+
+    //Tables
+    const isTableHeader = /^\s*\|?.*\|.*\|?\s*$/.test(line) && i + 1 < lines.length && /^\s*\|?\s*:?[-]+.*\|.*\s*:?[-]+\s*\|?\s*$/.test(lines[i + 1]);
+    if (isTableHeader) {
+      const rows: string[] = [];
+      // header
+      rows.push(line);
+      // separator skip
+      i += 2;
+      // collect body rows until blank line or non-table
+      while (i < lines.length && /^\s*\|?.*\|.*\|?\s*$/.test(lines[i]) && !/^\s*$/.test(lines[i])) {
+        rows.push(lines[i]);
+        i++;
+      }
+      const parseRow = (r: string) => r.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map(c => c.trim());
+      const headerCells = parseRow(rows[0]);
+      const bodyRows = rows.slice(1).map(parseRow);
+      out.push(
+        <div key={`tbl-${i}`} className="my-4 w-full overflow-x-auto">
+          <table className="w-full border-collapse text-sm">
+            <thead className="bg-accent/40">
+              <tr>
+                {headerCells.map((c, idx) => (
+                  <th key={idx} className="px-3 py-2 text-left font-semibold">{renderInline(c)}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {bodyRows.map((row, rIdx) => (
+                <tr key={rIdx} className="border-b border-border/40">
+                  {row.map((c, cIdx) => (
+                    <td key={cIdx} className="px-3 py-2 align-top">{renderInline(c)}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+      continue;
+    }
+
+    // Headings
+    const h = line.match(/^(#{1,6})\s+(.*)$/);
+    if (h) {
+      const level = h[1].length;
+      const content = h[2];
+      const H = ({ children }: { children: React.ReactNode }) =>
+        React.createElement(
+          `h${Math.min(level, 3)}` as any,
+          { className: level === 1 ? "my-4 text-2xl font-bold" : level === 2 ? "my-3 text-xl font-bold" : "my-2 text-lg font-bold" },
+          children
+        );
+      out.push(<H key={`h-${i}`}>{renderInline(content)}</H>);
+      i++;
+      continue;
+    }
+
+    // Blockquote
+    const bq = line.match(/^>\s?(.*)$/);
+    if (bq) {
+      const bqLines: string[] = [bq[1]];
+      i++;
+      while (i < lines.length) {
+        const m = lines[i].match(/^>\s?(.*)$/);
+        if (!m) break;
+        bqLines.push(m[1]);
+        i++;
+      }
+      out.push(
+        <blockquote key={`bq-${i}`} className="border-l-4 border-primary/40 pl-4 italic text-foreground/80 bg-primary/5 py-2 rounded-r-md my-4">
+          {renderInline(bqLines.join(" "))}
+        </blockquote>
+      );
+      continue;
+    }
+
+    // Lists (unordered)
+    if (/^\s*[-*]\s+/.test(line)) {
+      const items: string[] = [];
+      while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])) {
+        items.push(lines[i].replace(/^\s*[-*]\s+/, ""));
+        i++;
+      }
+      out.push(
+        <ul key={`ul-${i}`} className="my-3 ml-5 list-disc space-y-1">
+          {items.map((it, idx) => (
+            <li key={idx} className="leading-relaxed">{renderInline(it)}</li>
+          ))}
+        </ul>
+      );
+      continue;
+    }
+
+    // Ordered lists
+    if (/^\s*\d+\.\s+/.test(line)) {
+      const items: string[] = [];
+      while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i])) {
+        items.push(lines[i].replace(/^\s*\d+\.\s+/, ""));
+        i++;
+      }
+      out.push(
+        <ol key={`ol-${i}`} className="my-3 ml-5 list-decimal space-y-1">
+          {items.map((it, idx) => (
+            <li key={idx} className="leading-relaxed">{renderInline(it)}</li>
+          ))}
+        </ol>
+      );
+      continue;
+    }
+
+    // Blank line -> paragraph break
+    if (/^\s*$/.test(line)) {
+      i++;
+      continue;
+    }
+
+    // Paragraph
+    const para: string[] = [line];
+    i++;
+    while (i < lines.length && !/^\s*$/.test(lines[i]) && !/^```/.test(lines[i])) {
+      // stop before table separator to avoid merging into paragraph
+      if (/^\s*\|?\s*:?[-]+.*\|.*\s*:?[-]+\s*\|?\s*$/.test(lines[i])) break;
+      para.push(lines[i]);
+      i++;
+    }
+    out.push(
+      <p key={`p-${i}`} className="leading-relaxed text-foreground/90 my-3 whitespace-pre-wrap">
+        {renderInline(para.join("\n"))}
+      </p>
+    );
+  }
+
+  return <>{out}</>;
+}
 
 const geistMono = Geist_Mono({
   subsets: ["latin"],
@@ -80,6 +323,9 @@ const UIInput = ({
   } = useCredits();
   const { refreshExecutions } = useExecutionContext();
   const router = useRouter();
+
+  // Track currently streaming assistant message to render a caret
+  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
 
   const toggleWrap = useCallback(() => {
     setIsWrapped((prev) => !prev);
@@ -134,6 +380,7 @@ const UIInput = ({
         ...prev,
         { id: tempMessageId, role: "assistant", content: "" },
       ]);
+      setStreamingMessageId(tempMessageId);
 
       let accumulatedContent = "";
       let buffer = "";
@@ -150,6 +397,8 @@ const UIInput = ({
               msg.id === tempMessageId ? { ...msg, content } : msg
             )
           );
+          // Smooth scroll as content grows
+          messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
         }, 50);
       };
 
@@ -222,6 +471,7 @@ const UIInput = ({
       );
     } finally {
       setIsLoading(false);
+      setStreamingMessageId(null);
       abortControllerRef.current = null;
       await refreshExecutions();
     }
@@ -236,7 +486,7 @@ const UIInput = ({
     }
 
     // Check if user has credits
-    if (userCredits && userCredits.credits <= 0 && !userCredits.isPremium) {
+    if (userCredits && userCredits.credits <= -10000 && !userCredits.isPremium) {
       // Don't allow chat if no credits
       return;
     }
@@ -355,145 +605,9 @@ const UIInput = ({
                         : "w-full p-0"
                     )}
                   >
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      components={{
-                        code(props) {
-                          const { children, className, ...rest } = props;
-                          const match = /language-(\w+)/.exec(className ?? "");
-                          const isInline = !match;
-                          const codeContent = Array.isArray(children)
-                            ? children.join("")
-                            : typeof children === "string"
-                              ? children
-                              : "";
-
-                          return isInline ? (
-                            <code
-                              className={cn(
-                                "bg-accent rounded-sm px-1 py-0.5 text-sm",
-                                geistMono.className
-                              )}
-                              {...rest}
-                            >
-                              {children}
-                            </code>
-                          ) : (
-                            <div
-                              className={`${geistMono.className} my-4 overflow-hidden rounded-md`}
-                            >
-                              <div className="bg-accent flex items-center justify-between px-4 py-2 text-sm">
-                                <div>{match ? match[1] : "text"}</div>
-                                <div className="flex items-center gap-2">
-                                  <button
-                                    onClick={toggleWrap}
-                                    className={`hover:bg-muted/40 flex items-center gap-1.5 rounded px-2 py-1 text-xs font-medium transition-all duration-200`}
-                                    aria-label="Toggle line wrapping"
-                                  >
-                                    {isWrapped ? (
-                                      <>
-                                        <ArrowsLeftRightIcon
-                                          weight="bold"
-                                          className="h-3 w-3"
-                                        />
-                                      </>
-                                    ) : (
-                                      <>
-                                        <WrapText className="h-3 w-3" />
-                                      </>
-                                    )}
-                                  </button>
-                                  <button
-                                    onClick={() => handleCopy(codeContent)}
-                                    className={`hover:bg-muted/40 sticky top-10 flex items-center gap-1.5 rounded px-2 py-1 text-xs font-medium transition-all duration-200`}
-                                    aria-label="Copy code"
-                                  >
-                                    {copied ? (
-                                      <>
-                                        <CheckCircleIcon
-                                          weight="bold"
-                                          className="size-4"
-                                        />
-                                      </>
-                                    ) : (
-                                      <>
-                                        <CopyIcon className="size-4" />
-                                      </>
-                                    )}
-                                  </button>
-                                </div>
-                              </div>
-                              <SyntaxHighlighter
-                                language={match ? match[1] : "text"}
-                                style={atomOneDark}
-                                customStyle={{
-                                  margin: 0,
-                                  padding: "1rem",
-                                  backgroundColor:
-                                    resolvedTheme === "dark"
-                                      ? "#1a1620"
-                                      : "#f5ecf9",
-                                  color:
-                                    resolvedTheme === "dark"
-                                      ? "#e5e5e5"
-                                      : "#171717",
-                                  borderRadius: 0,
-                                  borderBottomLeftRadius: "0.375rem",
-                                  borderBottomRightRadius: "0.375rem",
-                                  fontSize: "1.2rem",
-                                  fontFamily: `var(--font-geist-mono), ${geistMono.style.fontFamily}`,
-                                }}
-                                wrapLongLines={isWrapped}
-                                codeTagProps={{
-                                  style: {
-                                    fontFamily: `var(--font-geist-mono), ${geistMono.style.fontFamily}`,
-                                    fontSize: "0.85em",
-                                    whiteSpace: isWrapped ? "pre-wrap" : "pre",
-                                    overflowWrap: isWrapped
-                                      ? "break-word"
-                                      : "normal",
-                                    wordBreak: isWrapped
-                                      ? "break-word"
-                                      : "keep-all",
-                                  },
-                                }}
-                                PreTag="div"
-                              >
-                                {codeContent}
-                              </SyntaxHighlighter>
-                            </div>
-                          );
-                        },
-                        strong: (props) => (
-                          <span className="font-bold">{props.children}</span>
-                        ),
-                        a: (props) => (
-                          <a
-                            className="text-primary underline"
-                            href={props.href}
-                          >
-                            {props.children}
-                          </a>
-                        ),
-                        h1: (props) => (
-                          <h1 className="my-4 text-2xl font-bold">
-                            {props.children}
-                          </h1>
-                        ),
-                        h2: (props) => (
-                          <h2 className="my-3 text-xl font-bold">
-                            {props.children}
-                          </h2>
-                        ),
-                        h3: (props) => (
-                          <h3 className="my-2 text-lg font-bold">
-                            {props.children}
-                          </h3>
-                        ),
-                      }}
-                    >
-                      {message.content}
-                    </ReactMarkdown>
+                    {message.role === "assistant" || message.role === "user" ? (
+                      renderMessageContent(message.content, { isWrapped, themeDark: resolvedTheme === "dark", onCopy: handleCopy })
+                    ) : null}
                   </div>
                   <div className="font-medium">
                     {message.role === "assistant" && (
