@@ -6,8 +6,6 @@ import { Button } from "@/components/ui/button";
 import {
   SpinnerGapIcon,
   CopyIcon,
-  ThumbsDownIcon,
-  ThumbsUpIcon,
   CheckIcon,
   CheckCircleIcon,
   ArrowsLeftRightIcon,
@@ -51,6 +49,14 @@ interface UIInputProps {
   conversationId?: string;
 }
 
+const options = {
+  keepBackground: false,
+  theme: {
+    dark: "dracula",
+    light: "github-light",
+  },
+};
+
 const UIInput = ({
   conversationId: initialConversationId,
 }: UIInputProps = {}) => {
@@ -65,12 +71,12 @@ const UIInput = ({
   const abortControllerRef = useRef<AbortController | null>(null);
   const [isWrapped, setIsWrapped] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(
-    initialConversationId || v4()
+    initialConversationId || v4(),
   );
   const { resolvedTheme } = useTheme();
   const { user, isLoading: isUserLoading } = useUser();
   const { conversation, loading: converstionLoading } = useConversationById(
-    initialConversationId
+    initialConversationId,
   );
   const {
     userCredits,
@@ -146,8 +152,8 @@ const UIInput = ({
         updateTimeout = setTimeout(() => {
           setMessages((prev) =>
             prev.map((msg) =>
-              msg.id === tempMessageId ? { ...msg, content } : msg
-            )
+              msg.id === tempMessageId ? { ...msg, content } : msg,
+            ),
           );
         }, 50);
       };
@@ -160,8 +166,8 @@ const UIInput = ({
             prev.map((msg) =>
               msg.id === tempMessageId
                 ? { ...msg, content: accumulatedContent }
-                : msg
-            )
+                : msg,
+            ),
           );
 
           if (updateTimeout) {
@@ -216,8 +222,8 @@ const UIInput = ({
         prev.map((msg) =>
           msg.id === tempMessageId
             ? { ...msg, content: "Error: Failed to process response" }
-            : msg
-        )
+            : msg,
+        ),
       );
     } finally {
       setIsLoading(false);
@@ -328,181 +334,172 @@ const UIInput = ({
 
   return (
     <div className="flex h-[96dvh] w-full overflow-hidden">
-      <div className="relative flex h-full w-full flex-col">
-        {!query && showWelcome && messages.length === 0 ? (
-          <div className="flex h-full w-full flex-col">
-            <div className="flex h-full w-full flex-col items-center justify-center">
-              <TabsSuggestion
-                suggestedInput={query}
-                setSuggestedInput={setQuery}
-              />
-            </div>
-          </div>
-        ) : (
-          <div className="no-scrollbar mt-6 flex h-full w-full flex-1 flex-col gap-4 overflow-y-auto px-4 pt-4 pb-10 md:px-8">
-            <div className="mx-auto h-full w-full max-w-4xl">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`group mb-8 flex w-full flex-col ${message.role === "assistant" ? "items-start" : "items-end"} gap-2`}
-                >
+      <div className="relative flex h-full w-full flex-col justify-center">
+        {showWelcome && messages.length === 0 ? null : (
+          <div className="no-scrollbar mt-8 xl:mt-0 flex h-full w-full flex-1 flex-col gap-4 overflow-y-auto pb-20">
+            <div className="mx-auto w-full max-w-4xl">
+              {messages.map((message) => {
+                return (
                   <div
-                    className={cn(
-                      "prose cursor-pointer dark:prose-invert max-w-none rounded-lg px-4 py-2",
-                      message.role === "user"
-                        ? "bg-accent/10 w-fit max-w-full font-medium"
-                        : "w-full p-0"
-                    )}
+                    key={message.id}
+                    className={`group mb-8 flex w-full flex-col ${message.role === "assistant" ? "items-start" : "items-end"} gap-2`}
                   >
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      components={{
-                        code(props) {
-                          const { children, className, ...rest } = props;
-                          const match = /language-(\w+)/.exec(className ?? "");
-                          const isInline = !match;
-                          const codeContent = Array.isArray(children)
-                            ? children.join("")
-                            : typeof children === "string"
-                              ? children
-                              : "";
-
-                          return isInline ? (
-                            <code
-                              className={cn(
-                                "bg-accent rounded-sm px-1 py-0.5 text-sm",
-                                geistMono.className
-                              )}
-                              {...rest}
-                            >
-                              {children}
-                            </code>
-                          ) : (
-                            <div
-                              className={`${geistMono.className} my-4 overflow-hidden rounded-md`}
-                            >
-                              <div className="bg-accent flex items-center justify-between px-4 py-2 text-sm">
-                                <div>{match ? match[1] : "text"}</div>
-                                <div className="flex items-center gap-2">
-                                  <button
-                                    onClick={toggleWrap}
-                                    className={`hover:bg-muted/40 flex items-center gap-1.5 rounded px-2 py-1 text-xs font-medium transition-all duration-200`}
-                                    aria-label="Toggle line wrapping"
-                                  >
-                                    {isWrapped ? (
-                                      <>
-                                        <ArrowsLeftRightIcon
-                                          weight="bold"
-                                          className="h-3 w-3"
-                                        />
-                                      </>
-                                    ) : (
-                                      <>
-                                        <WrapText className="h-3 w-3" />
-                                      </>
-                                    )}
-                                  </button>
-                                  <button
-                                    onClick={() => handleCopy(codeContent)}
-                                    className={`hover:bg-muted/40 sticky top-10 flex items-center gap-1.5 rounded px-2 py-1 text-xs font-medium transition-all duration-200`}
-                                    aria-label="Copy code"
-                                  >
-                                    {copied ? (
-                                      <>
-                                        <CheckCircleIcon
-                                          weight="bold"
-                                          className="size-4"
-                                        />
-                                      </>
-                                    ) : (
-                                      <>
-                                        <CopyIcon className="size-4" />
-                                      </>
-                                    )}
-                                  </button>
-                                </div>
-                              </div>
-                              <SyntaxHighlighter
-                                language={match ? match[1] : "text"}
-                                style={atomOneDark}
-                                customStyle={{
-                                  margin: 0,
-                                  padding: "1rem",
-                                  backgroundColor:
-                                    resolvedTheme === "dark"
-                                      ? "#1a1620"
-                                      : "#f5ecf9",
-                                  color:
-                                    resolvedTheme === "dark"
-                                      ? "#e5e5e5"
-                                      : "#171717",
-                                  borderRadius: 0,
-                                  borderBottomLeftRadius: "0.375rem",
-                                  borderBottomRightRadius: "0.375rem",
-                                  fontSize: "1.2rem",
-                                  fontFamily: `var(--font-geist-mono), ${geistMono.style.fontFamily}`,
-                                }}
-                                wrapLongLines={isWrapped}
-                                codeTagProps={{
-                                  style: {
-                                    fontFamily: `var(--font-geist-mono), ${geistMono.style.fontFamily}`,
-                                    fontSize: "0.85em",
-                                    whiteSpace: isWrapped ? "pre-wrap" : "pre",
-                                    overflowWrap: isWrapped
-                                      ? "break-word"
-                                      : "normal",
-                                    wordBreak: isWrapped
-                                      ? "break-word"
-                                      : "keep-all",
-                                  },
-                                }}
-                                PreTag="div"
-                              >
-                                {codeContent}
-                              </SyntaxHighlighter>
-                            </div>
-                          );
-                        },
-                        strong: (props) => (
-                          <span className="font-bold">{props.children}</span>
-                        ),
-                        a: (props) => (
-                          <a
-                            className="text-primary underline"
-                            href={props.href}
-                          >
-                            {props.children}
-                          </a>
-                        ),
-                        h1: (props) => (
-                          <h1 className="my-4 text-2xl font-bold">
-                            {props.children}
-                          </h1>
-                        ),
-                        h2: (props) => (
-                          <h2 className="my-3 text-xl font-bold">
-                            {props.children}
-                          </h2>
-                        ),
-                        h3: (props) => (
-                          <h3 className="my-2 text-lg font-bold">
-                            {props.children}
-                          </h3>
-                        ),
-                      }}
+                    <div
+                      className={cn(
+                        "prose cursor-pointer dark:prose-invert max-w-none px-4 py-2 space-y-4",
+                        message.role === "user"
+                          ? "bg-zinc-200/60 dark:bg-zinc-800 w-full max-w-xl rounded-xl"
+                          : "w-full p-0",
+                      )}
                     >
-                      {message.content}
-                    </ReactMarkdown>
-                  </div>
-                  <div className="font-medium">
-                    {message.role === "assistant" && (
-                      <div className="invisible flex w-fit items-center gap-2 text-base font-semibold group-hover:visible">
-                        <button className="hover:bg-accent flex size-7 items-center justify-center rounded-lg">
-                          <ThumbsUpIcon weight="bold" />
-                        </button>
-                        <button className="hover:bg-accent flex size-7 items-center justify-center rounded-lg">
-                          <ThumbsDownIcon weight="bold" />
-                        </button>
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          code(props) {
+                            const { children, className, ...rest } = props;
+                            const match = /language-(\w+)/.exec(
+                              className ?? "",
+                            );
+                            const isInline = !match;
+                            const codeContent = Array.isArray(children)
+                              ? children.join("")
+                              : typeof children === "string"
+                                ? children
+                                : "";
+
+                            return isInline ? (
+                              <code
+                                className={cn(
+                                  "bg-orange-400/10 text-orange-400 dark:text-orange-100 dark:bg-orange-200/10 rounded-lg px-1.5 py-0.5 text-sm",
+                                  geistMono.className,
+                                )}
+                                {...rest}
+                              >
+                                {children}
+                              </code>
+                            ) : (
+                              <div
+                                className={`${geistMono.className} overflow-hidden rounded-2xl`}
+                              >
+                                <div className="bg-zinc-400/10 flex items-center justify-between px-4 py-2 text-sm">
+                                  <p className="text-xs">
+                                    {match ? match[1] : "text"}
+                                  </p>
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      onClick={toggleWrap}
+                                      className={`hover:bg-muted/40 flex items-center gap-1.5 rounded px-2 py-1 text-xs font-medium transition-all duration-200`}
+                                      aria-label="Toggle line wrapping"
+                                    >
+                                      {isWrapped ? (
+                                        <>
+                                          <ArrowsLeftRightIcon
+                                            weight="bold"
+                                            className="h-3 w-3"
+                                          />
+                                        </>
+                                      ) : (
+                                        <>
+                                          <WrapText className="h-3 w-3" />
+                                        </>
+                                      )}
+                                    </button>
+                                    <button
+                                      onClick={() => handleCopy(codeContent)}
+                                      className={`hover:bg-muted/40 sticky top-10 flex items-center gap-1.5 rounded px-2 py-1 text-xs font-medium transition-all duration-200`}
+                                      aria-label="Copy code"
+                                    >
+                                      {copied ? (
+                                        <>
+                                          <CheckCircleIcon
+                                            weight="bold"
+                                            className="size-4"
+                                          />
+                                        </>
+                                      ) : (
+                                        <>
+                                          <CopyIcon className="size-4" />
+                                        </>
+                                      )}
+                                    </button>
+                                  </div>
+                                </div>
+                                <SyntaxHighlighter
+                                  language={match ? match[1] : "text"}
+                                  style={atomOneDark}
+                                  customStyle={{
+                                    margin: 0,
+                                    padding: "1.5rem",
+                                    backgroundColor:
+                                      resolvedTheme === "dark"
+                                        ? "#262626"
+                                        : "#f5f5f5",
+                                    color:
+                                      resolvedTheme === "dark"
+                                        ? "#e5e5e5"
+                                        : "#171717",
+                                    borderRadius: 0,
+                                    boxShadow: "#fa7319",
+                                    fontSize: "0.95rem",
+                                    fontFamily: `var(--font-geist-mono), ${geistMono.style.fontFamily}`,
+                                  }}
+                                  wrapLongLines={isWrapped}
+                                  codeTagProps={{
+                                    style: {
+                                      fontFamily: `var(--font-geist-mono), ${geistMono.style.fontFamily}`,
+                                      fontSize: "0.85em",
+                                      whiteSpace: isWrapped
+                                        ? "pre-wrap"
+                                        : "pre",
+                                      overflowWrap: isWrapped
+                                        ? "break-word"
+                                        : "normal",
+                                      wordBreak: isWrapped
+                                        ? "break-word"
+                                        : "keep-all",
+                                    },
+                                  }}
+                                  PreTag="div"
+                                >
+                                  {codeContent}
+                                </SyntaxHighlighter>
+                              </div>
+                            );
+                          },
+                          strong: (props) => (
+                            <span className="font-bold">{props.children}</span>
+                          ),
+                          a: (props) => (
+                            <a
+                              className="hover:underline hover:underline-offset-3 text-orange-400 dark:text-orange-200 tracking-wide"
+                              target="_blank"
+                              href={props.href}
+                            >
+                              {props.children}
+                            </a>
+                          ),
+                          h1: (props) => (
+                            <h1 className="my-4 text-2xl font-bold">
+                              {props.children}
+                            </h1>
+                          ),
+                          h2: (props) => (
+                            <h2 className="my-3 text-xl font-bold">
+                              {props.children}
+                            </h2>
+                          ),
+                          h3: (props) => (
+                            <h3 className="my-2 text-lg font-bold">
+                              {props.children}
+                            </h3>
+                          ),
+                        }}
+                      >
+                        {message.content}
+                      </ReactMarkdown>
+                    </div>
+                    <div className="font-medium">
+                      {message.role === "user" && (
                         <button
                           onClick={() => handleCopy(message.content)}
                           className="hover:bg-accent flex size-7 items-center justify-center rounded-lg"
@@ -513,23 +510,11 @@ const UIInput = ({
                             <CheckIcon weight="bold" />
                           )}
                         </button>
-                      </div>
-                    )}
-                    {message.role === "user" && (
-                      <button
-                        onClick={() => handleCopy(message.content)}
-                        className="hover:bg-accent flex size-7 items-center justify-center rounded-lg"
-                      >
-                        {!copied ? (
-                          <CopyIcon weight="bold" />
-                        ) : (
-                          <CheckIcon weight="bold" />
-                        )}
-                      </button>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               {isLoading && (
                 <div className="flex h-5 items-start justify-start space-x-2">
                   <div className="bg-accent h-2.5 w-2.5 animate-bounce rounded-full [animation-delay:0s]"></div>
@@ -542,24 +527,29 @@ const UIInput = ({
           </div>
         )}
 
+        {showWelcome && messages.length === 0 && (
+          <h1 className="text-4xl font-serif mb-8 text-center">
+            What's on your mind today?
+          </h1>
+        )}
+
         {/* Show upgrade prompt when user has no credits */}
         {userCredits && userCredits.credits <= 0 && !userCredits.isPremium && (
-          <div className="mb-4 w-full px-4 md:px-8">
-            <div className="mx-auto w-full max-w-4xl">
-              <UpgradeCTA variant="banner" />
-            </div>
+          <div className="w-full px-4">
+            <UpgradeCTA variant="banner" />
           </div>
         )}
 
-        <div className="bg-muted/20 backdrop-blur-3xl border border-border/50 mb-4 w-full rounded-2xl p-1">
-          <div className="mx-auto w-full max-w-4xl">
+        <div className="bg-zinc-400/10 w-full mb-4 border rounded-2xl border-black/10 dark:border-zinc-400/8">
+          <div className="w-full max-w-4xl mx-auto">
             <form
               onSubmit={handleCreateChat}
-              className="bg-accent/30 dark:bg-accent/10 flex w-full flex-col rounded-xl p-3"
+              className="flex flex-col p-3 rounded-lg bg-traansparent inset-shadow-sm"
             >
               <Textarea
                 ref={textareaRef}
                 autoFocus
+                spellCheck={false}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => {
@@ -573,9 +563,9 @@ const UIInput = ({
                   userCredits.credits <= 0 &&
                   !userCredits.isPremium
                     ? "You need credits to start a chat. Please upgrade to continue."
-                    : "Ask anything"
+                    : "Ask anything..."
                 }
-                className="h-[2rem] resize-none rounded-none border-none bg-transparent px-0 py-1 shadow-none ring-0 focus-visible:ring-0 dark:bg-transparent"
+                className="min-h-16 max-h-80 tracking-wider leading-5 resize-none rounded-none border-none bg-transparent px-0 py-1 shadow-none ring-0 focus-visible:ring-0 dark:bg-transparent placeholder:tracking-wider"
                 disabled={
                   isLoading ||
                   !!(
@@ -603,6 +593,7 @@ const UIInput = ({
                 <Button
                   type="submit"
                   size="icon"
+                  className="text-xs text-white bg-[#fa7319] hover:bg-[#fa7319]/90 p-4 rounded-xl inset-shadow-sm inset-shadow-white/60 font-medium border border-black/4 outline-0"
                   disabled={
                     isLoading ||
                     !query.trim() ||
@@ -623,6 +614,14 @@ const UIInput = ({
             </form>
           </div>
         </div>
+        {showWelcome && messages.length === 0 && (
+          <div className="flex items-center justify-center">
+            <TabsSuggestion
+              suggestedInput={query}
+              setSuggestedInput={setQuery}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

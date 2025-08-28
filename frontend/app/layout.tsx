@@ -5,13 +5,20 @@ import { BlurProvider } from "@/contexts/blur-context";
 import { Toaster } from "sonner";
 import { siteConfig } from "@/config/site";
 import { ThemeProvider } from "@/components/theme-provider";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Inter, Syne } from "next/font/google";
 import { ExecutionProvider } from "@/contexts/execution-context";
 export const metadata: Metadata = siteConfig;
 
-const font = Plus_Jakarta_Sans({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-jakarta",
+  variable: "--font-inter",
+  weight: ["200", "400", "500"],
+});
+
+const syne = Syne({
+  subsets: ["latin"],
+  variable: "--font-syne",
+  weight: ["700"],
 });
 
 export default function RootLayout({
@@ -19,8 +26,8 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${font.className}`}>
-          <ExecutionProvider>
+      <body className={`${inter.variable} ${syne.variable}`}>
+        <ExecutionProvider>
           <ThemeProvider
             attribute="class"
             defaultTheme="dark"
@@ -34,7 +41,7 @@ export default function RootLayout({
               </BlurProvider>
             </FontProvider>
           </ThemeProvider>
-          </ExecutionProvider>
+        </ExecutionProvider>
       </body>
     </html>
   );

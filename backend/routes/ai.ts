@@ -143,7 +143,7 @@ router.post("/chat", authMiddleware, async (req, res) => {
                 data: {
                     id: conversationId,
                     userId,
-                    title: data.message.slice(0, 20) + "...",
+                    title: data.message.slice(0, 35) + "...",
                     type: "CONVERSATION",
                     externalId: conversationId
                 }
