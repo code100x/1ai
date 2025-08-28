@@ -32,7 +32,7 @@ const RazorpayPayment: React.FC<RazorpayPaymentProps> = ({
   const { error, isLoading: rzpLoading, Razorpay } = useRazorpay();
   const [isProcessing, setIsProcessing] = useState(false);
   const { user, isLoading: userLoading } = useUser();
-  const { userCredits } = useCredits();
+  const { userCredits, refetchCredits } = useCredits();
   const router = useRouter();
 
   const handlePayment = async () => {
@@ -108,6 +108,8 @@ const RazorpayPayment: React.FC<RazorpayPaymentProps> = ({
                     toast.success("Payment successful! Your subscription is being activated...", {
                       duration: 3000
                     });
+                    await refetchCredits();
+                    router.replace("/ask");
                   } else {
                     toast.error("Payment failed! Please try again.");
                   }
