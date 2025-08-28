@@ -25,7 +25,6 @@ router.post("/initiate_signin", perMinuteLimiter, async (req, res) => {
             res.status(411).send("Invalid input");
             return
         }
-        if (process.env.NODE_ENV === "development") { otpCache.set(data.email, "123456");  } else { otpCache.set(data.email, otp);  }
 
         // Generate TOTP using email and secret
         console.log("before send email")
