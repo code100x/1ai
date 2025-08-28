@@ -47,6 +47,7 @@ export function UIStructure() {
   const { executions, loading, createNewExecution } = useExecutionContext();
   const router = useRouter();
 
+  //search
   useEffect(() => {
     if (executions) {
       const term = searchTerm.trim().toLowerCase();
