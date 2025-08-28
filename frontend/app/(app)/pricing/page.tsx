@@ -92,7 +92,8 @@ export default function PricingPage() {
           {pricingPlans.map((plan) => (
             <Card
               key={plan.name}
-              className={`relative border-muted/40 bg-muted/10 transition-all duration-300 hover:shadow-lg ${
+             
+              className={`relative flex flex-col border-muted/40 bg-muted/10 transition-all duration-300 hover:shadow-lg ${
                 plan.highlight
                   ? "border-primary/50 bg-primary/5 scale-[1.02]"
                   : "hover:border-muted/60"
@@ -135,7 +136,9 @@ export default function PricingPage() {
                 </p>
               </CardHeader>
 
-              <CardContent className="space-y-4">
+              
+              <CardContent className="flex flex-col flex-grow p-6 space-y-4">
+                
                 <div className="space-y-2">
                   {plan.features.map((feature, index) => (
                     <div key={index} className="flex items-center gap-3">
@@ -151,7 +154,7 @@ export default function PricingPage() {
                     </div>
                   ))}
                 </div>
-
+                
                 <RazorpayPayment
                   plan={{
                     name: plan.name,
@@ -159,7 +162,8 @@ export default function PricingPage() {
                     currency: plan.currency,
                     interval: plan.interval.replace("per ", ""),
                   }}
-                  className={`w-full h-10 font-semibold text-sm ${
+                  
+                  className={`mt-auto w-full h-10 font-semibold text-sm ${
                     plan.highlight
                       ? "bg-primary hover:bg-primary/90 text-primary-foreground"
                       : "bg-muted hover:bg-muted/80 text-foreground"
