@@ -147,7 +147,7 @@ export function UIStructure() {
                                 e.preventDefault();
                                 const shareLink =
                                   process.env.NEXT_PUBLIC_APP_URL +
-                                  `/chat/share/${execution.id}`;
+                                  `/ask/${execution.id}`;
                                 navigator.clipboard.writeText(shareLink);
                                 toast.success("Share link copied to clipboard");
                               }}
