@@ -174,9 +174,8 @@ export function UIStructure() {
                               className="flex items-center justify-center rounded-md"
                               onClick={(e) => {
                                 e.preventDefault();
-                                const shareLink =
-                                  process.env.NEXT_PUBLIC_APP_URL +
-                                  `/ask/${execution.id}`;
+                                const baseURL = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+                                const shareLink = `${baseURL}/ask/${execution.id}`;
                                 navigator.clipboard.writeText(shareLink);
                                 toast.success("Share link copied to clipboard");
                               }}
