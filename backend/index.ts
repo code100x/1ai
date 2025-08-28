@@ -9,8 +9,18 @@ import executionRouter from "./routes/execution";
 
 const app = express();
 app.use(cors())
-
 app.use(express.json());
+
+// Health-check route
+app.get("/ping", (_, res) => {
+  res.status(200).json({ status: "healthy", uptime: process.uptime() });
+});
+
+// Or alternative: /health
+app.get("/health", (_, res) => {
+  res.status(200).json({ status: "healthy", uptime: process.uptime() });
+});
+
 app.use("/rzp_webhook", rzpWebhookRouter);
 app.use("/ai", aiRouter);
 app.use("/auth", authRouter);

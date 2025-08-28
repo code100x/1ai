@@ -52,6 +52,35 @@ router.get("/conversations/:conversationId", authMiddleware, async (req, res) =>
     });
 })
 
+router.delete("/chat/:chatId", authMiddleware, async (req, res) => {
+    const userId = req.userId;
+    const chatId = req.params.chatId;
+    
+    const execution = await prismaClient.execution.findFirst({
+        where: {
+            id: chatId,
+            userId
+        }
+    })
+
+    if (!execution) {
+        res.status(404).json({
+            message: "Chat not found"
+        });
+        return;
+    }
+
+    await prismaClient.execution.delete({
+        where: {
+            id: chatId
+        }
+    })
+
+    res.json({
+        message: "Chat deleted successfully"
+    });
+})
+
 router.post("/chat", authMiddleware, async (req, res) => {
     const userId = req.userId;
     const {success, data} = CreateChatSchema.safeParse(req.body);

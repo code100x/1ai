@@ -23,6 +23,32 @@ export function Email({
 }) {
   const router = useRouter();
   const [sendingRequest, setSendingRequest] = useState(false);
+
+  const handleSendOTP = async () => {
+    setSendingRequest(true);
+    
+    try {
+      const response = await fetch(`${BACKEND_URL}/auth/initiate_signin`, {
+        method: "POST",
+        body: JSON.stringify({ email }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.status === 200) {
+        setStep("otp");
+        toast.success("OTP sent to email");
+      } else {
+        toast.error("Failed to send OTP, please retry after a few minutes");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to send OTP, please retry after a few minutes");
+    } finally {
+      setSendingRequest(false);
+    }
+  };
   return (
     <div className="mx-auto max-h-screen max-w-6xl">
       <div className="absolute top-4 left-4">
@@ -41,38 +67,19 @@ export function Email({
           <Input
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && isEmailValid(email) && !sendingRequest) {
+                handleSendOTP();
+              }
+            }}
           />
           <Button
             disabled={!isEmailValid(email) || sendingRequest}
             variant="accent"
             onClick={() => {
-              setSendingRequest(true);
-              fetch(`${BACKEND_URL}/auth/initiate_signin`, {
-                method: "POST",
-                body: JSON.stringify({ email }),
-                headers: {
-                  "Content-Type": "application/json",
-                },
-              })
-                .then((res) => {
-                  if (res.status === 200) {
-                    setStep("otp");
-                    toast.success("OTP sent to email");
-                  } else {
-                    toast.error(
-                      "Failed to send OTP, please retry after a few minutes"
-                    );
-                  }
-                })
-                .catch((err) => {
-                  console.error(err);
-                  toast.error(
-                    "Failed to send OTP, please retry after a few minutes"
-                  );
-                })
-                .finally(() => {
-                  setSendingRequest(false);
-                });
+              if (isEmailValid(email) && !sendingRequest) {
+                handleSendOTP();
+              }
             }}
             className="w-full h-12"
           >
