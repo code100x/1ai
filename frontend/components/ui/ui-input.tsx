@@ -54,7 +54,14 @@ interface UIInputProps {
 const UIInput = ({
   conversationId: initialConversationId,
 }: UIInputProps = {}) => {
-  const [model, setModel] = useState<string>(DEFAULT_MODEL_ID);
+  const [model, setModel] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const storedModel = localStorage.getItem("selectedModel") || DEFAULT_MODEL_ID;
+      console.log("Loaded model from localStorage:", storedModel);
+      return storedModel;
+    }
+    return DEFAULT_MODEL_ID;
+  });
   const [query, setQuery] = useState<string>("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [showWelcome, setShowWelcome] = useState(true);
@@ -90,6 +97,13 @@ const UIInput = ({
       setShowWelcome(false);
     }
   }, [conversation, initialConversationId]);
+
+  // Persist model selection in localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("selectedModel", model);
+    }
+  }, [model]);
 
   useGlobalKeyPress({
     inputRef: textareaRef,
