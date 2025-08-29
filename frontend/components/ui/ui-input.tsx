@@ -19,7 +19,7 @@ import { Geist_Mono } from "next/font/google";
 import { cn } from "@/lib/utils";
 import TabsSuggestion from "./tabs-suggestion";
 import { ModelSelector } from "@/components/ui/model-selector";
-import { useModel } from "@/hooks/use-model";
+import { DEFAULT_MODEL_ID } from "@/models/constants";
 import { useTheme } from "next-themes";
 import { ArrowUpIcon, WrapText } from "lucide-react";
 import { atomOneDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
@@ -54,7 +54,14 @@ interface UIInputProps {
 const UIInput = ({
   conversationId: initialConversationId,
 }: UIInputProps = {}) => {
-  const { modelId, setModelId } = useModel();
+  const [model, setModel] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const storedModel = localStorage.getItem("selectedModel") || DEFAULT_MODEL_ID;
+      console.log("Loaded model from localStorage:", storedModel);
+      return storedModel;
+    }
+    return DEFAULT_MODEL_ID;
+  });
   const [query, setQuery] = useState<string>("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [showWelcome, setShowWelcome] = useState(true);
@@ -90,6 +97,13 @@ const UIInput = ({
       setShowWelcome(false);
     }
   }, [conversation, initialConversationId]);
+
+  // Persist model selection in localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("selectedModel", model);
+    }
+  }, [model]);
 
   useGlobalKeyPress({
     inputRef: textareaRef,
@@ -274,7 +288,7 @@ const UIInput = ({
               },
               body: JSON.stringify({
                 message: currentQuery,
-                model: modelId,
+                model: model,
                 conversationId: conversationId,
               }),
               signal: abortControllerRef.current?.signal,
@@ -497,18 +511,10 @@ const UIInput = ({
                   <div className="font-medium">
                     {message.role === "assistant" && (
                       <div className="invisible flex w-fit items-center gap-2 text-base font-semibold group-hover:visible">
-                        <button
-                          aria-label="Thumbs up"
-                          title="Thumbs up"
-                          className="hover:bg-accent flex size-7 items-center justify-center rounded-lg"
-                        >
+                        <button className="hover:bg-accent flex size-7 items-center justify-center rounded-lg">
                           <ThumbsUpIcon weight="bold" />
                         </button>
-                        <button
-                          aria-label="Thumbs down"
-                          title="Thumbs down"
-                          className="hover:bg-accent flex size-7 items-center justify-center rounded-lg"
-                        >
+                        <button className="hover:bg-accent flex size-7 items-center justify-center rounded-lg">
                           <ThumbsDownIcon weight="bold" />
                         </button>
                         <button
@@ -596,8 +602,8 @@ const UIInput = ({
               <div className="mt-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <ModelSelector
-                    value={modelId}
-                    onValueChange={setModelId}
+                    value={model}
+                    onValueChange={setModel}
                     disabled={
                       isLoading ||
                       !!(
