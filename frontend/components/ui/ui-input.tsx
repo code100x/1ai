@@ -28,6 +28,7 @@ import { useRouter } from "next/navigation";
 import { useConversationById } from "@/hooks/useConversation";
 import { useCredits } from "@/hooks/useCredits";
 import { UpgradeCTA } from "@/components/ui/upgrade-cta";
+import { useGlobalKeyPress } from "@/hooks/useGlobalKeyPress";
 import { useExecutionContext } from "@/contexts/execution-context";
 
 const geistMono = Geist_Mono({
@@ -60,6 +61,7 @@ const UIInput = ({
   const [copied, setCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const [isWrapped, setIsWrapped] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(
@@ -88,6 +90,15 @@ const UIInput = ({
       setShowWelcome(false);
     }
   }, [conversation, initialConversationId]);
+
+  useGlobalKeyPress({
+    inputRef: textareaRef,
+    onKeyPress: (key: string) => {
+      setQuery(prev => prev + key);
+    },
+    disabled: !!(userCredits && userCredits.credits <= 0 && !userCredits.isPremium),
+    loading: isLoading,
+  });
 
   const processStream = async (response: Response, userMessage: string) => {
     if (!response.ok) {
@@ -547,6 +558,8 @@ const UIInput = ({
               className="bg-accent/30 dark:bg-accent/10 flex w-full flex-col rounded-xl p-3"
             >
               <Textarea
+                ref={textareaRef}
+                autoFocus
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => {

@@ -32,30 +32,51 @@ import {
   TrashIcon,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Logo } from "../svgs/logo";
 import { useUser } from "@/hooks/useUser";
 import Link from "next/link";
 import { useExecutionContext } from "@/contexts/execution-context";
 import { Execution } from "@/hooks/useExecution";
+import { BACKEND_URL, cn } from "@/lib/utils";
 
 export function UIStructure() {
   const [uiExecutions, setUiExecutions] = useState<Execution[]>([]);
   const [hoverChatId, setHoverChatId] = useState<string>("");
   const [isAppsDialogOpen, setIsAppsDialogOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const { executions, loading, createNewExecution } = useExecutionContext();
   const router = useRouter();
+  
+  const pathname = usePathname();
+  const currentConversationId = pathname.split("/").pop();
 
   useEffect(() => {
     if (executions) {
-      setUiExecutions(executions);
+      const term = searchTerm.trim().toLowerCase();
+      if (!term) {
+        setUiExecutions(executions);
+      } else {
+        setUiExecutions(
+          executions.filter((execution) =>
+            (execution.title ?? "").toLowerCase().includes(term)
+          )
+        );
+      }
     }
-  }, [executions]);
+  }, [executions, searchTerm]);
 
-  const handleDeleteExecution = (executionId: string) => {
+  const handleDeleteExecution = async (executionId: string) => {
     try {
-      toast.success("Chat deleted successfully");
+      await fetch(`${BACKEND_URL}/ai/chat/${executionId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        }
+      });
       setUiExecutions(executions.filter((execution) => execution.id !== executionId));
+      toast.success("Chat deleted successfully");
     } catch (error) {
       console.error("Error deleting chat:", error);
     }
@@ -68,10 +89,11 @@ export function UIStructure() {
     {
       id: "article-summarizer",
       name: "Article Summarizer",
-      description: "Summarize long articles into concise, easy-to-read summaries",
+      description:
+        "Summarize long articles into concise, easy-to-read summaries",
       icon: "📄",
-      credits: 2
-    }
+      credits: 2,
+    },
   ];
 
   const handleAppNavigation = (appId: string) => {
@@ -82,7 +104,7 @@ export function UIStructure() {
   return (
     <Sidebar className={`border py-2 pl-2`}>
       <SidebarContent className="h-full justify-between">
-        <SidebarGroup className="flex flex-col gap-8">
+        <SidebarGroup className="flex flex-col gap-4">
           <SidebarHeader className="sticky top-0 !p-0">
             <div className="flex w-full flex-col items-center gap-2 rounded-lg">
               <div className="flex w-full items-center gap-2 rounded-lg p-1 text-lg justify-between">
@@ -95,8 +117,7 @@ export function UIStructure() {
               <Button
                 onClick={(e) => {
                   e.preventDefault();
-                  const id = createNewExecution();
-                  router.push(`/ask/${id}`);
+                  router.push(`/ask`);
                 }}
                 variant="accent"
                 className="w-full"
@@ -110,6 +131,8 @@ export function UIStructure() {
               <Input
                 placeholder="Search for chats"
                 className="rounded-none border-none bg-transparent px-0 py-1 shadow-none ring-0 focus-visible:ring-0 dark:bg-transparent"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
           </SidebarHeader>
@@ -126,7 +149,7 @@ export function UIStructure() {
                 : uiExecutions.map((execution: Execution) => (
                     <SidebarMenuItem key={execution.id}>
                       <SidebarMenuButton
-                        className="group hover:bg-primary/20 relative"
+                        className={`group relative w-full text-left hover:bg-primary/20 transition ${execution.id === currentConversationId ? "bg-primary/20" : ""}`}
                         onMouseEnter={() => setHoverChatId(execution.id)}
                         onMouseLeave={() => setHoverChatId("")}
                         onClick={() => router.push(`/ask/${execution.id}`)}
@@ -136,10 +159,16 @@ export function UIStructure() {
                             {execution.title}
                           </span>
                           <div
-                            className={`absolute top-0 right-0 z-[5] h-full w-12 rounded-r-md blur-[2em] ${execution.id === hoverChatId ? "bg-primary" : ""}`}
+                            className={cn(
+                              "absolute top-0 right-0 z-[5] h-full w-12 rounded-r-md blur-[2em]", 
+                              execution.id === hoverChatId && "bg-primary"
+                            )}
                           />
                           <div
-                            className={`absolute top-1/2 -right-16 z-[10] flex h-full -translate-y-1/2 items-center justify-center gap-1.5 rounded-r-md bg-transparent px-1 backdrop-blur-xl transition-all duration-200 ease-in-out ${execution.id === hoverChatId ? "group-hover:right-0" : ""}`}
+                            className={cn(
+                              "absolute top-1/2 -right-16 z-[10] flex h-full -translate-y-1/2 items-center justify-center gap-1.5 rounded-r-md bg-transparent px-1 backdrop-blur-xl transition-all duration-200 ease-in-out",
+                              execution.id === hoverChatId && "group-hover:right-0"
+                            )}
                           >
                             <div
                               className="flex items-center justify-center rounded-md"
@@ -147,7 +176,7 @@ export function UIStructure() {
                                 e.preventDefault();
                                 const shareLink =
                                   process.env.NEXT_PUBLIC_APP_URL +
-                                  `/chat/share/${execution.id}`;
+                                  `/ask/${execution.id}`;
                                 navigator.clipboard.writeText(shareLink);
                                 toast.success("Share link copied to clipboard");
                               }}
@@ -160,7 +189,9 @@ export function UIStructure() {
 
                             <div
                               className="flex items-center justify-center rounded-md"
-                              onClick={() => handleDeleteExecution(execution.id)}
+                              onClick={() =>
+                                handleDeleteExecution(execution.id)
+                              }
                             >
                               <TrashIcon
                                 weight={"bold"}
@@ -186,11 +217,7 @@ export function UIStructure() {
           )}
           <Dialog open={isAppsDialogOpen} onOpenChange={setIsAppsDialogOpen}>
             <DialogTrigger asChild>
-              <Button
-                variant="secondary"
-                className="w-full"
-                size="lg"
-              >
+              <Button variant="secondary" className="w-full" size="lg">
                 AI Apps
               </Button>
             </DialogTrigger>
@@ -198,10 +225,11 @@ export function UIStructure() {
               <DialogHeader>
                 <DialogTitle>AI Apps</DialogTitle>
                 <DialogDescription>
-                  Choose from our collection of AI-powered applications to enhance your productivity.
+                  Choose from our collection of AI-powered applications to
+                  enhance your productivity.
                 </DialogDescription>
               </DialogHeader>
-              
+
               <div className="grid gap-4 py-4">
                 {availableApps.map((app) => (
                   <div
@@ -212,7 +240,9 @@ export function UIStructure() {
                     <div className="text-2xl">{app.icon}</div>
                     <div className="flex-1">
                       <h3 className="font-semibold text-lg">{app.name}</h3>
-                      <p className="text-sm text-muted-foreground">{app.description}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {app.description}
+                      </p>
                       <div className="flex items-center gap-1 mt-1">
                         <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
                           {app.credits} credits per use
@@ -222,7 +252,7 @@ export function UIStructure() {
                   </div>
                 ))}
               </div>
-              
+
               <DialogFooter>
                 <DialogClose asChild>
                   <Button variant="outline">Close</Button>
@@ -245,6 +275,7 @@ export function UIStructure() {
               Logout
             </Button>
           )}
+          
 
           <div className="flex items-center gap-2 justify-center">
             <Link href="/terms" target="_target" className="text-xs">

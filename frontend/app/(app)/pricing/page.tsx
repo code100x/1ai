@@ -1,5 +1,7 @@
 "use client";
-
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,28 +14,6 @@ import {
 import RazorpayPayment from "@/components/RazorpayPayment";
 
 const pricingPlans = [
-  {
-    name: "Monthly",
-    price: 99,
-    currency: "₹",
-    interval: "per month",
-    description: "Perfect for individuals getting started with AI",
-    highlight: false,
-    popular: false,
-    features: [
-      "Unlimited AI conversations",
-      "Access to all AI models",
-      "Chat history & sync",
-      "Web-based platform",
-      "24/7 customer support",
-      "Regular model updates",
-      "Mobile responsive design",
-    ],
-    cta: {
-      text: "Start Monthly Plan",
-      href: "/auth",
-    },
-  },
   {
     name: "Yearly",
     price: 999,
@@ -61,9 +41,20 @@ const pricingPlans = [
 ];
 
 export default function PricingPage() {
+  const router = useRouter();
+    
   return (
     <div className="h-full overflow-y-auto pt-8 pb-4">
-      <div className="container mx-auto px-4 py-8 max-w-5xl">
+      <div className="container mx-auto px-4 max-w-5xl">
+        {/* Back Button */}
+        <div className="mb-6">
+          <Button asChild variant="ghost" className="font-semibold" onClick={() => router.push("/")}>
+            <Link className="flex items-center gap-2" href="/ask">
+              <ArrowLeft className="size-4" />
+              Back to chat
+            </Link>
+          </Button>
+        </div>
         <div className="text-center flex flex-col gap-2">
           <h1 className="text-3xl font-bold text-primary lg:text-4xl tracking-tight">
             Simple, Transparent Pricing
@@ -74,7 +65,8 @@ export default function PricingPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-12">
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-12 mt-6">
           {pricingPlans.map((plan) => (
             <Card
               key={plan.name}

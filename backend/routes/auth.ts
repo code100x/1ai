@@ -59,7 +59,7 @@ router.post("/initiate_signin", perMinuteLimiter, async (req, res) => {
         });
     } catch (e) {
         console.log(e);
-        res.json({
+        res.status(500).json({
             message: "Internal server error",
             success: false,
         });

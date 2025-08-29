@@ -7,7 +7,10 @@
   },
   "scripts": {
     "dev": "bun --hot index.ts",
-    "start": "bun index.ts"
+    "start": "bun index.ts",
+    "db:migrate": "prisma migrate dev",
+    "db:generate": "prisma generate",
+    "db:studio": "prisma studio"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"

@@ -41,7 +41,7 @@ export const SidebarToggle = () => {
         <DialogTrigger className="hover:bg-muted flex size-7 items-center justify-center rounded-lg">
           <MagnifyingGlassIcon
             weight="bold"
-            className={cn(open ? "invisible" : "flex", "size-4")}
+            className={cn(open ? "lg:invisible" : "flex", "size-4")}
           />
         </DialogTrigger>
         <DialogContent className="border-none p-0">
@@ -65,7 +65,7 @@ export const SidebarToggle = () => {
         href={"/ask"}
         className="hover:bg-muted flex size-7 items-center justify-center rounded-lg"
       >
-        <PlusIcon weight="bold" className={open ? "invisible" : "flex"} />
+        <PlusIcon weight="bold" className={open ? "lg:invisible" : "flex"} />
       </Link>
     </div>
   );

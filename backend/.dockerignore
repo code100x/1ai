@@ -1,0 +1,21 @@
+# Ignore node_modules and bun cache
+node_modules
+bun.lockb
+*.log
+
+# Ignore git and OS files
+.git
+.gitignore
+.DS_Store
+Thumbs.db
+.vscode
+.idea
+
+# Ignore build artifacts
+dist
+build
+*.tsbuildinfo
+
+# Ignore env files (unless you need them inside container)
+.env
+.env.*
