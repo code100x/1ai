@@ -18,8 +18,12 @@ import remarkGfm from "remark-gfm";
 import { Geist_Mono } from "next/font/google";
 import { cn } from "@/lib/utils";
 import TabsSuggestion from "./tabs-suggestion";
-import { ModelSelector } from "@/components/ui/model-selector";
-import { DEFAULT_MODEL_ID } from "@/models/constants";
+import dynamic from "next/dynamic";
+const ModelSelectorNoSSR = dynamic(
+  () => import("@/components/ui/model-selector").then((m) => m.ModelSelector),
+  { ssr: false }
+);
+import { DEFAULT_MODEL_ID, getModelById } from "@/models/constants";
 import { useTheme } from "next-themes";
 import { ArrowUpIcon, WrapText } from "lucide-react";
 import { atomOneDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
@@ -54,7 +58,14 @@ interface UIInputProps {
 const UIInput = ({
   conversationId: initialConversationId,
 }: UIInputProps = {}) => {
-  const [model, setModel] = useState<string>(DEFAULT_MODEL_ID);
+  const [model, setModel] = useState<string>(() => {
+    if (typeof window === "undefined") return DEFAULT_MODEL_ID;
+    const stored = window.localStorage.getItem("model");
+    if (stored) {
+      return stored;
+    }
+    return DEFAULT_MODEL_ID;
+  });
   const [query, setQuery] = useState<string>("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [showWelcome, setShowWelcome] = useState(true);
@@ -587,7 +598,7 @@ const UIInput = ({
               />
               <div className="mt-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <ModelSelector
+                  <ModelSelectorNoSSR
                     value={model}
                     onValueChange={setModel}
                     disabled={
