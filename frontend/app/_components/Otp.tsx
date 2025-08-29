@@ -3,13 +3,14 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@/components/ui/input-otp";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BACKEND_URL } from "@/lib/utils";
 import { toast } from "sonner";
 import { Mail } from "lucide-react";
 
 export function Otp({ email }: { email: string }) {
   const [otp, setOtp] = useState("");
+  const [timer, setTimer] = useState(30);
   const [isResending, setIsResending] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -27,6 +28,7 @@ export function Otp({ email }: { email: string }) {
       const data = await response.json();
       
       if (response.ok) {
+        setTimer(30); // restart timer after resend
         toast("New verification code sent to your email");
       } else {
         toast(data.message || "Failed to resend code");
@@ -76,6 +78,15 @@ export function Otp({ email }: { email: string }) {
       setIsSubmitting(false);
     }
   };
+
+  useEffect(() => {
+    if (timer > 0) {
+      const interval = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [timer]);
 
   return (
     <div className="flex h-screen w-screen items-center justify-center bg-background">
@@ -137,10 +148,10 @@ export function Otp({ email }: { email: string }) {
               Didn't get a code?{" "}
               <button
                 onClick={handleResend}
-                disabled={isResending}
-                className="font-medium text-primary hover:text-primary/90 underline underline-offset-4 disabled:opacity-50"
+                disabled={isResending || timer > 0} 
+                className={`font-medium text-primary hover:text-primary/90 underline underline-offset-4 disabled:opacity-50 ${isResending || timer > 0 ? "cursor-default" : "cursor-pointer"}`}
               >
-                {isResending ? "Sending..." : "resend"}
+                {isResending ? "Sending..." : (timer > 0 ? `resend in ${timer}s` : "resend")}
               </button>
             </p>
           </div>
