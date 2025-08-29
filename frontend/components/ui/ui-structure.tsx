@@ -275,6 +275,7 @@ export function UIStructure() {
               Logout
             </Button>
           )}
+          
 
           <div className="flex items-center gap-2 justify-center">
             <Link href="/terms" target="_target" className="text-xs">

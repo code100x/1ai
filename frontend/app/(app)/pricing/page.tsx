@@ -15,28 +15,6 @@ import RazorpayPayment from "@/components/RazorpayPayment";
 
 const pricingPlans = [
   {
-    name: "Monthly",
-    price: 99,
-    currency: "₹",
-    interval: "per month",
-    description: "Perfect for individuals getting started with AI",
-    highlight: false,
-    popular: false,
-    features: [
-      "Unlimited AI conversations",
-      "Access to all AI models",
-      "Chat history & sync",
-      "Web-based platform",
-      "24/7 customer support",
-      "Regular model updates",
-      "Mobile responsive design",
-    ],
-    cta: {
-      text: "Start Monthly Plan",
-      href: "/auth",
-    },
-  },
-  {
     name: "Yearly",
     price: 999,
     currency: "₹",
