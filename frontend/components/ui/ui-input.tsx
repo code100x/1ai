@@ -15,6 +15,8 @@ import {
 import ReactMarkdown from "react-markdown";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import remarkGfm from "remark-gfm";
+import remarkBreaks from "remark-breaks";
+import { processOutput } from "@/lib/markdown";
 import { Geist_Mono } from "next/font/google";
 import { cn } from "@/lib/utils";
 import TabsSuggestion from "./tabs-suggestion";
@@ -30,6 +32,8 @@ import { useCredits } from "@/hooks/useCredits";
 import { UpgradeCTA } from "@/components/ui/upgrade-cta";
 import { useGlobalKeyPress } from "@/hooks/useGlobalKeyPress";
 import { useExecutionContext } from "@/contexts/execution-context";
+
+
 
 const geistMono = Geist_Mono({
   subsets: ["latin"],
@@ -355,7 +359,7 @@ const UIInput = ({
                     )}
                   >
                     <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
+                      remarkPlugins={[remarkGfm, remarkBreaks]}
                       components={{
                         code(props) {
                           const { children, className, ...rest } = props;
@@ -463,35 +467,58 @@ const UIInput = ({
                             </div>
                           );
                         },
+                        p: (props) => (
+                          <p className="leading-relaxed text-foreground/90 my-4 whitespace-pre-wrap">{props.children}</p>
+                        ),
                         strong: (props) => (
                           <span className="font-bold">{props.children}</span>
                         ),
+                        em: (props) => (
+                          <em className="italic">{props.children}</em>
+                        ),
+                        del: (props) => (
+                          <del className="opacity-80">{props.children}</del>
+                        ),
                         a: (props) => (
-                          <a
-                            className="text-primary underline"
-                            href={props.href}
-                          >
+                          <a className="text-primary underline" href={props.href} target="_blank" rel="noreferrer">
                             {props.children}
                           </a>
                         ),
+                        blockquote: (props) => (
+                          <blockquote className="border-l-4 border-primary/40 pl-4 italic text-foreground/80 bg-primary/5 py-2 rounded-r-md my-4">{props.children}</blockquote>
+                        ),
+                        table: (props) => (
+                          <div className="my-4 w-full overflow-x-auto">
+                            <table className="w-full border-collapse text-sm">{props.children}</table>
+                          </div>
+                        ),
+                        thead: (props) => (
+                          <thead className="bg-accent/40">{props.children}</thead>
+                        ),
+                        tr: (props) => (
+                          <tr className="border-b border-border/40">{props.children}</tr>
+                        ),
+                        th: (props) => (
+                          <th className="px-3 py-2 text-left font-semibold">{props.children}</th>
+                        ),
+                        td: (props) => (
+                          <td className="px-3 py-2 align-top">{props.children}</td>
+                        ),
                         h1: (props) => (
-                          <h1 className="my-4 text-2xl font-bold">
-                            {props.children}
-                          </h1>
+                          <h1 className="my-4 text-2xl font-bold">{props.children}</h1>
                         ),
                         h2: (props) => (
-                          <h2 className="my-3 text-xl font-bold">
-                            {props.children}
-                          </h2>
+                          <h2 className="my-4 text-xl font-bold">{props.children}</h2>
                         ),
                         h3: (props) => (
-                          <h3 className="my-2 text-lg font-bold">
-                            {props.children}
-                          </h3>
+                          <h3 className="my-4 text-lg font-bold">{props.children}</h3>
+                        ),
+                        hr: () => (
+                          <hr className="my-6 border-t border-border/60" />
                         ),
                       }}
                     >
-                      {message.content}
+                      {processOutput(message.content)}
                     </ReactMarkdown>
                   </div>
                   <div className="font-medium">
