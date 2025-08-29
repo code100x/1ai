@@ -53,10 +53,20 @@ export function ModelSelector({
     }
   }, [value]);
 
+  useEffect(() => {
+    const storedModel = localStorage.getItem("preferredModel");
+    if (storedModel) {
+      handleValueChange(storedModel);
+    }
+  }, []);
+
   const handleValueChange = (newValue: string) => {
-    setSelectedModel(newValue);
     if (onValueChange) {
       onValueChange(newValue);
+      if (newValue) {
+        localStorage.setItem("preferredModel", newValue);
+        setSelectedModel(newValue);
+      }
     }
   };
 
