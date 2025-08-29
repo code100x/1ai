@@ -19,7 +19,7 @@ import { Geist_Mono } from "next/font/google";
 import { cn } from "@/lib/utils";
 import TabsSuggestion from "./tabs-suggestion";
 import { ModelSelector } from "@/components/ui/model-selector";
-import { DEFAULT_MODEL_ID } from "@/models/constants";
+import { useModel } from "@/hooks/use-model";
 import { useTheme } from "next-themes";
 import { ArrowUpIcon, WrapText } from "lucide-react";
 import { atomOneDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
@@ -54,7 +54,7 @@ interface UIInputProps {
 const UIInput = ({
   conversationId: initialConversationId,
 }: UIInputProps = {}) => {
-  const [model, setModel] = useState<string>(DEFAULT_MODEL_ID);
+  const { modelId, setModelId } = useModel();
   const [query, setQuery] = useState<string>("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [showWelcome, setShowWelcome] = useState(true);
@@ -274,7 +274,7 @@ const UIInput = ({
               },
               body: JSON.stringify({
                 message: currentQuery,
-                model: model,
+                model: modelId,
                 conversationId: conversationId,
               }),
               signal: abortControllerRef.current?.signal,
@@ -497,10 +497,18 @@ const UIInput = ({
                   <div className="font-medium">
                     {message.role === "assistant" && (
                       <div className="invisible flex w-fit items-center gap-2 text-base font-semibold group-hover:visible">
-                        <button className="hover:bg-accent flex size-7 items-center justify-center rounded-lg">
+                        <button
+                          aria-label="Thumbs up"
+                          title="Thumbs up"
+                          className="hover:bg-accent flex size-7 items-center justify-center rounded-lg"
+                        >
                           <ThumbsUpIcon weight="bold" />
                         </button>
-                        <button className="hover:bg-accent flex size-7 items-center justify-center rounded-lg">
+                        <button
+                          aria-label="Thumbs down"
+                          title="Thumbs down"
+                          className="hover:bg-accent flex size-7 items-center justify-center rounded-lg"
+                        >
                           <ThumbsDownIcon weight="bold" />
                         </button>
                         <button
@@ -588,8 +596,8 @@ const UIInput = ({
               <div className="mt-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <ModelSelector
-                    value={model}
-                    onValueChange={setModel}
+                    value={modelId}
+                    onValueChange={setModelId}
                     disabled={
                       isLoading ||
                       !!(
