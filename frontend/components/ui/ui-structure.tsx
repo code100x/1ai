@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 import {
   Sidebar,
@@ -39,6 +38,7 @@ import Link from "next/link";
 import { useExecutionContext } from "@/contexts/execution-context";
 import { Execution } from "@/hooks/useExecution";
 import { BACKEND_URL, cn } from "@/lib/utils";
+import { listAvailableApps } from "@/lib/apps-registry";
 
 export function UIStructure() {
   const [uiExecutions, setUiExecutions] = useState<Execution[]>([]);
@@ -47,7 +47,7 @@ export function UIStructure() {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const { executions, loading, createNewExecution } = useExecutionContext();
   const router = useRouter();
-  
+
   const pathname = usePathname();
   const currentConversationId = pathname.split("/").pop();
 
@@ -59,8 +59,8 @@ export function UIStructure() {
       } else {
         setUiExecutions(
           executions.filter((execution) =>
-            (execution.title ?? "").toLowerCase().includes(term)
-          )
+            (execution.title ?? "").toLowerCase().includes(term),
+          ),
         );
       }
     }
@@ -72,10 +72,12 @@ export function UIStructure() {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("token")}`
-        }
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
       });
-      setUiExecutions(executions.filter((execution) => execution.id !== executionId));
+      setUiExecutions(
+        executions.filter((execution) => execution.id !== executionId),
+      );
       toast.success("Chat deleted successfully");
     } catch (error) {
       console.error("Error deleting chat:", error);
@@ -84,17 +86,8 @@ export function UIStructure() {
 
   const { user, isLoading: isUserLoading } = useUser();
 
-  // Available AI Apps
-  const availableApps = [
-    {
-      id: "article-summarizer",
-      name: "Article Summarizer",
-      description:
-        "Summarize long articles into concise, easy-to-read summaries",
-      icon: "📄",
-      credits: 2,
-    },
-  ];
+  // Available AI Apps (centralized)
+  const availableApps = listAvailableApps();
 
   const handleAppNavigation = (appId: string) => {
     router.push(`/apps/${appId}/`);
@@ -160,14 +153,15 @@ export function UIStructure() {
                           </span>
                           <div
                             className={cn(
-                              "absolute top-0 right-0 z-[5] h-full w-12 rounded-r-md blur-[2em]", 
-                              execution.id === hoverChatId && "bg-primary"
+                              "absolute top-0 right-0 z-[5] h-full w-12 rounded-r-md blur-[2em]",
+                              execution.id === hoverChatId && "bg-primary",
                             )}
                           />
                           <div
                             className={cn(
                               "absolute top-1/2 -right-16 z-[10] flex h-full -translate-y-1/2 items-center justify-center gap-1.5 rounded-r-md bg-transparent px-1 backdrop-blur-xl transition-all duration-200 ease-in-out",
-                              execution.id === hoverChatId && "group-hover:right-0"
+                              execution.id === hoverChatId &&
+                                "group-hover:right-0",
                             )}
                           >
                             <div
@@ -240,9 +234,7 @@ export function UIStructure() {
                     <div className="text-2xl">{app.icon}</div>
                     <div className="flex-1">
                       <h3 className="font-semibold text-lg">{app.name}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {app.description}
-                      </p>
+                      <p className="text-sm text-muted-foreground">{app.description}</p>
                       <div className="flex items-center gap-1 mt-1">
                         <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
                           {app.credits} credits per use
@@ -275,7 +267,6 @@ export function UIStructure() {
               Logout
             </Button>
           )}
-          
 
           <div className="flex items-center gap-2 justify-center">
             <Link href="/terms" target="_target" className="text-xs">
