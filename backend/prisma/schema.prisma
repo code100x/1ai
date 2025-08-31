@@ -40,6 +40,7 @@ model Execution {
 enum ExecutionType {
   CONVERSATION
   ARTICLE_SUMMARIZER
+  YOUTUBE_SUMMARIZER
 }
 
 model Conversation {

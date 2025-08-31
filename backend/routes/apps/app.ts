@@ -32,6 +32,10 @@ export abstract class App {
         }
     }
 
+    public getPerExecutionCredit(): number {
+        return this.per_execution_credit;
+    }
+
     initStreamableRoute() {
         return (req: Request, res: Response) => {
             const result = this.zodSchema.safeParse(req.body);
