@@ -10,11 +10,11 @@ const YoutubeSummarizerSchema = z.object({
   userId: z.string(),
 });
 
-const MODEL = "openai/gpt-4o:online";
+const MODEL = "google/gemini-2.5-flash:online";
 const prismaClient = new PrismaClient();
 
 const SYSTEM_PROMPT = `
-   You are a helpful assistant that summarizes YouTube videos. Your task is to create clear, concise, and well-structured summaries.
+   You are a helpful assistant that summarizes YouTube videos. Your task is to make the web search toolcall and create clear, concise, and well-structured summaries.
     Instructions:
     - You will receive a YouTube video ID
     - Extract and analyze the video's content, including title, description, and transcript if available

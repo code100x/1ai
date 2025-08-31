@@ -1,4 +1,4 @@
-import type { Message, MODEL, SUPPORTER_MODELS } from "./types";
+import { Role, type Message, type MODEL, type SUPPORTER_MODELS } from "./types";
 const OPENROUTER_KEY = process.env.OPENROUTER_KEY!;
 const MAX_TOKEN_ITERATIONS = 1000;
 
@@ -24,7 +24,12 @@ export const createCompletion = async (
         },
         body: JSON.stringify({
           model,
-          messages: messages,
+          messages: [
+            ...(systemPrompt
+              ? [{ role: Role.System, content: systemPrompt }]
+              : []),
+            ...messages,
+          ],
           stream: true,
           system: systemPrompt,
           plugins: options?.plugins,
