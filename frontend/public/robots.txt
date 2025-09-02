@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+# Disallow sensitive areas
+Disallow: /api/
+Disallow: /admin/
+Disallow: /_next/
+Disallow: /auth/
+Disallow: /dashboard/
+
+# Sitemap location
+Sitemap: https://1ai.co/sitemap.xml
