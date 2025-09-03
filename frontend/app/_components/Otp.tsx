@@ -164,7 +164,6 @@ export function Otp({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Enter Verification Code</FormLabel>
-
                         <FormControl>
                           <InputOTP
                             {...field}

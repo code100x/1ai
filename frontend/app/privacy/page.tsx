@@ -238,8 +238,8 @@ export default function PrivacyPolicy() {
               If you have any questions about this Privacy Policy or our data practices, please contact us at:
             </p>
             <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
-              <p><strong>Email:</strong> privacy@1ai.com</p>
-              <p><strong>Address:</strong> [Your Company Address]</p>
+              <p><strong>Email:</strong> privacy@1ai.co</p>
+              <p><strong>Address:</strong> Noida, Uttar Pradesh, India</p>
               <p><strong>Response Time:</strong> We aim to respond within 5 business days</p>
             </div>
           </CardContent>

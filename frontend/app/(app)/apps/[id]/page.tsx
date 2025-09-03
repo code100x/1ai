@@ -9,6 +9,8 @@ import SyntaxHighlighter from "react-syntax-highlighter";
 import { atomOneDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
+import { useUser } from "@/hooks/useUser";
+import { useRouter } from "next/navigation";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3000";
 
@@ -25,6 +27,8 @@ export default function AppPage({ params }: AppPageProps) {
   const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const { resolvedTheme } = useTheme();
+  const { user, isLoading: isUserLoading } = useUser();
+  const router = useRouter();
 
   React.useEffect(() => {
     params.then(({ id }) => setAppId(id));
@@ -118,6 +122,10 @@ export default function AppPage({ params }: AppPageProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) {
+      router.push("/auth");
+      return;
+    }
 
     if (!input.trim() || isLoading) return;
 
@@ -179,6 +187,7 @@ export default function AppPage({ params }: AppPageProps) {
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
+               
                   void handleSubmit(e);
                 }
               }}

@@ -1,6 +1,5 @@
 "use client";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
-
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { SearchBox } from "@/components/searchBox";

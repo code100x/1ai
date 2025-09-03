@@ -202,9 +202,10 @@ export function UIStructure() {
 
                             <div
                               className="flex items-center justify-center rounded-md"
-                              onClick={() =>
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 handleDeleteExecution(execution.id)
-                              }
+                              }}
                             >
                               <TrashIcon
                                 weight={"bold"}

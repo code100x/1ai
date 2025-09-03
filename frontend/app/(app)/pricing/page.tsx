@@ -6,6 +6,8 @@ import {
   CodeIcon,
 } from "@phosphor-icons/react/dist/ssr";
 import RazorpayPayment from "@/components/RazorpayPayment";
+import { useEffect } from "react";
+import { useCredits } from "@/hooks/useCredits";
 
 const pricingPlans = [
   {
@@ -30,6 +32,17 @@ const pricingPlans = [
 ];
 
 export default function PricingPage() {
+      const router = useRouter();
+  const { userCredits, isPending } = useCredits();
+
+  useEffect(() => {
+    if (isPending) return;
+
+    if (userCredits?.isPremium) {
+      router.push("/ask");
+    }
+  }, []);
+        
   return (
     <div className="flex flex-col gap-8 py-12 items-center justify-center">
       <h1 className="text-center text-2xl lg:text-3xl font-semibold tracking-tighter text-yellow-600">
