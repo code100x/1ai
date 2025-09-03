@@ -21,8 +21,8 @@ export default function ChatLayout({
         >
           <UIStructure />
           <SidebarInset className="min-!h-svh p-2">
-            <div className="bg-muted/60 relative h-[calc(100vh-16px)] min-h-[calc(100vh-16px)] w-full rounded-xl p-4">
-              <div className="absolute top-0 left-0 z-[50] flex h-12 w-full items-center justify-between px-3">
+            <div className="bg-muted dark:bg-muted/60 relative h-[calc(100vh-16px)] min-h-[calc(100vh-16px)] w-full rounded-xl p-4">
+              <div className="absolute top-0 left-0 z-[50] flex h-12 w-full items-center justify-between p-3">
                 <SidebarToggle />
                 <div className="flex items-center gap-2">
                   <UpgradeCTA variant="topbar" />

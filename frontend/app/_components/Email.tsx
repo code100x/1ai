@@ -1,16 +1,22 @@
 "use client";
 import { toast } from "sonner";
-import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { BACKEND_URL } from "@/lib/utils";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
-
-const isEmailValid = (email: string) => {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-};
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
 export function Email({
   setEmail,
@@ -21,16 +27,27 @@ export function Email({
   setStep: (step: string) => void;
   email: string;
 }) {
-  const router = useRouter();
   const [sendingRequest, setSendingRequest] = useState(false);
 
-  const handleSendOTP = async () => {
+  const form = useForm<{ email: string }>({
+    resolver: zodResolver(
+      z.object({
+        email: z
+          .string()
+          .min(1, { message: "Email is required" })
+          .email({ message: "Please enter a valid email address" }),
+      })
+    ),
+    defaultValues: { email },
+  });
+
+  const handleSendOTP = async (emailValue: string) => {
     setSendingRequest(true);
-    
+
     try {
       const response = await fetch(`${BACKEND_URL}/auth/initiate_signin`, {
         method: "POST",
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email: emailValue }),
         headers: {
           "Content-Type": "application/json",
         },
@@ -49,54 +66,95 @@ export function Email({
       setSendingRequest(false);
     }
   };
+
   return (
-    <div className="mx-auto max-h-screen max-w-6xl">
-      <div className="absolute top-4 left-4">
-        {/* <Button asChild variant="ghost" className="font-semibold" onClick={() => router.push("/")}>
-            <Link className="flex items-center gap-2" href="/">
-              <ArrowLeft className="size-4" />
-              Back to chat
-            </Link>
-          </Button> */}
-      </div>
-      <div className="flex h-full flex-col items-center justify-center gap-8 max-w-xl ">
-        <h1 className="text-3xl lg:text-4xl font-bold tracking-tighter text-center">
-          Welcome to <span className="text-primary">1ai</span>
-        </h1>
-        <div className="w-full flex flex-col gap-2">
-          <Input
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && isEmailValid(email) && !sendingRequest) {
-                handleSendOTP();
-              }
-            }}
-          />
-          <Button
-            disabled={!isEmailValid(email) || sendingRequest}
-            variant="accent"
-            onClick={() => {
-              if (isEmailValid(email) && !sendingRequest) {
-                handleSendOTP();
-              }
-            }}
-            className="w-full h-12"
-          >
-            Continue with Email
-          </Button>
+    <section className="mx-auto w-full p-4 h-full max-w-3xl flex flex-col">
+      <div className="flex flex-col gap-4 relative overflow-hidden items-center justify-center min-h-dvh">
+        <div className="w-full max-w-lg flex flex-col gap-6">
+          <div className="flex flex-col gap-2">
+            <h1 className="text-3xl md:text-4xl font-semibold tracking-tighter text-center">
+              Welcome to 1<span className="text-yellow-500">ai</span>
+            </h1>
+          </div>
+          <div className="rounded-3xl p-6 transition-all duration-300 flex flex-col bg-muted/50">
+            <div className="flex flex-col gap-12">
+              <Form {...form}>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const emailValue = form.getValues("email");
+                    setEmail(emailValue);
+                    handleSendOTP(emailValue);
+                  }}
+                  className="flex flex-col gap-6"
+                >
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Enter your email</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="email@example.com"
+                            autoFocus
+                            onChange={(e) => {
+                              field.onChange(e);
+                              setEmail(e.target.value);
+                            }}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          We&apos;ll send you a verification code to sign in.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="flex flex-col gap-3">
+                    <Button
+                      size="lg"
+                      type="submit"
+                      disabled={sendingRequest || !form.formState.isValid}
+                    >
+                      {sendingRequest ? "Sending..." : "Continue"}
+                    </Button>
+                    <Link href="/" className="w-full">
+                      <Button variant="link" size="lg" className="w-full">
+                        Back to chat
+                      </Button>
+                    </Link>
+                  </div>
+                </form>
+              </Form>
+            </div>
+          </div>
         </div>
-        <div className="text-muted-foreground text-sm">
-          By continuing, you agree to our{" "}
-          <Link href="/terms" className="text-muted-foreground font-medium">
-            Terms
-          </Link>{" "}
-          and{" "}
-          <Link href="/privacy" className="text-muted-foreground font-medium">
-            Privacy Policy
-          </Link>
-        </div>
+
+        <footer className="max-w-lg flex flex-col w-full">
+          <div className="flex flex-col gap-4">
+            <div className="text-sm text-center text-muted-foreground">
+              By continuing, you agree to our{" "}
+              <Link href="/terms" className="font-medium text-primary">
+                Terms
+              </Link>{" "}
+              and{" "}
+              <Link href="/privacy" className="font-medium text-primary">
+                Privacy Policy
+              </Link>
+              .
+            </div>
+            <p className="text-xs text-muted-foreground text-center">
+              All Rights Reserved &copy; 2025{" "}
+              <Link href="/" className="font-medium text-foreground">
+                1<span className="text-yellow-500">ai</span>
+              </Link>
+            </p>
+          </div>
+        </footer>
       </div>
-    </div>
+    </section>
   );
 }
