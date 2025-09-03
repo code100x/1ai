@@ -7,9 +7,15 @@ html {
   scroll-behavior: smooth;
 }
 
+@theme {
+  --font-*: initial;
+  --font-sans: var(--font-inter);
+  --font-serif: var(--font-syne);
+}
+
 :root {
   --radius: 0.65rem;
-  --background: hsl(0 0% 100%);
+  --background: oklch(92% 0 0);
   --foreground: hsl(0 0% 20%);
   --card: hsl(0 0% 100%);
   --card-foreground: hsl(0 0% 20%);
@@ -54,6 +60,8 @@ html {
   --shadow-xl:
     0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
   --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+  --font-inter: "Inter", sans-serif;
+  --font-syne: "Syne", serif;
 }
 
 .dark {

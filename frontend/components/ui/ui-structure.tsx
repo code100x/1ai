@@ -10,22 +10,11 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Button } from "./button";
 import { useState } from "react";
 import { useEffect } from "react";
-import { Input } from "./input";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { NavSetting } from "@/components/nav-setting";
 import {
   MagnifyingGlassIcon,
   ShareFatIcon,
@@ -66,23 +55,21 @@ export function UIStructure() {
     }
   }, [executions, searchTerm]);
 
-  const handleDeleteExecution = async (executionId: string) => {
-    try {
-      await fetch(`${BACKEND_URL}/ai/chat/${executionId}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("token")}`
-        }
-      });
-      setUiExecutions(executions.filter((execution) => execution.id !== executionId));
-      toast.success("Chat deleted successfully");
-    } catch (error) {
-      console.error("Error deleting chat:", error);
-    }
-  };
-
-  const { user, isLoading: isUserLoading } = useUser();
+	const handleDeleteExecution = async (executionId: string) => {
+		try {
+			await fetch(`${BACKEND_URL}/ai/chat/${executionId}`, {
+				method: "DELETE",
+				headers: {
+					"Content-Type": "application/json",
+					"Authorization": `Bearer ${localStorage.getItem("token")}`
+				}
+			});
+			setUiExecutions(executions.filter((execution) => execution.id !== executionId));
+			toast.success("Chat deleted successfully");
+		} catch (error) {
+			console.error("Error deleting chat:", error);
+		}
+	};
 
   // Available AI Apps
   const availableApps = [
@@ -108,33 +95,30 @@ export function UIStructure() {
           <SidebarHeader className="sticky top-0 !p-0">
             <div className="flex w-full flex-col items-center gap-2 rounded-lg">
               <div className="flex w-full items-center gap-2 rounded-lg p-1 text-lg justify-between">
-                <SidebarTrigger className="shrink-0" />
-                <h1 className="text-2xl font-bold text-foreground">
-                  1<span className="text-yellow-500">ai</span>
+                <h1 className="text-3xl font-serif text-foreground">
+                  1<span className="text-orange-400">ai</span>
                 </h1>
                 <span className="size-6"></span>
               </div>
               <Button
+                className="w-full text-sm text-white bg-[#fa7319] hover:bg-[#fa7319]/90 h-10 px-3.5 rounded-xl inset-shadow-sm inset-shadow-white/60 font-medium border border-black/4 outline-0"
                 onClick={(e) => {
                   e.preventDefault();
                   router.push(`/ask`);
                 }}
                 variant="accent"
-                className="w-full"
               >
                 New Chat
               </Button>
             </div>
 
-            <div className="flex items-center gap-2 pb-2 border-b">
-              <MagnifyingGlassIcon className="text-foreground" weight="bold" />
-              <Input
-                placeholder="Search for chats"
-                className="rounded-none border-none bg-transparent px-0 py-1 shadow-none ring-0 focus-visible:ring-0 dark:bg-transparent"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+            <div className="relative flex items-center p-2 gap-2 bg-zinc-400/10 px-2 rounded-xl border border-black/10 dark:border-zinc-400/8 inset-shadow-sm cursor-pointer hover:bg-orange-200/10 dark:hover:bg-orange-100/10 dark:hover:[&>*]:text-orange-100 hover:[&>*]:text-orange-400">
+              <MagnifyingGlassIcon className="text-foreground" size={18} />
+              <p className="rounded-none text-sm border-none bg-transparent px-0 shadow-none ring-0 focus-visible:ring-0 dark:bg-transparent">
+                Search for chats
+              </p>
             </div>
+
           </SidebarHeader>
           <SidebarGroupContent>
             <SidebarMenu className="w-full p-0">
@@ -164,6 +148,7 @@ export function UIStructure() {
                               execution.id === hoverChatId && "bg-primary"
                             )}
                           />
+
                           <div
                             className={cn(
                               "absolute top-1/2 -right-16 z-[10] flex h-full -translate-y-1/2 items-center justify-center gap-1.5 rounded-r-md bg-transparent px-1 backdrop-blur-xl transition-all duration-200 ease-in-out",
@@ -208,7 +193,7 @@ export function UIStructure() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarFooter className="sticky bottom-0 flex flex-col gap-2 w-full p-3 bg-background">
+				{/* <SidebarFooter className="sticky bottom-0 flex flex-col gap-2 w-full p-3 bg-background">
           {!isUserLoading && !user && (
             <Link href="/auth">
               <Button variant="secondary" className="w-full" size="lg">
@@ -260,12 +245,63 @@ export function UIStructure() {
                 </DialogClose>
               </DialogFooter>
             </DialogContent>
-          </Dialog>
+          </Dialog> */}
 
-          {user && (
+
+        <SidebarFooter className="sticky bottom-0 flex flex-col gap-2 w-full p-3 bg-transparent">
+          <NavSetting />
+
+					{/* {user && (
+            <Dialog open={isAppsDialogOpen} onOpenChange={setIsAppsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="secondary" className="w-full " size="lg">
+                  AI Apps
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[525px]">
+                <DialogHeader>
+                  <DialogTitle>AI Apps</DialogTitle>
+                  <DialogDescription>
+                    Choose from our collection of AI-powered applications to
+                    enhance your productivity.
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="grid gap-4 py-4">
+                  {availableApps.map((app) => (
+                    <div
+                      key={app.id}
+                      className="flex items-center gap-4 p-4 rounded-lg border hover:bg-accent/50 cursor-pointer transition-colors"
+                      onClick={() => handleAppNavigation(app.id)}
+                    >
+                      <div className="text-2xl">{app.icon}</div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg">{app.name}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {app.description}
+                        </p>
+                        <div className="flex items-center gap-1 mt-1">
+                          <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
+                            {app.credits} credits per use
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant="outline">Close</Button>
+                  </DialogClose>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )} */}
+
+					{/* {user && (
             <Button
               variant="destructive"
-              className="w-full"
+              className="w-full text-sm text-white h-10 px-3.5 rounded-xl inset-shadow-sm inset-shadow-white/60 font-medium border border-black/4 outline-0"
               size="lg"
               onClick={(e) => {
                 e.preventDefault();
@@ -277,7 +313,6 @@ export function UIStructure() {
             </Button>
           )}
           
-
           <div className="flex items-center gap-2 justify-center">
             <Link href="/terms" target="_target" className="text-xs">
               Terms
@@ -289,6 +324,7 @@ export function UIStructure() {
               Refund Policy
             </Link>
           </div>
+          )} */}
         </SidebarFooter>
       </SidebarContent>
     </Sidebar>

@@ -1,6 +1,13 @@
 import React, { useState } from "react";
-import { Sparkles, Search, Code, BookOpen } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Sparkles, Search, Code, BookOpen, Gimini } from "lucide-react";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+
+interface Tab {
+	id: string;
+	label: string;
+	icon: React.ReactNode;
+	content: string[];
+}
 
 const TabsSuggestion = ({
   suggestedInput,
@@ -9,9 +16,9 @@ const TabsSuggestion = ({
   suggestedInput: string;
   setSuggestedInput: (input: string) => void;
 }) => {
-  const [activeTab, setActiveTab] = useState("create");
+	const [activePopover, setActivePopover] = useState<string | null>(null)
 
-  const tabs = [
+  const tabs: Tab[] = [
     {
       id: "create",
       label: "Create",
@@ -58,57 +65,55 @@ const TabsSuggestion = ({
     },
   ];
 
-  const activeTabData = tabs.find((tab) => tab.id === activeTab);
-
   return (
-    <div className="text-foreground max-w-xl w-full">
-      <div className="flex flex-col gap-4">
-        {/* Tab Navigation */}
-        <div className="mb-4 flex flex-wrap gap-2">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm transition-all duration-300 cursor-pointer justify-center border ${
-                activeTab === tab.id
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-              } `}
-            >
-              {tab.icon}
-              {activeTab === tab.id && (
-                <span
-                  className={cn(
-                    "text-sm whitespace-nowrap overflow-hidden transition-all duration-300"
-                  )}
-                >
-                  {tab.label}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
+		<div className="flex flex-col gap-4">
+			{/* Tab Navigation */}
+			<div className="mb-4 flex flex-wrap gap-2">
+				{tabs.map((tab) => (
+					<Popover 
+						key={tab.id}
+						onOpenChange={(open) => {
+							setActivePopover(open ? tab.id : null)
+						}}
+					>
+						<PopoverTrigger asChild>
+							<button
+								className={`flex items-center justify-center cursor-pointer px-4 py-2 gap-2 border font-medium border-black/10 dark:border-zinc-400/8 rounded-xl bg-zinc-400/5 inset-shadow-xs ${activePopover === tab.id
+									? "bg-zinc-400/15"
+									: "hover:bg-zinc-400/15"
+									} `}
+							>
+								{tab.icon}
+								<span
+									className="text-sm whitespace-nowrap overflow-hidden transition-all duration-300"
+								>
+									{tab.label}
+								</span>
+							</button>
+						</PopoverTrigger>
 
-        {/* Tab Content */}
-        <div className="flex flex-col">
-          {activeTabData?.content.map((item, index) => (
-            <div
-              key={index}
-              onClick={() => {
-                if (suggestedInput || suggestedInput === "") {
-                  setSuggestedInput(item);
-                }
-              }}
-              className="flex items-start gap-2 border-t border-secondary/40 py-1 first:border-none cursor-pointer"
-            >
-              <button className="w-full rounded-md py-2 text-left hover:bg-secondary sm:px-3">
-                {item}
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
+						<PopoverContent sideOffset={8} className="flex justify-center w-80 p-4 border-none rounded-xl">
+							<div className="flex flex-col">
+								<h3 className="mb-3 font-medium text-sm text-muted-foreground">{tab.label}</h3>
+								{tab.content.map((item, index) => (
+									<div
+										key={index}
+										onClick={() => {
+											if (setSuggestedInput) {
+												setSuggestedInput(item)
+											}
+										}}
+										className="flex items-start gap-2 border-t border-secondary/40 py-1 first:border-none"
+									>
+										<button className="w-full rounded-md text-[.80rem] text-left hover:bg-orange-100/30 dark:hover:bg-orange-100/5 cursor-pointer">{item}</button>
+									</div>
+								))}
+							</div>
+						</PopoverContent>
+					</Popover>
+				))}
+			</div>
+		</div>
   );
 };
 
