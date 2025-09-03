@@ -1,20 +1,58 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@/components/ui/input-otp";
-import { useState } from "react";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
+import { useEffect, useState } from "react";
 import { BACKEND_URL } from "@/lib/utils";
 import { toast } from "sonner";
-import { Mail } from "lucide-react";
+import { Clock } from "lucide-react";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import Link from "next/link";
 
-export function Otp({ email }: { email: string }) {
+export function Otp({
+  email,
+  setStep,
+}: {
+  email: string;
+  setStep: (step: string) => void;
+}) {
   const [otp, setOtp] = useState("");
-  const [isResending, setIsResending] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [timerSeconds, setTimerSeconds] = useState(() => {
+    const stored = sessionStorage.getItem("timerSeconds");
+    const parsed = stored !== null ? parseInt(stored, 10) : 0;
+    return isNaN(parsed) ? 0 : parsed;
+  });
 
-  const handleResend = async () => {
-    setIsResending(true);
+  const form = useForm<{ otp: string }>({
+    resolver: zodResolver(
+      z.object({
+        otp: z
+          .string()
+          .min(6, { message: "Please enter the 6-digit verification code" })
+          .max(6, { message: "Please enter the 6-digit verification code" }),
+      })
+    ),
+    defaultValues: { otp: "" },
+  });
+
+  const onResendOtp = async () => {
+    setLoading(true);
     try {
       const response = await fetch(`${BACKEND_URL}/auth/initiate_signin`, {
         method: "POST",
@@ -25,29 +63,54 @@ export function Otp({ email }: { email: string }) {
       });
 
       const data = await response.json();
-      
+
       if (response.ok) {
-        toast("New verification code sent to your email");
+        setLoading(false);
+        setTimerSeconds(30);
+        triggerTimer();
+        toast("OTP resent successfully");
       } else {
-        toast(data.message || "Failed to resend code");
+        setLoading(false);
+        toast(data.message || "Failed to resend OTP");
       }
     } catch (error) {
-      toast("Failed to resend code. Please try again.");
-    } finally {
-      setIsResending(false);
+      setLoading(false);
+      toast("Failed to resend OTP");
     }
   };
 
-  const handleLogin = async (otpValue?: string) => {
-    const currentOtp = otpValue || otp;
-    console.log("handleLogin called with:", { currentOtp, isSubmitting, length: currentOtp.length });
-    if (currentOtp.length !== 6 || isSubmitting) return;
-    
-    setIsSubmitting(true);
+  const triggerTimer = () => {
+    const interval = setInterval(function () {
+      setTimerSeconds((prevSeconds) => {
+        if (prevSeconds <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prevSeconds - 1;
+      });
+    }, 1000);
+  };
+
+  useEffect(() => {
+    triggerTimer();
+    setOtp("");
+  }, []);
+
+  useEffect(() => {
+    sessionStorage.setItem("timerSeconds", timerSeconds.toString());
+  }, [timerSeconds]);
+
+  const submitOtp = async (otpValue: string) => {
+    if (!otpValue || !/^\d{6}$/.test(otpValue)) {
+      toast("Please enter the 6-digit verification code");
+      return;
+    }
+
+    setLoading(true);
     try {
       const response = await fetch(`${BACKEND_URL}/auth/signin`, {
         method: "POST",
-        body: JSON.stringify({ email, otp: currentOtp }),
+        body: JSON.stringify({ email, otp: otpValue }),
         headers: {
           "Content-Type": "application/json",
         },
@@ -55,107 +118,147 @@ export function Otp({ email }: { email: string }) {
 
       const data = await response.json();
 
-      if (response.status === 401) {
-        toast(data.message);
-      }
-
-      if (response.status === 429) {
-        toast(data.message);
-      }
-
       if (response.status === 200) {
         localStorage.setItem("token", data.token);
         window.location.href = "/";
-      } else if (response.status !== 401 && response.status !== 429) {
-        toast(data.message || "An unexpected error occurred");
+      } else {
+        setLoading(false);
+        toast(data.message || "Verification failed");
       }
     } catch (error) {
-      console.error("Some error occured ", error);
+      setLoading(false);
       toast("An error occurred. Please try again.");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
+  function formatTime(seconds: number) {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
+  }
+
   return (
-    <div className="flex h-screen w-screen items-center justify-center bg-background">
-      <div className="w-full max-w-md px-6">
-        <div className="flex flex-col items-center space-y-6">
-          {/* Email Icon */}
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary">
-            <Mail className="h-8 w-8 text-primary-foreground" />
-          </div>
-
-          {/* Title and Description */}
-          <div className="text-center space-y-2">
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Check your email
+    <section className="mx-auto w-full p-4 h-full max-w-3xl flex flex-col">
+      <div className="flex flex-col gap-4 relative overflow-hidden items-center justify-center min-h-dvh">
+        <div className="w-full max-w-lg flex flex-col gap-6">
+          <div className="flex flex-col gap-2">
+            <h1 className="text-3xl md:text-4xl font-semibold tracking-tighter text-center">
+              Verify your email
             </h1>
-            <p className="text-sm text-muted-foreground">
-              Enter the verification code sent to{" "}
-              <span className="font-medium text-foreground">{email}</span>
-            </p>
           </div>
 
-          {/* OTP Input */}
-          <div className="w-full flex justify-center">
-            <InputOTP
-              maxLength={6}
-              value={otp}
-              onChange={(value) => {
-                setOtp(value);
-                // Auto-submit when OTP is complete
-                if (value.length === 6) {
-                  console.log("Auto-submitting OTP:", value);
-                  setTimeout(() => handleLogin(value), 50);
-                }
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && otp.length === 6) {
-                  handleLogin(otp);
-                }
-              }}
-              className="flex justify-center"
-            >
-              <InputOTPGroup className="flex gap-2">
-                <InputOTPSlot index={0} className="w-12 h-12 text-xl font-semibold rounded-lg" />
-                <InputOTPSlot index={1} className="w-12 h-12 text-xl font-semibold rounded-lg" />
-                <InputOTPSlot index={2} className="w-12 h-12 text-xl font-semibold rounded-lg" />
-              </InputOTPGroup>
-              <InputOTPSeparator className="mx-3" />
-              <InputOTPGroup className="flex gap-2">
-                <InputOTPSlot index={3} className="w-12 h-12 text-xl font-semibold rounded-lg" />
-                <InputOTPSlot index={4} className="w-12 h-12 text-xl font-semibold rounded-lg" />
-                <InputOTPSlot index={5} className="w-12 h-12 text-xl font-semibold rounded-lg" />
-              </InputOTPGroup>
-            </InputOTP>
-          </div>
+          <div className="rounded-3xl p-6 transition-all duration-300 flex flex-col bg-muted/50">
+            <div className="flex flex-col gap-12">
+              <Form {...form}>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    submitOtp(otp);
+                  }}
+                  className="flex flex-col gap-6"
+                >
+                  <FormField
+                    control={form.control}
+                    name="otp"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Enter Verification Code</FormLabel>
 
-          {/* Resend Link */}
-          <div className="text-center">
-            <p className="text-sm text-muted-foreground">
-              Didn't get a code?{" "}
-              <button
-                onClick={handleResend}
-                disabled={isResending}
-                className="font-medium text-primary hover:text-primary/90 underline underline-offset-4 disabled:opacity-50"
-              >
-                {isResending ? "Sending..." : "resend"}
-              </button>
-            </p>
-          </div>
+                        <FormControl>
+                          <InputOTP
+                            {...field}
+                            maxLength={6}
+                            value={otp}
+                            onChange={(value) => {
+                              setOtp(value);
+                              // Auto-submit when OTP is complete
+                              if (value.length === 6) {
+                                setTimeout(() => submitOtp(value), 50);
+                              }
+                            }}
+                            autoFocus
+                          >
+                            <InputOTPGroup className="gap-2 w-full flex justify-center">
+                              {[0, 1, 2, 3, 4, 5].map((index) => (
+                                <InputOTPSlot
+                                  key={index}
+                                  index={index}
+                                  className="w-full h-12"
+                                />
+                              ))}
+                            </InputOTPGroup>
+                          </InputOTP>
+                        </FormControl>
+                        <FormDescription>
+                          We&apos;ve sent a 6-digit verification code to{" "}
+                          <span className="font-medium">{email}</span>.{" "}
+                          <span
+                            onClick={() => {
+                              setStep("email");
+                            }}
+                            className="text-primary cursor-pointer underline"
+                          >
+                            Change email
+                          </span>
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-          {/* Verify Button - Always visible, disabled when incomplete */}
-          <Button
-            onClick={() => handleLogin()}
-            disabled={otp.length !== 6 || isSubmitting}
-            className="w-full h-11"
-            variant="default"
-          >
-            {isSubmitting ? "Verifying..." : "Verify Code"}
-          </Button>
+                  <div className="flex flex-col gap-3">
+                    <Button
+                      size="lg"
+                      type="submit"
+                      disabled={loading || otp.length !== 6}
+                    >
+                      {loading ? "Verifying..." : "Verify"}
+                    </Button>
+
+                    {timerSeconds > 0 ? (
+                      <Button variant="link" disabled size="lg">
+                        <Clock className="h-4 w-4" />
+                        <span>Resend code in {formatTime(timerSeconds)}</span>
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="secondary"
+                        size="lg"
+                        onClick={onResendOtp}
+                        disabled={loading}
+                      >
+                        Didn&apos;t receive the code? Resend
+                      </Button>
+                    )}
+                  </div>
+                </form>
+              </Form>
+            </div>
+          </div>
         </div>
+        <footer className="max-w-lg flex flex-col w-full">
+          <div className="flex flex-col gap-4">
+            <div className="text-sm text-center text-muted-foreground">
+              By proceeding, you agree to our{" "}
+              <a href="/terms" className="font-medium text-primary">
+                Terms
+              </a>{" "}
+              and{" "}
+              <a href="/privacy" className="font-medium text-primary">
+                Privacy Policy
+              </a>
+              .
+            </div>
+            <p className="text-xs text-muted-foreground text-center">
+              All Rights Reserved &copy; 2025{" "}
+              <Link href="/" className="font-medium text-foreground">
+                1<span className="text-yellow-500">ai</span>
+              </Link>
+            </p>
+          </div>
+        </footer>
       </div>
-    </div>
+    </section>
   );
 }

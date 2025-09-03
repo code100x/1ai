@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-const TITLE = "1ai | Multi-model AI chat app";
+const TITLE = "All-in-one AI Platform";
 const DESCRIPTION =
   "1ai is a platform that allows you to chat with different LLMs via a unified interface.";
 

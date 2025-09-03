@@ -10,7 +10,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         accent:
-          "bg-gradient-to-b from-primary to-primary/90 text-primary-foreground border cursor-pointer",
+          "bg-yellow-50 dark:bg-yellow-400/10 border border-yellow-100 dark:border-yellow-400/10 cursor-pointer text-yellow-500",
         default:
           "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90",
         destructive:
@@ -19,8 +19,7 @@ const buttonVariants = cva(
           "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
         secondary:
           "bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80",
-        ghost:
-          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
+        ghost: "hover:bg-muted hover:text-muted-foreground",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
