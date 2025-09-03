@@ -1,0 +1,27 @@
+{
+  "name": "1ai - Multi-model AI Chat Platform",
+  "short_name": "1ai",
+  "description": "Chat with multiple AI models including GPT-4, Claude, and more through a unified interface",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon-dark.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["productivity", "utilities", "ai"],
+  "lang": "en",
+  "dir": "ltr"
+}
