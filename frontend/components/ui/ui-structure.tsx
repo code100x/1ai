@@ -19,14 +19,11 @@ import {
   MagnifyingGlassIcon,
   ShareFatIcon,
   TrashIcon,
-  DotsThreeIcon,
+  ArrowUpRightIcon,
 } from "@phosphor-icons/react";
-import { EllipsisIcon } from "lucide-react";
+import { EllipsisIcon, SparklesIcon } from "lucide-react";
 import { toast } from "sonner";
 import { usePathname, useRouter } from "next/navigation";
-import { Logo } from "../svgs/logo";
-import { useUser } from "@/hooks/useUser";
-import Link from "next/link";
 import { useExecutionContext } from "@/contexts/execution-context";
 import {
   Dialog,
@@ -35,8 +32,6 @@ import {
   DialogTrigger,
   DialogTitle,
   DialogHeader,
-  DialogClose,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -99,8 +94,7 @@ export function UIStructure() {
     {
       id: "article-summarizer",
       name: "Article Summarizer",
-      description:
-        "Summarize long articles into concise, easy-to-read summaries",
+      description: "Summarize articles instantly",
       icon: "📄",
       credits: 2,
     },
@@ -126,6 +120,7 @@ export function UIStructure() {
               <Button
                 className="w-full text-sm text-white bg-[#fa7319] hover:bg-[#fa7319]/90 h-10 px-3.5 rounded-xl inset-shadow-sm inset-shadow-white/60 font-medium border border-black/4 outline-0"
                 onClick={(e) => {
+                  console.log("new chat clicked");
                   e.preventDefault();
                   router.push(`/ask`);
                 }}
@@ -222,7 +217,7 @@ export function UIStructure() {
                               }
                             >
                               <DropdownMenuTrigger asChild>
-                                <button
+                                <div
                                   className={cn(
                                     "opacity-0 transition-opacity",
                                     {
@@ -233,7 +228,7 @@ export function UIStructure() {
                                   )}
                                 >
                                   <EllipsisIcon className="size-5 text-white" />
-                                </button>
+                                </div>
                               </DropdownMenuTrigger>
 
                               <DropdownMenuContent className="border-none rounded-xl">
@@ -264,35 +259,6 @@ export function UIStructure() {
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
-                            {/* <div
-                              className="flex items-center justify-center rounded-md"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                const shareLink =
-                                  process.env.NEXT_PUBLIC_APP_URL +
-                                  `/ask/${execution.id}`;
-                                navigator.clipboard.writeText(shareLink);
-                                toast.success("Share link copied to clipboard");
-                              }}
-                            >
-                              <ShareFatIcon
-                                weight="fill"
-                                className="hover:text-foreground size-4"
-                              />
-                            </div> */}
-
-                            {/* <div
-                              className="flex items-center justify-center rounded-md"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteExecution(execution.id)
-                              }}
-                            >
-                              <TrashIcon
-                                weight={"bold"}
-                                className="hover:text-foreground size-4"
-                              />
-                            </div> */}
                           </div>
                         </div>
                       </SidebarMenuButton>
@@ -302,137 +268,51 @@ export function UIStructure() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* <SidebarFooter className="sticky bottom-0 flex flex-col gap-2 w-full p-3 bg-background">
-          {!isUserLoading && !user && (
-            <Link href="/auth">
-              <Button variant="secondary" className="w-full" size="lg">
-                Login
-              </Button>
-            </Link>
-          )}
+        <SidebarFooter className="sticky bottom-0 flex flex-col gap-2 w-full p-3 bg-transparent">
           <Dialog open={isAppsDialogOpen} onOpenChange={setIsAppsDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="secondary" className="w-full" size="lg">
-                Agents
-              </Button>
+              <div className="flex items-center justify-between h-8 bg-zinc-400/10 dark:bg-zinc-100/2 p-2 rounded-lg gap-2 text-sm text-foreground/80 hover:text-orange-400 dark:hover:text-orange-100 cursor-pointer hover:[&>*]:opacity-100">
+                <div className="flex items-center gap-2">
+                  <SparklesIcon className="size-4" />
+                  Tools
+                </div>
+                <ArrowUpRightIcon className="size-4 opacity-0 transition duration-200 ease-in" />
+              </div>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[525px]">
+
+            <DialogContent className="sm:max-w-[525px] border-0 rounded-xl">
               <DialogHeader>
-                <DialogTitle>Agents</DialogTitle>
-                <DialogDescription>
-                  Choose from our collection of AI-powered agents to
-                  enhance your productivity.
+                <DialogTitle className="text-start">Tools</DialogTitle>
+                <DialogDescription className="text-start">
+                  Enhance productivity with our AI tools.
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 {availableApps.map((app) => (
                   <div
                     key={app.id}
-                    className="flex items-center gap-4 p-4 rounded-lg border hover:bg-accent/50 cursor-pointer transition-colors"
+                    className="relative group flex flex-col items-center dark:hover:bg-orange-100/20 hover:bg-orange-300/40 justify-center h-32 gap-2 p-2 cursor-pointer transition-colors bg-orange-300/20 text-orange-400 dark:text-orange-100 dark:bg-orange-100/5 rounded-lg"
                     onClick={() => handleAppNavigation(app.id)}
                   >
-                    <div className="text-2xl">{app.icon}</div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-lg">{app.name}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {app.description}
-                      </p>
-                      <div className="flex items-center gap-1 mt-1">
-                        <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
-                          {app.credits} credits per use
-                        </span>
+                    <div className="absolute -top-1 -right-1 z-10 bg-zinc-100 dark:bg-zinc-950/80 p-[.20rem] opacity-0 group-hover:opacity-100 rounded-[.55rem] transition duration-200 ease-in">
+                      <div className="bg-zinc-200/50 dark:bg-zinc-700/50 rounded-[.55rem] p-1">
+                        <ArrowUpRightIcon className="size-[18px]" />
                       </div>
                     </div>
+                    <div className="text-2xl">{app.icon}</div>
+                    <h3 className="font-medium text-sm text-center">
+                      {app.name}
+                    </h3>
+                    <span className="font-light text-xs">
+                      {app.credits} credits per use
+                    </span>
                   </div>
                 ))}
               </div>
-
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button variant="outline">Close</Button>
-                </DialogClose>
-              </DialogFooter>
             </DialogContent>
-          </Dialog> */}
-
-        <SidebarFooter className="sticky bottom-0 flex flex-col gap-2 w-full p-3 bg-transparent">
+          </Dialog>
           <NavSetting />
-
-          {/* {user && (
-            <Dialog open={isAppsDialogOpen} onOpenChange={setIsAppsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="secondary" className="w-full " size="lg">
-                  AI Apps
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[525px]">
-                <DialogHeader>
-                  <DialogTitle>AI Apps</DialogTitle>
-                  <DialogDescription>
-                    Choose from our collection of AI-powered applications to
-                    enhance your productivity.
-                  </DialogDescription>
-                </DialogHeader>
-
-                <div className="grid gap-4 py-4">
-                  {availableApps.map((app) => (
-                    <div
-                      key={app.id}
-                      className="flex items-center gap-4 p-4 rounded-lg border hover:bg-accent/50 cursor-pointer transition-colors"
-                      onClick={() => handleAppNavigation(app.id)}
-                    >
-                      <div className="text-2xl">{app.icon}</div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg">{app.name}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {app.description}
-                        </p>
-                        <div className="flex items-center gap-1 mt-1">
-                          <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
-                            {app.credits} credits per use
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <DialogFooter>
-                  <DialogClose asChild>
-                    <Button variant="outline">Close</Button>
-                  </DialogClose>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          )} */}
-
-          {/* {user && (
-            <Button
-              variant="destructive"
-              className="w-full text-sm text-white h-10 px-3.5 rounded-xl inset-shadow-sm inset-shadow-white/60 font-medium border border-black/4 outline-0"
-              size="lg"
-              onClick={(e) => {
-                e.preventDefault();
-                localStorage.removeItem("token");
-                window.location.reload();
-              }}
-            >
-              Logout
-            </Button>
-          )}
-          
-          <div className="flex items-center gap-2 justify-center">
-            <Link href="/terms" target="_target" className="text-xs">
-              Terms
-            </Link>
-            <Link href="/privacy" target="_target" className="text-xs">
-              Privacy
-            </Link>
-            <Link href="/refund" target="_target" className="text-xs">
-              Refund Policy
-            </Link>
-          </div>
-          )} */}
         </SidebarFooter>
       </SidebarContent>
     </Sidebar>

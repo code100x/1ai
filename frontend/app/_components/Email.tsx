@@ -96,7 +96,7 @@ export function Email({
                 </Link>
               </div>
             </TooltipTrigger>
-            <TooltipContent sideOffset={1} className="bg-orange-400">
+            <TooltipContent sideOffset={1}>
               <p>By continuing, you agree</p>
             </TooltipContent>
           </Tooltip>
