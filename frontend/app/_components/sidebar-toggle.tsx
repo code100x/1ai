@@ -15,11 +15,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { Execution, useExecution } from "@/hooks/useExecution";
 interface Chat {
   id: string;
+  title: string;
+  createdAt: Date;
   updatedAt: Date;
   userId: string;
   messages: {
@@ -29,7 +31,7 @@ interface Chat {
 
 export const SidebarToggle = () => {
   const { open } = useSidebar();
-  const [chats, setChats] = useState<Chat[]>([]);
+  const { executions } = useExecution();
 
   return (
     <div
@@ -51,9 +53,9 @@ export const SidebarToggle = () => {
             <CommandList>
               <CommandEmpty>No results found.</CommandEmpty>
               <CommandGroup className="no-scrollbar" heading="Recent Chats">
-                {chats?.map((chat: Chat) => (
+                {executions?.map((chat: Execution) => (
                   <CommandItem key={chat.id}>
-                    <span>{chat.messages[0]?.content}...</span>
+                    <span>{chat.title}...</span>
                   </CommandItem>
                 ))}
               </CommandGroup>

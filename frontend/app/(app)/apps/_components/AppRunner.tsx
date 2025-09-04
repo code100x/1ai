@@ -14,6 +14,8 @@ import SyntaxHighlighter from "react-syntax-highlighter";
 import { atomOneDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
+import { useUser } from "@/hooks/useUser";
+import { useRouter } from "next/navigation";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3000";
@@ -40,6 +42,8 @@ export function AppRunner({ appId, config }: AppRunnerProps) {
   const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const { resolvedTheme } = useTheme();
+  const { user, isLoading: isUserLoading } = useUser();
+  const router = useRouter();
 
   const handleCopy = async (content: string) => {
     try {
@@ -68,7 +72,7 @@ export function AppRunner({ appId, config }: AppRunnerProps) {
         return;
       }
 
-      setResponse("");
+      setResponse(""); // Clear previous response
       let buffer = "";
 
       while (true) {
@@ -95,6 +99,7 @@ export function AppRunner({ appId, config }: AppRunnerProps) {
             }
 
             try {
+              // The backend sends raw text chunks directly, but we need to handle potential JSON error responses
               if (data.startsWith("{") && data.endsWith("}")) {
                 try {
                   const parsedData = JSON.parse(data);
@@ -105,10 +110,11 @@ export function AppRunner({ appId, config }: AppRunnerProps) {
                     continue;
                   }
                 } catch {
-                  // treat as plain text
+                  // If parsing fails, treat as plain text
                 }
               }
 
+              // For normal streaming, the data is raw text content
               if (data && data !== "[DONE]") {
                 setResponse((prev) => prev + data);
               }
@@ -129,6 +135,11 @@ export function AppRunner({ appId, config }: AppRunnerProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) {
+      router.push("/auth");
+      return;
+    }
+
     if (!input.trim() || isLoading) return;
 
     setIsLoading(true);
@@ -138,9 +149,14 @@ export function AppRunner({ appId, config }: AppRunnerProps) {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
+
     abortControllerRef.current = new AbortController();
 
     try {
+      console.log(input);
+      console.log(appId);
+      console.log({ BACKEND_URL });
+      console.log(`${BACKEND_URL}/apps/${appId}`);
       const response = await fetch(`${BACKEND_URL}/apps/${appId}`, {
         method: "POST",
         headers: {
@@ -168,7 +184,6 @@ export function AppRunner({ appId, config }: AppRunnerProps) {
         <p className="text-muted-foreground mb-6">{config.description}</p>
 
         {config.beforeForm}
-
         <form onSubmit={handleSubmit} className="w-full space-y-4">
           <div className="bg-muted/20 backdrop-blur-3xl border border-border/50 rounded-2xl p-4">
             <Textarea
@@ -177,6 +192,7 @@ export function AppRunner({ appId, config }: AppRunnerProps) {
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
+
                   void handleSubmit(e);
                 }
               }}
@@ -243,7 +259,7 @@ export function AppRunner({ appId, config }: AppRunnerProps) {
                     remarkPlugins={[remarkGfm]}
                     components={{
                       code(props) {
-                        const { children, className, ...rest } = props as any;
+                        const { children, className, ...rest } = props;
                         const match = /language-(\w+)/.exec(className ?? "");
                         const isInline = !match;
 
@@ -287,18 +303,16 @@ export function AppRunner({ appId, config }: AppRunnerProps) {
                         );
                       },
                       strong: (props) => (
-                        <span className="font-bold">
-                          {(props as any).children}
-                        </span>
+                        <span className="font-bold">{props.children}</span>
                       ),
                       a: (props) => (
                         <a
                           className="text-primary underline hover:no-underline"
-                          href={(props as any).href}
+                          href={props.href}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          {(props as any).children}
+                          {props.children}
                         </a>
                       ),
                     }}
@@ -318,11 +332,8 @@ export function AppRunner({ appId, config }: AppRunnerProps) {
             </div>
           </div>
         )}
-
         {config.afterResponse}
       </div>
     </div>
   );
 }
-
-export default AppRunner;

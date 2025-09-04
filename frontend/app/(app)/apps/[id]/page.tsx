@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import AppRunner, { AppRunnerConfig } from "../_components/AppRunner";
+import { AppRunner, AppRunnerConfig } from "../_components/AppRunner";
 import { getRunnerConfig } from "@/lib/apps-registry";
 
 interface AppPageProps {

@@ -183,9 +183,10 @@ export function UIStructure() {
 
                             <div
                               className="flex items-center justify-center rounded-md"
-                              onClick={() =>
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 handleDeleteExecution(execution.id)
-                              }
+                              }}
                             >
                               <TrashIcon
                                 weight={"bold"}
@@ -212,14 +213,14 @@ export function UIStructure() {
           <Dialog open={isAppsDialogOpen} onOpenChange={setIsAppsDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="secondary" className="w-full" size="lg">
-                AI Apps
+                Agents
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[525px]">
               <DialogHeader>
-                <DialogTitle>AI Apps</DialogTitle>
+                <DialogTitle>Agents</DialogTitle>
                 <DialogDescription>
-                  Choose from our collection of AI-powered applications to
+                  Choose from our collection of AI-powered agents to
                   enhance your productivity.
                 </DialogDescription>
               </DialogHeader>
@@ -276,7 +277,7 @@ export function UIStructure() {
               Privacy
             </Link>
             <Link href="/refund" target="_target" className="text-xs">
-              Refund
+              Refund Policy
             </Link>
           </div>
         </SidebarFooter>

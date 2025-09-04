@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Crown, Zap, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useCredits } from "@/hooks/useCredits";
+import { SpinnerGapIcon } from "@phosphor-icons/react";
 
 interface UpgradeCTAProps {
   variant?: "banner" | "card" | "minimal" | "topbar";
@@ -16,9 +17,9 @@ export const UpgradeCTA: React.FC<UpgradeCTAProps> = ({
   variant = "banner", 
   className = "" 
 }) => {
-  const { userCredits, isLoading } = useCredits();
+  const { userCredits, isPending } = useCredits();
   // Don't show if loading, user is premium, or has sufficient credits
-  if (isLoading || !userCredits || userCredits.isPremium || userCredits.credits > 3) {
+  if (isPending || !userCredits || userCredits.isPremium || userCredits.credits > 3) {
     return null;
   }
 
@@ -52,7 +53,7 @@ export const UpgradeCTA: React.FC<UpgradeCTAProps> = ({
         <div className="flex items-center gap-1 px-1.5 sm:px-2 py-1 rounded-md bg-purple-500/10 border border-purple-500/20">
           <Zap className="h-3 w-3 text-purple-500" />
           <span className="text-xs font-medium text-purple-600 dark:text-purple-400">
-            {Math.max(0, userCredits.credits)}
+            {isPending ? <SpinnerGapIcon className="animate-spin" /> : Math.max(0, userCredits.credits)}
           </span>
         </div>
         <Link href="/pricing">

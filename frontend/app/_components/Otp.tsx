@@ -140,7 +140,7 @@ export function Otp({ email }: { email: string }) {
                 disabled={isResending}
                 className="font-medium text-primary hover:text-primary/90 underline underline-offset-4 disabled:opacity-50"
               >
-                {isResending ? "Sending..." : "resend"}
+                {isResending ? "Sending..." : "Resend"}
               </button>
             </p>
           </div>
