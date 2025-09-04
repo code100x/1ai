@@ -114,8 +114,10 @@ const RazorpayPayment: React.FC<RazorpayPaymentProps> = ({
                       toast.success(response2.data.message || "Payment successful! Your yearly plan is now active!", {
                         duration: 5000
                       });
-                      // Refresh user credits
-                      window.location.reload();
+                      // Redirect to chat page after successful payment
+                      setTimeout(() => {
+                        router.push("/ask");
+                      }, 2000);
                     } else {
                       toast.error("Payment failed! Please try again.");
                     }
@@ -178,8 +180,10 @@ const RazorpayPayment: React.FC<RazorpayPaymentProps> = ({
                       toast.success("Payment successful! Your subscription is being activated...", {
                         duration: 3000
                       });
-                      // Refresh user credits
-                      window.location.reload();
+                      // Redirect to chat page after successful payment
+                      setTimeout(() => {
+                        router.push("/ask");
+                      }, 2000);
                     } else {
                       toast.error("Payment failed! Please try again.");
                     }
