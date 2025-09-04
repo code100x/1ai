@@ -58,8 +58,11 @@ export function ModelSelector({
     if (onValueChange) {
       onValueChange(newValue);
     }
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("model", newValue);
+    }
   };
-
+  
   const selectedModelObj = getModelById(selectedModel);
 
   const getModelStatusIcon = (model: Model) => {
