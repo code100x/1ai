@@ -98,7 +98,7 @@ export function UIStructure() {
     <Sidebar className={`border py-2 pl-2`}>
       <SidebarContent className="h-full justify-between">
         <SidebarGroup className="flex flex-col gap-4">
-          <SidebarHeader className="sticky top-0 !p-0">
+          <SidebarHeader className="sticky top-0 !p-0 bg-background z-30">
             <div className="flex w-full flex-col items-center gap-2 rounded-lg">
               <div className="flex w-full items-center gap-2 rounded-lg p-1 text-lg justify-between">
                 <SidebarTrigger className="shrink-0" />
@@ -188,8 +188,8 @@ export function UIStructure() {
                               onClick={(e) => {
                                 e.preventDefault();
                                 const shareLink =
-                                  process.env.NEXT_PUBLIC_APP_URL +
-                                  `/ask/${execution.id}`;
+                                  (process.env.NEXT_PUBLIC_APP_URL ||
+                                    "1ai.co") + `/ask/${execution.id}`;
                                 navigator.clipboard.writeText(shareLink);
                                 toast.success("Share link copied to clipboard");
                               }}
@@ -204,7 +204,7 @@ export function UIStructure() {
                               className="flex items-center justify-center rounded-md"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleDeleteExecution(execution.id)
+                                handleDeleteExecution(execution.id);
                               }}
                             >
                               <TrashIcon
@@ -221,7 +221,7 @@ export function UIStructure() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarFooter className="sticky bottom-0 flex flex-col gap-2 w-full p-3 bg-background">
+        <SidebarFooter className="sticky bottom-0 flex flex-col gap-2 w-full p-3 bg-background z-30">
           {user ? (
             <Button
               variant="destructive"
