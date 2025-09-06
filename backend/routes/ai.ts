@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { CreateChatSchema, MODELS, Role } from "../types";
-import { createCompletion } from "../openrouter";
+import { createCompletion, generateTitleFromUserMessage } from "../openrouter";
 import { InMemoryStore } from "../InMemoryStore";
 import { authMiddleware } from "../auth-middleware";
 import { PrismaClient } from "../generated/prisma";
@@ -138,12 +138,13 @@ router.post("/chat", authMiddleware, async (req, res) => {
     }
 
     if (!execution) {
+        const title = await generateTitleFromUserMessage({ message: data.message });
         await prismaClient.$transaction([
             prismaClient.execution.create({
                 data: {
                     id: conversationId,
                     userId,
-                    title: data.message.slice(0, 20) + "...",
+                    title,
                     type: "CONVERSATION",
                     externalId: conversationId
                 }

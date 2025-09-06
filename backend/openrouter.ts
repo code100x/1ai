@@ -82,3 +82,39 @@ export const createCompletion = async (
     })
 }
 
+export async function generateTitleFromUserMessage({
+  message,
+}: {
+  message: string;
+}) {
+  const systemPrompt = `\n
+    - you will generate a short title based on the first message a user begins a conversation with
+    - ensure it is not more than 50 characters long
+    - the title should be a summary of the user's message
+    - do not use quotes or colons`;
+
+  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${OPENROUTER_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'openai/gpt-4o-mini',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: message },
+      ],
+      stream: false,
+    }),
+  });
+
+  if (!response.ok) {
+    return message.slice(0, 20) + "...";
+  }
+
+  const data = await response.json();
+  const title = data.choices?.[0]?.message?.content?.trim() || '';
+  return title;
+}
+
