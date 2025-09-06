@@ -150,5 +150,6 @@ export type Messages = Message[];
 
 export enum Role {
     Agent = "assistant",
-    User = "user"
+    User = "user",
+    System = "system"
 }

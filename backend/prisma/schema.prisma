@@ -40,6 +40,7 @@ model Execution {
 enum ExecutionType {
   CONVERSATION
   ARTICLE_SUMMARIZER
+  YOUTUBE_SUMMARIZER
 }
 
 model Conversation {
@@ -110,6 +111,14 @@ model ArticleSummarizer {
   id String @id @default(uuid())
   article String
   summary String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model YoutubeSummarizer {
+  id        String   @id @default(uuid())
+  videoId   String
+  summary   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
