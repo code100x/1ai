@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import jwt, { type JwtPayload } from "jsonwebtoken";
+import { env } from "./env";
 
 export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
     const authToken = req.headers.authorization?.split(" ")[1];
@@ -13,7 +14,7 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
     }
 
     try {
-        const data = jwt.verify(authToken, process.env.JWT_SECRET!);
+        const data = jwt.verify(authToken, env.JWT_SECRET);
         req.userId = (data as unknown as JwtPayload).userId as unknown as string;
         next();
     } catch (e) {

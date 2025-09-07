@@ -1,4 +1,5 @@
 import axios from "axios";
+import { env } from "./env";
 
 type EmailArgs = {
     to: string;
@@ -26,7 +27,7 @@ export function sendEmail(arg1: string | EmailArgs, subject?: string, body?: str
     }
 
     let data = JSON.stringify({
-        "From": process.env.FROM_EMAIL!,
+        "From": env.FROM_EMAIL,
         "To": to,
         "Subject": subject!,
         "TextBody": textBody,
@@ -41,7 +42,7 @@ export function sendEmail(arg1: string | EmailArgs, subject?: string, body?: str
         headers: { 
             'Accept': 'application/json', 
             'Content-Type': 'application/json', 
-            'X-Postmark-Server-Token': process.env.POSTMARK_SERVER_TOKEN
+            'X-Postmark-Server-Token': env.POSTMARK_SERVER_TOKEN
         },
         data: data
     };

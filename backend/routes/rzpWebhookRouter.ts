@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { PrismaClient } from "../generated/prisma";
 import crypto from "crypto";
+import { env } from "../env";
 
 const prisma = new PrismaClient();
 const rzpWebhookRouter = Router();
@@ -8,7 +9,7 @@ const rzpWebhookRouter = Router();
 // Webhook signature verification function
 function verifyWebhookSignature(payload: string, signature: string): boolean {
   try {
-    const secret = process.env.RZP_WEBHOOK_SECRET!;
+    const secret = env.RZP_WEBHOOK_SECRET;
     const expectedHash = crypto
       .createHmac('sha256', secret)
       .update(payload)

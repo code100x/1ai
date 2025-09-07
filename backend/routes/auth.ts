@@ -8,6 +8,7 @@ import { PrismaClient } from "../generated/prisma";
 import { authMiddleware } from "../auth-middleware";
 import { perMinuteLimiter, perMinuteLimiterRelaxed } from "../ratelimitter";
 import { otpEmailHTML } from "../email/templates/otpEmail";
+import { env } from "../env";
 
 const prismaClient = new PrismaClient();
 
@@ -28,11 +29,11 @@ router.post("/initiate_signin", perMinuteLimiter, async (req, res) => {
 
         // Generate TOTP using email and secret
         console.log("before send email")
-        const { otp, expires } = TOTP.generate(base32.encode(data.email + process.env.JWT_SECRET!));
+        const { otp, expires } = TOTP.generate(base32.encode(data.email + env.JWT_SECRET));
         console.log("email is", data.email);
         console.log("otp is", otp);
 
-        if (process.env.NODE_ENV !== "development") {
+        if (env.NODE_ENV !== "development") {
             const subject = "Your 1ai sign-in code";
             const text = `Your OTP is ${otp}. Valid for ~30 seconds.`;
             const html = otpEmailHTML(otp, data.email, 30);
@@ -102,7 +103,7 @@ router.post("/signin", perMinuteLimiterRelaxed, async (req, res) => {
 
     const token = jwt.sign({
         userId: user.id
-    }, process.env.JWT_SECRET!);
+    }, env.JWT_SECRET);
 
     res.status(200).json({
         token

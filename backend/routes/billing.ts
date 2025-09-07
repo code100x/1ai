@@ -4,15 +4,16 @@ import axios from "axios";
 import { PrismaClient } from "../generated/prisma";
 import { authMiddleware } from "../auth-middleware";
 import crypto from "crypto";
+import { env } from "../env";
 
 const prisma = new PrismaClient();
 
 export const billingRouter = Router();
 
 const razorPayCredentials = {
-  key: process.env.RZP_KEY,
-  secret: process.env.RZP_SECRET!,
-  environment: process.env.RZP_ENVIRONMENT!,
+  key: env.RZP_KEY,
+  secret: env.RZP_SECRET,
+  environment: env.RZP_ENVIRONMENT,
 };
 
 const createOrderUrl = razorPayCredentials.environment === "sandbox" ? 'https://api.razorpay.com/v1/orders' : 'https://api.razorpay.com/v1/orders';
@@ -65,7 +66,7 @@ billingRouter.post("/init-subscribe", authMiddleware, async (req, res) => {
       receipt: uuidv4(),
       notes: {
         customer_id: userId,
-        return_url: `${process.env.FRONTEND_URL}`,
+        return_url: `${env.FRONTEND_URL}`,
         app_name: "1AI",
         plan_type: "yearly",
       }
@@ -115,7 +116,7 @@ billingRouter.post("/init-subscribe", authMiddleware, async (req, res) => {
     total_count: 12,
     notes: {
       customer_id: userId,
-      return_url: `${process.env.FRONTEND_URL}`,
+      return_url: `${env.FRONTEND_URL}`,
       app_name: "1AI",
       plan_type: "monthly",
     }

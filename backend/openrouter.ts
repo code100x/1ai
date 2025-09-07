@@ -1,5 +1,7 @@
 import type { Message, MODEL, SUPPORTER_MODELS } from "./types";
-const OPENROUTER_KEY = process.env.OPENROUTER_KEY!;
+import { env } from "./env";
+
+const OPENROUTER_KEY = env.OPENROUTER_KEY;
 const MAX_TOKEN_ITERATIONS = 1000;
 
 export const createCompletion = async (
