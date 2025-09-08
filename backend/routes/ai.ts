@@ -16,7 +16,8 @@ router.get("/conversations/:conversationId", authMiddleware, async (req, res) =>
     const execution = await prismaClient.execution.findFirst({
         where: {
             id: conversationId,
-            userId
+            userId,
+            deletedAt: null
         }
     });
 
@@ -59,7 +60,8 @@ router.delete("/chat/:chatId", authMiddleware, async (req, res) => {
     const execution = await prismaClient.execution.findFirst({
         where: {
             id: chatId,
-            userId
+            userId,
+            deletedAt: null
         }
     })
 
@@ -70,9 +72,12 @@ router.delete("/chat/:chatId", authMiddleware, async (req, res) => {
         return;
     }
 
-    await prismaClient.execution.delete({
+    await prismaClient.execution.update({
         where: {
             id: chatId
+        },
+        data: {
+            deletedAt: new Date()
         }
     })
 
@@ -126,7 +131,8 @@ router.post("/chat", authMiddleware, async (req, res) => {
     const execution = await prismaClient.execution.findFirst({
         where: {
             id: conversationId,
-            userId
+            userId,
+            deletedAt: null
         }
     });
     
