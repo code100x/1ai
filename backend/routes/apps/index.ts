@@ -15,7 +15,8 @@ router.get("/article-summarizer/:executionId", authMiddleware, async (req, res) 
     const execution = await prismaClient.execution.findFirst({
         where: {
             id: req.params.executionId,
-            userId: req.userId
+            userId: req.userId,
+            deletedAt: null
         }
     });
 

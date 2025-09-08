@@ -32,6 +32,7 @@ model Execution {
   type ExecutionType
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  deletedAt DateTime?
   user User @relation(fields: [userId], references: [id])
   userId String
   externalId String?

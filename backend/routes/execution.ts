@@ -11,6 +11,7 @@ router.get("/", authMiddleware, async (req, res) => {
     const executions = await prismaClient.execution.findMany({
         where: {
             userId,
+            deletedAt: null,
         },
         orderBy: {
             createdAt: "desc"
@@ -27,7 +28,8 @@ router.get("/:executionId", authMiddleware, async (req, res) => {
     const execution = await prismaClient.execution.findFirst({
         where: {
             id: executionId,
-            userId
+            userId,
+            deletedAt: null
         }
     });
 
