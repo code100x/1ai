@@ -102,10 +102,10 @@ export function UIStructure() {
   };
 
   return (
-    <Sidebar className={`border py-2 pl-2`}>
-      <SidebarContent className="h-full justify-between">
-        <SidebarGroup className="flex flex-col gap-4">
-          <SidebarHeader className="sticky top-0 !p-0">
+    <Sidebar className={`border py-2 pl-2 h-screen flex flex-col`}>
+      <SidebarContent className="flex flex-col h-full min-h-0">
+        <SidebarGroup className="flex-1 min-h-0 overflow-hidden">
+          <SidebarHeader className="flex-shrink-0 !p-0 pb-4">
             <div className="flex w-full flex-col items-center gap-2 rounded-lg">
               <div className="flex w-full items-center gap-2 rounded-lg p-1 text-lg justify-between">
                 <SidebarTrigger className="shrink-0" />
@@ -136,14 +136,14 @@ export function UIStructure() {
               />
             </div>
           </SidebarHeader>
-          <SidebarGroupContent>
-            <SidebarMenu className="w-full p-0">
+          <SidebarGroupContent className="h-full">
+            <SidebarMenu className="w-full p-0 h-full overflow-y-auto overflow-x-hidden no-scrollbar">
               {loading
                 ? // Skeleton loader while loading saved chats
                   Array.from({ length: 4 }).map((_, i) => (
                     <div
                       key={i}
-                      className="bg-primary/15 mb-2 h-7 w-full animate-pulse rounded-md"
+                      className="bg-primary/15 mb-2 h-7 w-full animate-pulse rounded-md space-y-1"
                     />
                   ))
                 : uiExecutions.map((execution: Execution) => (
@@ -155,18 +155,18 @@ export function UIStructure() {
                         onClick={() => router.push(`/ask/${execution.id}`)}
                       >
                         <div className="flex w-full items-center justify-between">
-                          <span className="z-[-1] cursor-pointer truncate">
+                          <span className="cursor-pointer truncate flex-1 min-w-0 pr-16">
                             {execution.title}
                           </span>
                           <div
                             className={cn(
-                              "absolute top-0 right-0 z-[5] h-full w-12 rounded-r-md blur-[2em]", 
-                              execution.id === hoverChatId && "bg-primary"
+                              "absolute top-0 right-0 h-full w-12 rounded-r-md transition-all duration-200", 
+                              execution.id === hoverChatId && "bg-primary/40"
                             )}
                           />
                           <div
                             className={cn(
-                              "absolute top-1/2 -right-16 z-[10] flex h-full -translate-y-1/2 items-center justify-center gap-1.5 rounded-r-md bg-transparent px-1 backdrop-blur-xl transition-all duration-200 ease-in-out",
+                              "absolute top-1/2 -translate-y-1/2 right-0 flex items-center gap-1.5 px-2 py-1 transition-all duration-200 ease-in-out",
                               execution.id === hoverChatId && "group-hover:right-0"
                             )}
                           >
@@ -208,7 +208,7 @@ export function UIStructure() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarFooter className="sticky bottom-0 flex flex-col gap-2 w-full p-3 bg-background">
+        <SidebarFooter className="flex-shrink-0 flex flex-col gap-2 w-full p-3 bg-background border-t mt-auto">
           {!isUserLoading && !user && (
             <Link href="/auth">
               <Button variant="secondary" className="w-full" size="lg">
