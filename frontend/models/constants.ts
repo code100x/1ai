@@ -40,7 +40,7 @@ export const MODELS: Model[] = [
     pricePer1kTokens: 0,
     capabilities: [ModelCapability.CODE, ModelCapability.TEXT],
     isAvailable: true,
-    isPremium: true
+    isPremium: false
   },
   {
     id: "deepseek/deepseek-r1:free",
@@ -51,7 +51,7 @@ export const MODELS: Model[] = [
     pricePer1kTokens: 0,
     capabilities: [ModelCapability.TEXT, ModelCapability.CODE],
     isAvailable: true,
-    isPremium: true
+    isPremium: false
   },
   {
     id: "deepseek/deepseek-chat-v3-0324:free",
@@ -62,7 +62,7 @@ export const MODELS: Model[] = [
     pricePer1kTokens: 0,
     capabilities: [ModelCapability.TEXT],
     isAvailable: true,
-    isPremium: true
+    isPremium: false
   },
   {
     id: "meta-llama/llama-3.3-70b-instruct:free",
@@ -73,7 +73,7 @@ export const MODELS: Model[] = [
     pricePer1kTokens: 0,
     capabilities: [ModelCapability.TEXT, ModelCapability.CODE],
     isAvailable: true,
-    isPremium: true
+    isPremium: false
   },
   {
     id: "mistralai/mistral-small-24b-instruct-2501:free",
@@ -84,7 +84,7 @@ export const MODELS: Model[] = [
     pricePer1kTokens: 0,
     capabilities: [ModelCapability.TEXT],
     isAvailable: true,
-    isPremium: true
+    isPremium: false
   },
   {
     id: "qwen/qwen-2.5-72b-instruct:free",
@@ -95,7 +95,7 @@ export const MODELS: Model[] = [
     pricePer1kTokens: 0,
     capabilities: [ModelCapability.TEXT, ModelCapability.CODE],
     isAvailable: true,
-    isPremium: true
+    isPremium: false
   },
   {
     id: "moonshotai/kimi-k2:free",
@@ -106,7 +106,7 @@ export const MODELS: Model[] = [
     pricePer1kTokens: 0,
     capabilities: [ModelCapability.TEXT],
     isAvailable: true,
-    isPremium: true
+    isPremium: false
   },
   {
     id: "rekaai/reka-flash-3:free",
@@ -117,7 +117,7 @@ export const MODELS: Model[] = [
     pricePer1kTokens: 0,
     capabilities: [ModelCapability.TEXT],
     isAvailable: true,
-    isPremium: true
+    isPremium: false
   },
   {
     id: "z-ai/glm-4.5-air:free",
@@ -128,7 +128,7 @@ export const MODELS: Model[] = [
     pricePer1kTokens: 0,
     capabilities: [ModelCapability.TEXT, ModelCapability.CODE],
     isAvailable: true,
-    isPremium: true
+    isPremium: false
   },
   {
     id: "tencent/hunyuan-a13b-instruct:free",
@@ -139,7 +139,7 @@ export const MODELS: Model[] = [
     pricePer1kTokens: 0,
     capabilities: [ModelCapability.TEXT],
     isAvailable: true,
-    isPremium: true
+    isPremium: false
   },
   {
     id: "google/gemma-3n-e2b-it:free",
@@ -150,7 +150,7 @@ export const MODELS: Model[] = [
     pricePer1kTokens: 0,
     capabilities: [ModelCapability.TEXT, ModelCapability.CODE],
     isAvailable: true,
-    isPremium: true
+    isPremium: false
   },
   {
     id: "google/gemma-3-27b-it:free",
@@ -161,7 +161,7 @@ export const MODELS: Model[] = [
     pricePer1kTokens: 0,
     capabilities: [ModelCapability.TEXT, ModelCapability.CODE],
     isAvailable: true,
-    isPremium: true
+    isPremium: false
   },
   {
     id: "cognitivecomputations/dolphin3.0-mistral-24b:free",
@@ -172,7 +172,7 @@ export const MODELS: Model[] = [
     pricePer1kTokens: 0,
     capabilities: [ModelCapability.TEXT, ModelCapability.CODE],
     isAvailable: true,
-    isPremium: true
+    isPremium: false
   },
   {
     id: "google/gemma-2-9b-it:free",
@@ -183,7 +183,7 @@ export const MODELS: Model[] = [
     pricePer1kTokens: 0,
     capabilities: [ModelCapability.TEXT, ModelCapability.CODE],
     isAvailable: true,
-    isPremium: true
+    isPremium: false
   },
   {
     id: "shisa-ai/shisa-v2-llama3.3-70b:free",
@@ -194,7 +194,7 @@ export const MODELS: Model[] = [
     pricePer1kTokens: 0,
     capabilities: [ModelCapability.TEXT, ModelCapability.CODE],
     isAvailable: true,
-    isPremium: true
+    isPremium: false
   },
   {
     id: "tngtech/deepseek-r1t-chimera:free",
@@ -205,7 +205,7 @@ export const MODELS: Model[] = [
     pricePer1kTokens: 0,
     capabilities: [ModelCapability.TEXT, ModelCapability.CODE],
     isAvailable: true,
-    isPremium: true
+    isPremium: false
   },
   {
     id: "microsoft/mai-ds-r1:free",
@@ -216,7 +216,7 @@ export const MODELS: Model[] = [
     pricePer1kTokens: 0,
     capabilities: [ModelCapability.TEXT, ModelCapability.CODE],
     isAvailable: true,
-    isPremium: true
+    isPremium: false
   },
   {
     id: "baidu/ernie-4.5-21b-a3b",
@@ -238,7 +238,7 @@ export const MODELS: Model[] = [
     pricePer1kTokens: 0,
     capabilities: [ModelCapability.TEXT, ModelCapability.CODE],
     isAvailable: true,
-    isPremium: true
+    isPremium: false
   },
   {
     id: "x-ai/grok-3-mini",
