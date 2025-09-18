@@ -94,6 +94,13 @@ export function UIStructure() {
       icon: "📄",
       credits: 2,
     },
+    {
+      id: "youtube-summarizer",
+      name: "YouTube Summarizer",
+      description: "Summarize YouTube videos into key bullet points",
+      icon: "📺",
+      credits: 4,
+    },
   ];
 
   const handleAppNavigation = (appId: string) => {
