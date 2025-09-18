@@ -10,13 +10,13 @@ import { Anthrophic } from "@/components/svgs/anthropic";
 export function getModelProviderIcon(model: Model): React.ReactNode {
   switch (model.provider) {
     case ModelProvider.OPENAI:
-      return <OpenAI className="text-foreground h-4 w-4" />; // OpenAI
+      return <OpenAI className="text-orange-400 dark:text-orange-100 h-4 w-4" />; // OpenAI
     case ModelProvider.GOOGLE:
-      return <StarFourIcon className="h-4 w-4 text-blue-500" />; // Google
+      return <StarFourIcon className="h-4 w-4 text-orange-400 dark:text-orange-100" />; // Google
     case ModelProvider.ANTHROPIC:
-      return <Anthrophic className="h-4 w-4 text-orange-100" />; // Anthropic Claude
+      return <Anthrophic className="h-4 w-4 text-orange-400 dark:text-orange-100" />; // Anthropic Claude
     default:
-      return <DiamondIcon className="h-4 w-4 text-gray-500" />; // Default
+      return <DiamondIcon className="h-4 w-4 text-orange-400 dark:text-orange-100" />; // Default
   }
 }
 
