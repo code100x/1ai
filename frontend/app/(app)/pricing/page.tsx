@@ -9,9 +9,9 @@ import {
   CheckIcon,
   StarIcon
 } from "@phosphor-icons/react/dist/ssr";
-import RazorpayPayment from "@/components/RazorpayPayment";
 import { useEffect } from "react";
 import { useCredits } from "@/hooks/useCredits";
+import PaymentModal from "@/components/PaymentModal";
 
 const pricingPlans = [
   {
@@ -144,7 +144,7 @@ export default function PricingPage() {
                     ))}
                   </div>
 
-                  <RazorpayPayment
+                  <PaymentModal
                     plan={{
                       name: plan.name,
                       price: plan.price,
@@ -158,7 +158,7 @@ export default function PricingPage() {
                     }`}
                   >
                     {plan.cta.text}
-                  </RazorpayPayment>
+                  </PaymentModal>
                 </CardContent>
               </Card>
             ))}

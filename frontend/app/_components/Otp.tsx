@@ -15,6 +15,7 @@ export function Otp({ email }: { email: string }) {
 
   const handleResend = async () => {
     setIsResending(true);
+    setOtp("")
     try {
       const response = await fetch(`${BACKEND_URL}/auth/initiate_signin`, {
         method: "POST",
