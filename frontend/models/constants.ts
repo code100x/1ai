@@ -35,7 +35,7 @@ export const MODELS: Model[] = [
     id: "agentica-org/deepcoder-14b-preview:free",
     name: "DeepCoder 14B Preview",
     provider: ModelProvider.OPENROUTER,
-    description: "Preview coding-focused model (free tier)",
+    description: "Preview coding-focused model ",
     maxTokens: 8192,
     pricePer1kTokens: 0,
     capabilities: [ModelCapability.CODE, ModelCapability.TEXT],
@@ -44,7 +44,7 @@ export const MODELS: Model[] = [
   },
   {
     id: "deepseek/deepseek-r1:free",
-    name: "DeepSeek R1 (free)",
+    name: "DeepSeek R1 ",
     provider: ModelProvider.OPENROUTER,
     description: "Reasoning-optimized free model",
     maxTokens: 8192,
@@ -55,7 +55,7 @@ export const MODELS: Model[] = [
   },
   {
     id: "deepseek/deepseek-chat-v3-0324:free",
-    name: "DeepSeek Chat v3 0324 (free)",
+    name: "DeepSeek Chat v3 0324 ",
     provider: ModelProvider.OPENROUTER,
     description: "General-purpose conversational AI (free tier)",
     maxTokens: 8192,
@@ -66,7 +66,7 @@ export const MODELS: Model[] = [
   },
   {
     id: "meta-llama/llama-3.3-70b-instruct:free",
-    name: "Llama 3.3 70B Instruct (free)",
+    name: "Llama 3.3 70B Instruct ",
     provider: ModelProvider.OPENROUTER,
     description: "Instruction-tuned model with high reasoning capability",
     maxTokens: 8192,
@@ -77,7 +77,7 @@ export const MODELS: Model[] = [
   },
   {
     id: "mistralai/mistral-small-24b-instruct-2501:free",
-    name: "Mistral Small 24B Instruct 2501 (free)",
+    name: "Mistral Small 24B Instruct 2501",
     provider: ModelProvider.OPENROUTER,
     description: "Efficient small-scale instruction model (free tier)",
     maxTokens: 8192,
@@ -88,7 +88,7 @@ export const MODELS: Model[] = [
   },
   {
     id: "qwen/qwen-2.5-72b-instruct:free",
-    name: "Qwen 2.5 72B Instruct (free)",
+    name: "Qwen 2.5 72B Instruct ",
     provider: ModelProvider.OPENROUTER,
     description: "Large-scale Chinese-English capable instruct model",
     maxTokens: 8192,
@@ -99,9 +99,9 @@ export const MODELS: Model[] = [
   },
   {
     id: "moonshotai/kimi-k2:free",
-    name: "Moonshot Kimi K2 (free)",
+    name: "Moonshot Kimi K2 ",
     provider: ModelProvider.OPENROUTER,
-    description: "Conversational model from Moonshot (free tier)",
+    description: "Conversational model from Moonshot ",
     maxTokens: 8192,
     pricePer1kTokens: 0,
     capabilities: [ModelCapability.TEXT],
@@ -110,9 +110,9 @@ export const MODELS: Model[] = [
   },
   {
     id: "rekaai/reka-flash-3:free",
-    name: "Reka Flash 3 (free)",
+    name: "Reka Flash 3 ",
     provider: ModelProvider.OPENROUTER,
-    description: "Fast lightweight AI model (free tier)",
+    description: "Fast lightweight AI model ",
     maxTokens: 8192,
     pricePer1kTokens: 0,
     capabilities: [ModelCapability.TEXT],
@@ -121,9 +121,9 @@ export const MODELS: Model[] = [
   },
   {
     id: "z-ai/glm-4.5-air:free",
-    name: "GLM 4.5 Air (free)",
+    name: "GLM 4.5 Air ",
     provider: ModelProvider.OPENROUTER,
-    description: "Lightweight multilingual model (free tier)",
+    description: "Lightweight multilingual model ",
     maxTokens: 8192,
     pricePer1kTokens: 0,
     capabilities: [ModelCapability.TEXT, ModelCapability.CODE],
@@ -132,7 +132,7 @@ export const MODELS: Model[] = [
   },
   {
     id: "tencent/hunyuan-a13b-instruct:free",
-    name: "Tencent Hunyuan A13B Instruct (free)",
+    name: "Tencent Hunyuan A13B Instruct ",
     provider: ModelProvider.OPENROUTER,
     description: "Instruction-tuned model from Tencent",
     maxTokens: 8192,
@@ -143,7 +143,7 @@ export const MODELS: Model[] = [
   },
   {
     id: "google/gemma-3n-e2b-it:free",
-    name: "Google Gemma 3n e2B IT (free)",
+    name: "Google Gemma 3n e2B IT ",
     provider: ModelProvider.OPENROUTER,
     description: "Gemma 3 nano variant for instruction tasks",
     maxTokens: 8192,
@@ -154,7 +154,7 @@ export const MODELS: Model[] = [
   },
   {
     id: "google/gemma-3-27b-it:free",
-    name: "Google Gemma 3 27B IT (free)",
+    name: "Google Gemma 3 27B IT",
     provider: ModelProvider.OPENROUTER,
     description: "Gemma 3 mid-scale instruction-tuned model",
     maxTokens: 8192,
@@ -165,7 +165,7 @@ export const MODELS: Model[] = [
   },
   {
     id: "cognitivecomputations/dolphin3.0-mistral-24b:free",
-    name: "Dolphin 3.0 Mistral 24B (free)",
+    name: "Dolphin 3.0 Mistral 24B ",
     provider: ModelProvider.OPENROUTER,
     description: "Dolphin model based on Mistral 24B (free tier)",
     maxTokens: 8192,
@@ -176,7 +176,7 @@ export const MODELS: Model[] = [
   },
   {
     id: "google/gemma-2-9b-it:free",
-    name: "Google Gemma 2 9B IT (free)",
+    name: "Google Gemma 2 9B IT ",
     provider: ModelProvider.OPENROUTER,
     description: "Instruction-tuned 9B Gemma model",
     maxTokens: 8192,
@@ -187,7 +187,7 @@ export const MODELS: Model[] = [
   },
   {
     id: "shisa-ai/shisa-v2-llama3.3-70b:free",
-    name: "Shisa v2 Llama 3.3 70B (free)",
+    name: "Shisa v2 Llama 3.3 70B ",
     provider: ModelProvider.OPENROUTER,
     description: "Llama 3.3 70B variant optimized by Shisa AI",
     maxTokens: 8192,
@@ -198,7 +198,7 @@ export const MODELS: Model[] = [
   },
   {
     id: "tngtech/deepseek-r1t-chimera:free",
-    name: "DeepSeek R1T Chimera (free)",
+    name: "DeepSeek R1T Chimera",
     provider: ModelProvider.OPENROUTER,
     description: "Hybrid DeepSeek reasoning model (free tier)",
     maxTokens: 8192,
@@ -209,7 +209,7 @@ export const MODELS: Model[] = [
   },
   {
     id: "microsoft/mai-ds-r1:free",
-    name: "Microsoft MAI DS-R1 (free)",
+    name: "Microsoft MAI DS-R1 ",
     provider: ModelProvider.OPENROUTER,
     description: "Microsoft AI reasoning model",
     maxTokens: 8192,
@@ -231,7 +231,7 @@ export const MODELS: Model[] = [
   },
   {
     id: "openai/gpt-oss-20b:free",
-    name: "OpenAI GPT-OSS 20B (free)",
+    name: "OpenAI GPT-OSS 20B ",
     provider: ModelProvider.OPENROUTER,
     description: "Open-source GPT 20B model",
     maxTokens: 8192,
