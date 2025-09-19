@@ -273,35 +273,37 @@ billingRouter.post("/verify-payment", authMiddleware, async (req, res) => {
 
       // Verify signature
       if (expectedSignature === signature) {
-        // Payment is authentic - update records
-        await prisma.paymentHistory.update({
-          where: { paymentId: paymentRecord.paymentId },
-          data: {
-            status: "SUCCESS",
-            cfPaymentId: razorpay_payment_id
+        await prisma.$transaction(async (tx) => {
+          const freshPayment = await tx.paymentHistory.findUnique({
+            where: { paymentId: paymentRecord.paymentId }
+          });
+          if (freshPayment?.status !== "PENDING") {
+            throw new Error("Payment already processed");
           }
-        });
-
-        // Update user to premium status and add 12k credits for yearly plan
-        await prisma.user.update({
-          where: { id: userId },
-          data: {
-            isPremium: true,
-            credits: { increment: 12000 } // Add 12k credits for yearly plan
-          }
+          await tx.paymentHistory.update({
+            where: { paymentId: paymentRecord.paymentId },
+            data: { status: "SUCCESS", cfPaymentId: razorpay_payment_id }
+          });
+          await tx.user.update({
+            where: { id: userId },
+            data: {
+              isPremium: true,
+              credits: { increment: isYearlyPlan ? 12000 : 1000 }
+            }
+          });
         });
 
         return res.json({
           success: true,
-          message: "Yearly plan payment verified successfully. You now have 12,000 credits!"
+          message: isYearlyPlan
+            ? "Yearly plan payment verified successfully. You now have 12,000 credits!"
+            : "Payment verified successfully"
         });
       } else {
-        // Invalid signature
-        await prisma.paymentHistory.update({
-          where: { paymentId: paymentRecord.paymentId },
-          data: {
-            status: "FAILED"
-          }
+        // Invalid signature: mark FAILED only if it was still PENDING
+        await prisma.paymentHistory.updateMany({
+          where: { paymentId: paymentRecord.paymentId, status: "PENDING" },
+          data: { status: "FAILED" }
         });
 
         return res.status(400).json({
@@ -335,34 +337,42 @@ billingRouter.post("/verify-payment", authMiddleware, async (req, res) => {
       // Verify signature
       if (expectedSignature === signature) {
         // Payment is authentic - update records
-        await prisma.paymentHistory.update({
-          where: { paymentId: paymentRecord.paymentId },
+        // Atomically mark the payment SUCCESS only if it's still PENDING.
+        const updated = await prisma.paymentHistory.updateMany({
+          where: {
+            paymentId: paymentRecord.paymentId,
+            status: "PENDING"
+          },
           data: {
             status: "SUCCESS",
             cfPaymentId: razorpay_payment_id
           }
         });
 
-        // Update user to premium status and add credits
+        if (updated.count === 0) {
+          return res.status(409).json({
+            success: false,
+            error: "Payment already processed or invalid payment state"
+          });
+        }
+
         await prisma.user.update({
           where: { id: userId },
           data: {
             isPremium: true,
-            credits: { increment: 1000 } // Add 1000 credits for monthly subscription
+            credits: { increment: 1000 }
           }
         });
 
         return res.json({
           success: true,
-          message: "Payment verified successfully"
+          message: "Yearly plan payment verified successfully. You now have 12,000 credits!"
         });
       } else {
-        // Invalid signature
-        await prisma.paymentHistory.update({
-          where: { paymentId: paymentRecord.paymentId },
-          data: {
-            status: "FAILED"
-          }
+        // Invalid signature: mark FAILED only if it was still PENDING
+        await prisma.paymentHistory.updateMany({
+          where: { paymentId: paymentRecord.paymentId, status: "PENDING" },
+          data: { status: "FAILED" }
         });
 
         return res.status(400).json({
